@@ -1,0 +1,32 @@
+Task: Add a real reconciliation dataset and scenario runner.
+
+Rules:
+- Keep existing src/invomatch architecture.
+- Do not redesign project structure.
+- Do not add OCR, API, or UI.
+- Keep changes small and focused.
+
+Goals:
+- Add sample-data/invoices.csv with 50 realistic invoice rows.
+- Add sample-data/payments.csv with realistic payment rows covering:
+  - exact matches
+  - duplicate matches
+  - partial payments
+  - unmatched cases
+  - noisy unrelated payments
+- Add scripts/run_reconciliation_demo.py
+- The script must load the CSV files, instantiate Invoice and Payment domain models, run the current matching engine, and print a summary:
+  - total invoices
+  - matched
+  - duplicate_detected
+  - partial_match
+  - unmatched
+- Also write output/reconciliation_results.csv
+- Add tests for dataset loading or runner summary if reasonable.
+- Do not introduce large abstractions.
+
+Acceptance criteria:
+- Dataset files are realistic and internally consistent.
+- The runner script executes locally.
+- Output CSV is generated.
+- Existing tests still pass.
