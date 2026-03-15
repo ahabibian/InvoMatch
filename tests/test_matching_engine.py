@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from invomatch.domain.models import Invoice, Payment
+from invomatch.domain.models import Invoice, MatchResult, Payment
 from invomatch.services.matching_engine import match
 
 
@@ -14,12 +14,11 @@ def test_match_returns_exact_match_with_full_confidence():
 
     result = match(invoice, payments)
 
-    assert result == {
-        "status": "matched",
-        "payment_id": "p2",
-        "confidence_score": 1.0,
-        "confidence_explanation": "Single exact amount match found.",
-    }
+    assert isinstance(result, MatchResult)
+    assert result.status == "matched"
+    assert result.payment_id == "p2"
+    assert result.confidence_score == 1.0
+    assert result.confidence_explanation == "Single exact amount match found."
 
 
 def test_match_detects_duplicate_exact_matches_deterministically():
@@ -31,13 +30,12 @@ def test_match_detects_duplicate_exact_matches_deterministically():
 
     result = match(invoice, payments)
 
-    assert result == {
-        "status": "duplicate_detected",
-        "payment_id": "p1",
-        "duplicate_payment_ids": ["p2"],
-        "confidence_score": 0.6,
-        "confidence_explanation": "Multiple exact amount matches found; first candidate selected deterministically.",
-    }
+    assert isinstance(result, MatchResult)
+    assert result.status == "duplicate_detected"
+    assert result.payment_id == "p1"
+    assert result.duplicate_payment_ids == ["p2"]
+    assert result.confidence_score == 0.6
+    assert result.confidence_explanation == "Multiple exact amount matches found; first candidate selected deterministically."
 
 
 def test_match_detects_partial_payment_combination():
@@ -49,12 +47,11 @@ def test_match_detects_partial_payment_combination():
 
     result = match(invoice, payments)
 
-    assert result == {
-        "status": "partial_match",
-        "payment_ids": ["p1", "p2"],
-        "confidence_score": 0.75,
-        "confidence_explanation": "No exact match found; combined partial payments equal invoice amount.",
-    }
+    assert isinstance(result, MatchResult)
+    assert result.status == "partial_match"
+    assert result.payment_ids == ["p1", "p2"]
+    assert result.confidence_score == 0.75
+    assert result.confidence_explanation == "No exact match found; combined partial payments equal invoice amount."
 
 
 def test_match_returns_unmatched_when_no_pattern_fits():
@@ -63,8 +60,7 @@ def test_match_returns_unmatched_when_no_pattern_fits():
 
     result = match(invoice, payments)
 
-    assert result == {
-        "status": "unmatched",
-        "confidence_score": 0.0,
-        "confidence_explanation": "No exact or complete partial payment match found.",
-    }
+    assert isinstance(result, MatchResult)
+    assert result.status == "unmatched"
+    assert result.confidence_score == 0.0
+    assert result.confidence_explanation == "No exact or complete partial payment match found."
