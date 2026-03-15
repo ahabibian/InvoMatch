@@ -1,0 +1,13 @@
+[project]
+name = "invomatch"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi",
+  "uvicorn",
+  "pydantic",
+  "pytest"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
