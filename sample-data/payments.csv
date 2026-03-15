@@ -1,0 +1,81 @@
+id,date,amount,currency,payer,reference,invoice_id,notes
+PAY-E001,2024-01-08,120.00,USD,Main Operating Account,Payment for INV-1001,INV-1001,ACH settlement
+PAY-E002,2024-01-10,155.00,USD,Main Operating Account,Payment for INV-1002,INV-1002,ACH settlement
+PAY-E003,2024-01-12,190.00,USD,Main Operating Account,Payment for INV-1003,INV-1003,ACH settlement
+PAY-E004,2024-01-14,225.00,USD,Main Operating Account,Payment for INV-1004,INV-1004,ACH settlement
+PAY-E005,2024-01-16,260.00,USD,Main Operating Account,Payment for INV-1005,INV-1005,ACH settlement
+PAY-E006,2024-01-18,295.00,USD,Main Operating Account,Payment for INV-1006,INV-1006,ACH settlement
+PAY-E007,2024-01-20,330.00,USD,Main Operating Account,Payment for INV-1007,INV-1007,ACH settlement
+PAY-E008,2024-01-22,365.00,USD,Main Operating Account,Payment for INV-1008,INV-1008,ACH settlement
+PAY-E009,2024-01-24,400.00,USD,Main Operating Account,Payment for INV-1009,INV-1009,ACH settlement
+PAY-E010,2024-01-26,435.00,USD,Main Operating Account,Payment for INV-1010,INV-1010,ACH settlement
+PAY-E011,2024-01-28,140.00,USD,Main Operating Account,Payment for INV-1011,INV-1011,ACH settlement
+PAY-E012,2024-01-30,175.00,USD,Main Operating Account,Payment for INV-1012,INV-1012,ACH settlement
+PAY-E013,2024-02-01,210.00,USD,Main Operating Account,Payment for INV-1013,INV-1013,ACH settlement
+PAY-E014,2024-02-03,245.00,USD,Main Operating Account,Payment for INV-1014,INV-1014,ACH settlement
+PAY-E015,2024-02-05,280.00,USD,Main Operating Account,Payment for INV-1015,INV-1015,ACH settlement
+PAY-E016,2024-02-07,315.00,USD,Main Operating Account,Payment for INV-1016,INV-1016,ACH settlement
+PAY-E017,2024-02-09,350.00,USD,Main Operating Account,Payment for INV-1017,INV-1017,ACH settlement
+PAY-E018,2024-02-11,385.00,USD,Main Operating Account,Payment for INV-1018,INV-1018,ACH settlement
+PAY-E019,2024-02-13,420.00,USD,Main Operating Account,Payment for INV-1019,INV-1019,ACH settlement
+PAY-E020,2024-02-15,455.00,USD,Main Operating Account,Payment for INV-1020,INV-1020,ACH settlement
+PAY-D01-1,2024-02-16,160.00,USD,Main Operating Account,Duplicate processing INV-1021,INV-1021,Potential duplicate capture
+PAY-D01-2,2024-02-17,160.00,USD,Main Operating Account,Duplicate processing INV-1021,INV-1021,Potential duplicate capture
+PAY-D02-1,2024-02-18,195.00,USD,Main Operating Account,Duplicate processing INV-1022,INV-1022,Potential duplicate capture
+PAY-D02-2,2024-02-19,195.00,USD,Main Operating Account,Duplicate processing INV-1022,INV-1022,Potential duplicate capture
+PAY-D03-1,2024-02-20,230.00,USD,Main Operating Account,Duplicate processing INV-1023,INV-1023,Potential duplicate capture
+PAY-D03-2,2024-02-21,230.00,USD,Main Operating Account,Duplicate processing INV-1023,INV-1023,Potential duplicate capture
+PAY-D04-1,2024-02-22,265.00,USD,Main Operating Account,Duplicate processing INV-1024,INV-1024,Potential duplicate capture
+PAY-D04-2,2024-02-23,265.00,USD,Main Operating Account,Duplicate processing INV-1024,INV-1024,Potential duplicate capture
+PAY-D05-1,2024-02-24,300.00,USD,Main Operating Account,Duplicate processing INV-1025,INV-1025,Potential duplicate capture
+PAY-D05-2,2024-02-25,300.00,USD,Main Operating Account,Duplicate processing INV-1025,INV-1025,Potential duplicate capture
+PAY-D06-1,2024-02-26,335.00,USD,Main Operating Account,Duplicate processing INV-1026,INV-1026,Potential duplicate capture
+PAY-D06-2,2024-02-27,335.00,USD,Main Operating Account,Duplicate processing INV-1026,INV-1026,Potential duplicate capture
+PAY-D07-1,2024-02-28,370.00,USD,Main Operating Account,Duplicate processing INV-1027,INV-1027,Potential duplicate capture
+PAY-D07-2,2024-02-29,370.00,USD,Main Operating Account,Duplicate processing INV-1027,INV-1027,Potential duplicate capture
+PAY-D08-1,2024-03-01,405.00,USD,Main Operating Account,Duplicate processing INV-1028,INV-1028,Potential duplicate capture
+PAY-D08-2,2024-03-02,405.00,USD,Main Operating Account,Duplicate processing INV-1028,INV-1028,Potential duplicate capture
+PAY-D09-1,2024-03-03,440.00,USD,Main Operating Account,Duplicate processing INV-1029,INV-1029,Potential duplicate capture
+PAY-D09-2,2024-03-04,440.00,USD,Main Operating Account,Duplicate processing INV-1029,INV-1029,Potential duplicate capture
+PAY-D10-1,2024-03-05,475.00,USD,Main Operating Account,Duplicate processing INV-1030,INV-1030,Potential duplicate capture
+PAY-D10-2,2024-03-06,475.00,USD,Main Operating Account,Duplicate processing INV-1030,INV-1030,Potential duplicate capture
+PAY-P01-1,2024-03-06,72.00,USD,Client Clearing Account,Installment 1 INV-1031,INV-1031,Partial payment
+PAY-P01-2,2024-03-15,108.00,USD,Client Clearing Account,Installment 2 INV-1031,INV-1031,Partial payment
+PAY-P02-1,2024-03-08,86.00,USD,Client Clearing Account,Installment 1 INV-1032,INV-1032,Partial payment
+PAY-P02-2,2024-03-17,129.00,USD,Client Clearing Account,Installment 2 INV-1032,INV-1032,Partial payment
+PAY-P03-1,2024-03-10,100.00,USD,Client Clearing Account,Installment 1 INV-1033,INV-1033,Partial payment
+PAY-P03-2,2024-03-19,150.00,USD,Client Clearing Account,Installment 2 INV-1033,INV-1033,Partial payment
+PAY-P04-1,2024-03-12,114.00,USD,Client Clearing Account,Installment 1 INV-1034,INV-1034,Partial payment
+PAY-P04-2,2024-03-21,171.00,USD,Client Clearing Account,Installment 2 INV-1034,INV-1034,Partial payment
+PAY-P05-1,2024-03-14,128.00,USD,Client Clearing Account,Installment 1 INV-1035,INV-1035,Partial payment
+PAY-P05-2,2024-03-23,192.00,USD,Client Clearing Account,Installment 2 INV-1035,INV-1035,Partial payment
+PAY-P06-1,2024-03-16,142.00,USD,Client Clearing Account,Installment 1 INV-1036,INV-1036,Partial payment
+PAY-P06-2,2024-03-25,213.00,USD,Client Clearing Account,Installment 2 INV-1036,INV-1036,Partial payment
+PAY-P07-1,2024-03-18,156.00,USD,Client Clearing Account,Installment 1 INV-1037,INV-1037,Partial payment
+PAY-P07-2,2024-03-27,234.00,USD,Client Clearing Account,Installment 2 INV-1037,INV-1037,Partial payment
+PAY-P08-1,2024-03-20,170.00,USD,Client Clearing Account,Installment 1 INV-1038,INV-1038,Partial payment
+PAY-P08-2,2024-03-29,255.00,USD,Client Clearing Account,Installment 2 INV-1038,INV-1038,Partial payment
+PAY-P09-1,2024-03-22,184.00,USD,Client Clearing Account,Installment 1 INV-1039,INV-1039,Partial payment
+PAY-P09-2,2024-03-31,276.00,USD,Client Clearing Account,Installment 2 INV-1039,INV-1039,Partial payment
+PAY-P10-1,2024-03-24,198.00,USD,Client Clearing Account,Installment 1 INV-1040,INV-1040,Partial payment
+PAY-P10-2,2024-04-02,297.00,USD,Client Clearing Account,Installment 2 INV-1040,INV-1040,Partial payment
+PAY-U01,2024-03-30,110.00,USD,Delayed Remittance Account,Short payment INV-1041,INV-1041,Insufficient payment
+PAY-U02,2024-04-01,129.25,USD,Delayed Remittance Account,Short payment INV-1042,INV-1042,Insufficient payment
+PAY-U03,2024-04-03,148.50,USD,Delayed Remittance Account,Short payment INV-1043,INV-1043,Insufficient payment
+PAY-U04,2024-04-05,167.75,USD,Delayed Remittance Account,Short payment INV-1044,INV-1044,Insufficient payment
+PAY-U05,2024-04-07,187.00,USD,Delayed Remittance Account,Short payment INV-1045,INV-1045,Insufficient payment
+PAY-U06,2024-04-09,206.25,USD,Delayed Remittance Account,Short payment INV-1046,INV-1046,Insufficient payment
+PAY-U07,2024-04-11,225.50,USD,Delayed Remittance Account,Short payment INV-1047,INV-1047,Insufficient payment
+PAY-U08,2024-04-13,244.75,USD,Delayed Remittance Account,Short payment INV-1048,INV-1048,Insufficient payment
+PAY-U09,2024-04-15,264.00,USD,Delayed Remittance Account,Short payment INV-1049,INV-1049,Insufficient payment
+PAY-U10,2024-04-17,283.25,USD,Delayed Remittance Account,Short payment INV-1050,INV-1050,Insufficient payment
+PAY-N01,2024-01-04,47.50,USD,Misc External Source,Bank transfer EXT-700,,Unmapped bank feed noise
+PAY-N02,2024-01-13,60.50,USD,Misc External Source,Bank transfer EXT-701,,Unmapped bank feed noise
+PAY-N03,2024-01-22,73.50,USD,Misc External Source,Bank transfer EXT-702,,Unmapped bank feed noise
+PAY-N04,2024-01-31,86.50,USD,Misc External Source,Bank transfer EXT-703,,Unmapped bank feed noise
+PAY-N05,2024-02-09,99.50,USD,Misc External Source,Bank transfer EXT-704,,Unmapped bank feed noise
+PAY-N06,2024-02-18,112.50,USD,Misc External Source,Bank transfer EXT-705,,Unmapped bank feed noise
+PAY-N07,2024-02-27,125.50,USD,Misc External Source,Bank transfer EXT-706,,Unmapped bank feed noise
+PAY-N08,2024-03-07,138.50,USD,Misc External Source,Bank transfer EXT-707,,Unmapped bank feed noise
+PAY-N09,2024-03-16,151.50,USD,Misc External Source,Bank transfer EXT-708,,Unmapped bank feed noise
+PAY-N10,2024-03-25,164.50,USD,Misc External Source,Bank transfer EXT-709,,Unmapped bank feed noise
