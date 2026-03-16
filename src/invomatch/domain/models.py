@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -52,3 +52,11 @@ class ReconciliationReport(BaseModel):
     partial_match: int
     unmatched: int
     results: list[ReconciliationResult]
+
+
+class ReconciliationRun(BaseModel):
+    run_id: str
+    created_at: datetime
+    invoice_csv_path: str
+    payment_csv_path: str
+    report: ReconciliationReport
