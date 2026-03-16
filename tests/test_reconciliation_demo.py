@@ -9,22 +9,12 @@ if str(SCRIPTS_DIR) not in sys.path:
 import run_reconciliation_demo as demo
 
 
-def test_demo_dataset_loads_into_domain_models():
-    invoices = demo.load_invoices(ROOT_DIR / "sample-data" / "invoices.csv")
-    payments = demo.load_payments(ROOT_DIR / "sample-data" / "payments.csv")
-
-    assert len(invoices) == 50
-    assert len(payments) == 80
-    assert invoices[0].id.startswith("INV-")
-    assert payments[0].payment.id.startswith("PAY-")
-
-
 def test_demo_summary_counts_are_deterministic():
-    invoices = demo.load_invoices(ROOT_DIR / "sample-data" / "invoices.csv")
-    payments = demo.load_payments(ROOT_DIR / "sample-data" / "payments.csv")
-
-    results = demo.run_reconciliation(invoices, payments)
-    summary = demo.summarize_results(results)
+    report = demo.run_reconciliation(
+        ROOT_DIR / "sample-data" / "invoices.csv",
+        ROOT_DIR / "sample-data" / "payments.csv",
+    )
+    summary = demo.summarize_results(report)
 
     assert summary == {
         "total_invoices": 50,
@@ -33,3 +23,14 @@ def test_demo_summary_counts_are_deterministic():
         "partial_match": 10,
         "unmatched": 10,
     }
+
+
+def test_demo_report_shape_is_stable():
+    report = demo.run_reconciliation(
+        ROOT_DIR / "sample-data" / "invoices.csv",
+        ROOT_DIR / "sample-data" / "payments.csv",
+    )
+
+    assert report.total_invoices == 50
+    assert len(report.results) == 50
+    assert report.results[0].invoice_id.startswith("INV-")
