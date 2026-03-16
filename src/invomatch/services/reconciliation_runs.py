@@ -11,6 +11,10 @@ from invomatch.domain.models import ReconciliationReport, ReconciliationRun
 DEFAULT_RUN_STORE_PATH = Path("output") / "reconciliation_runs.json"
 
 
+def _normalize_path_for_storage(path: Path) -> str:
+    return path.as_posix()
+
+
 def _read_store(path: Path) -> list[dict]:
     if not path.exists():
         return []
@@ -36,8 +40,8 @@ def save_reconciliation_run(
     run = ReconciliationRun(
         run_id=uuid.uuid4().hex,
         created_at=datetime.now(timezone.utc),
-        invoice_csv_path=str(invoice_csv_path),
-        payment_csv_path=str(payment_csv_path),
+        invoice_csv_path=_normalize_path_for_storage(invoice_csv_path),
+        payment_csv_path=_normalize_path_for_storage(payment_csv_path),
         report=report,
     )
     runs = _read_store(store_path)
