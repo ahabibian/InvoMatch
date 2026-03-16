@@ -36,17 +36,26 @@ def _date_score(invoice_date: date, payment_date: date) -> tuple[float, str]:
     return DATE_FAR_SCORE, "date_far"
 
 
-def _reference_score(invoice: Invoice, payment: Payment) -> tuple[float, str]:
+def _reference_score(invoice: Invoice, payment: Payment) -> tuple[float, str | None]:
     if _reference_equal(invoice.reference, payment.reference):
         return REFERENCE_EXACT_SCORE, "reference_match"
-    return REFERENCE_MISSING_SCORE, "reference_missing"
+    if invoice.reference is None or payment.reference is None:
+        return REFERENCE_MISSING_SCORE, "reference_missing"
+    return 0.0, None
 
 
 def _candidate_score(invoice: Invoice, payment: Payment) -> tuple[float, list[str]]:
     date_score, date_reason = _date_score(invoice.date, payment.date)
     reference_score, reference_reason = _reference_score(invoice, payment)
     score = AMOUNT_WEIGHT + date_score + reference_score
-    return round(score, 2), ["amount_match", date_reason, reference_reason]
+    reasons = ["amount_match", date_reason]
+    if reference_reason is not None:
+        reasons.append(reference_reason)
+    return round(score, 2), reasons
+
+
+def _explanation(base: str, reasons: list[str]) -> str:
+    return f"{base} Reasons: {', '.join(reasons)}."
 
 
 def match(invoice: Invoice, payments: list[Payment]) -> MatchResult:
@@ -60,7 +69,10 @@ def match(invoice: Invoice, payments: list[Payment]) -> MatchResult:
             status="matched",
             payment_id=payment.id,
             confidence_score=score,
-            confidence_explanation="Single exact amount candidate scored using date and reference signals.",
+            confidence_explanation=_explanation(
+                "Single exact amount candidate scored using date and reference signals.",
+                reasons,
+            ),
             mismatch_reasons=reasons,
         )
 
@@ -77,7 +89,10 @@ def match(invoice: Invoice, payments: list[Payment]) -> MatchResult:
             payment_id=primary_payment.id,
             duplicate_payment_ids=duplicate_ids,
             confidence_score=round(max(DUPLICATE_MATCH_CONFIDENCE, primary_score - 0.2), 2),
-            confidence_explanation="Multiple exact amount candidates found; best score selected and ties resolved deterministically.",
+            confidence_explanation=_explanation(
+                "Multiple exact amount candidates found; best score selected and ties resolved deterministically.",
+                primary_reasons + ["duplicate_candidates"],
+            ),
             mismatch_reasons=primary_reasons + ["duplicate_candidates"],
         )
 
@@ -89,13 +104,19 @@ def match(invoice: Invoice, payments: list[Payment]) -> MatchResult:
             status="partial_match",
             payment_ids=[p.id for p in partial_payments],
             confidence_score=PARTIAL_MATCH_CONFIDENCE,
-            confidence_explanation="No exact candidate found; combined partial payments equal invoice amount.",
+            confidence_explanation=_explanation(
+                "No exact candidate found; combined partial payments equal invoice amount.",
+                ["partial_sum_match"],
+            ),
             mismatch_reasons=["partial_sum_match"],
         )
 
     return MatchResult(
         status="unmatched",
         confidence_score=UNMATCHED_CONFIDENCE,
-        confidence_explanation="No exact or complete partial payment candidate found.",
+        confidence_explanation=_explanation(
+            "No exact or complete partial payment candidate found.",
+            ["no_viable_candidate"],
+        ),
         mismatch_reasons=["no_viable_candidate"],
     )

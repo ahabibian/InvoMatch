@@ -35,6 +35,19 @@ def test_match_uses_date_tolerance_for_confidence_when_reference_missing():
     assert "reference_missing" in result.mismatch_reasons
 
 
+def test_match_uses_far_date_score_and_omits_reference_reason_on_reference_mismatch():
+    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")
+    payments = [
+        Payment(id="p1", date=date(2024, 1, 20), amount=Decimal("100.00"), reference="OTHER")
+    ]
+
+    result = match(invoice, payments)
+
+    assert result.status == "matched"
+    assert result.confidence_score == 0.7
+    assert result.mismatch_reasons == ["amount_match", "date_far"]
+
+
 def test_match_detects_duplicate_exact_matches_deterministically_with_scoring():
     invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")
     payments = [
@@ -78,6 +91,7 @@ def test_match_returns_unmatched_with_clear_reason_taxonomy():
     assert result.status == "unmatched"
     assert result.confidence_score == 0.0
     assert result.mismatch_reasons == ["no_viable_candidate"]
+    assert "no_viable_candidate" in result.confidence_explanation
 
 
 def test_duplicate_selection_is_deterministic_on_tied_scores():
@@ -92,3 +106,15 @@ def test_duplicate_selection_is_deterministic_on_tied_scores():
     assert result.status == "duplicate_detected"
     assert result.payment_id == "p1"
     assert result.duplicate_payment_ids == ["p2"]
+
+
+def test_explanation_contains_reasons_for_auditability():
+    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")
+    payments = [Payment(id="p1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")]
+
+    result = match(invoice, payments)
+
+    assert result.status == "matched"
+    assert "amount_match" in result.confidence_explanation
+    assert "date_near" in result.confidence_explanation
+    assert "reference_match" in result.confidence_explanation
