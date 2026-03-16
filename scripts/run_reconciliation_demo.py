@@ -4,7 +4,6 @@ import csv
 import sys
 from collections import Counter
 from dataclasses import dataclass
-from decimal import Decimal
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -13,6 +12,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from invomatch.domain.models import Invoice, Payment
+from invomatch.services.ingestion import load_invoices_from_csv, parse_payment_row
 from invomatch.services.matching_engine import match
 
 
@@ -23,18 +23,7 @@ class PaymentRecord:
 
 
 def load_invoices(path: Path) -> list[Invoice]:
-    invoices: list[Invoice] = []
-    with path.open(newline="", encoding="utf-8") as csv_file:
-        reader = csv.DictReader(csv_file)
-        for row in reader:
-            invoices.append(
-                Invoice(
-                    id=row["id"],
-                    date=row["date"],
-                    amount=Decimal(row["amount"]),
-                )
-            )
-    return invoices
+    return load_invoices_from_csv(path)
 
 
 def load_payments(path: Path) -> list[PaymentRecord]:
@@ -44,11 +33,7 @@ def load_payments(path: Path) -> list[PaymentRecord]:
         for row in reader:
             payments.append(
                 PaymentRecord(
-                    payment=Payment(
-                        id=row["id"],
-                        date=row["date"],
-                        amount=Decimal(row["amount"]),
-                    ),
+                    payment=parse_payment_row(row),
                     invoice_id=row["invoice_id"] or None,
                 )
             )
