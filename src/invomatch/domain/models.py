@@ -38,3 +38,17 @@ class MatchResult(BaseModel):
             "no_viable_candidate",
         ]
     ]
+
+
+class ReconciliationResult(BaseModel):
+    invoice_id: str
+    match_result: MatchResult
+
+
+class ReconciliationReport(BaseModel):
+    total_invoices: int
+    matched: int
+    duplicate_detected: int
+    partial_match: int
+    unmatched: int
+    results: list[ReconciliationResult]
