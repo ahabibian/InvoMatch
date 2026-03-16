@@ -5,10 +5,10 @@ from invomatch.domain.models import Invoice, MatchResult, Payment
 from invomatch.services.matching_engine import match
 
 
-def test_match_returns_exact_match_with_full_confidence():
-    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"))
+def test_match_returns_exact_match_with_date_and_reference_weighting():
+    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")
     payments = [
-        Payment(id="p2", date=date(2024, 1, 12), amount=Decimal("100.00")),
+        Payment(id="p2", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100"),
         Payment(id="p1", date=date(2024, 1, 11), amount=Decimal("25.00")),
     ]
 
@@ -18,14 +18,28 @@ def test_match_returns_exact_match_with_full_confidence():
     assert result.status == "matched"
     assert result.payment_id == "p2"
     assert result.confidence_score == 1.0
-    assert result.confidence_explanation == "Single exact amount match found."
+    assert result.mismatch_reasons == ["amount_match", "date_near", "reference_match"]
 
 
-def test_match_detects_duplicate_exact_matches_deterministically():
+def test_match_uses_date_tolerance_for_confidence_when_reference_missing():
     invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"))
+    payments = [Payment(id="p1", date=date(2024, 1, 13), amount=Decimal("100.00"))]
+
+    result = match(invoice, payments)
+
+    assert isinstance(result, MatchResult)
+    assert result.status == "matched"
+    assert result.payment_id == "p1"
+    assert result.confidence_score == 0.87
+    assert "date_near" in result.mismatch_reasons
+    assert "reference_missing" in result.mismatch_reasons
+
+
+def test_match_detects_duplicate_exact_matches_deterministically_with_scoring():
+    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")
     payments = [
-        Payment(id="p2", date=date(2024, 1, 12), amount=Decimal("100.00")),
-        Payment(id="p1", date=date(2024, 1, 11), amount=Decimal("100.00")),
+        Payment(id="p2", date=date(2024, 1, 12), amount=Decimal("100.00"), reference="wrong"),
+        Payment(id="p1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100"),
     ]
 
     result = match(invoice, payments)
@@ -34,8 +48,8 @@ def test_match_detects_duplicate_exact_matches_deterministically():
     assert result.status == "duplicate_detected"
     assert result.payment_id == "p1"
     assert result.duplicate_payment_ids == ["p2"]
-    assert result.confidence_score == 0.6
-    assert result.confidence_explanation == "Multiple exact amount matches found; first candidate selected deterministically."
+    assert result.confidence_score == 0.8
+    assert "duplicate_candidates" in result.mismatch_reasons
 
 
 def test_match_detects_partial_payment_combination():
@@ -51,16 +65,30 @@ def test_match_detects_partial_payment_combination():
     assert result.status == "partial_match"
     assert result.payment_ids == ["p1", "p2"]
     assert result.confidence_score == 0.75
-    assert result.confidence_explanation == "No exact match found; combined partial payments equal invoice amount."
+    assert result.mismatch_reasons == ["partial_sum_match"]
 
 
-def test_match_returns_unmatched_when_no_pattern_fits():
+def test_match_returns_unmatched_with_clear_reason_taxonomy():
     invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"))
-    payments = [Payment(id="p1", date=date(2024, 1, 11), amount=Decimal("35.00"))]
+    payments = [Payment(id="p1", date=date(2024, 1, 20), amount=Decimal("35.00"))]
 
     result = match(invoice, payments)
 
     assert isinstance(result, MatchResult)
     assert result.status == "unmatched"
     assert result.confidence_score == 0.0
-    assert result.confidence_explanation == "No exact or complete partial payment match found."
+    assert result.mismatch_reasons == ["no_viable_candidate"]
+
+
+def test_duplicate_selection_is_deterministic_on_tied_scores():
+    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"))
+    payments = [
+        Payment(id="p2", date=date(2024, 1, 11), amount=Decimal("100.00")),
+        Payment(id="p1", date=date(2024, 1, 11), amount=Decimal("100.00")),
+    ]
+
+    result = match(invoice, payments)
+
+    assert result.status == "duplicate_detected"
+    assert result.payment_id == "p1"
+    assert result.duplicate_payment_ids == ["p2"]
