@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from invomatch.domain.models import ReconciliationRun
 
@@ -35,6 +35,11 @@ class RunDetailResponse(BaseModel):
     invoice_csv_path: str
     payment_csv_path: str
     report: dict[str, Any]
+
+
+class CreateRunRequest(BaseModel):
+    invoice_csv_path: str = Field(min_length=1)
+    payment_csv_path: str = Field(min_length=1)
 
 
 def to_run_summary_response(run: ReconciliationRun) -> RunSummaryResponse:

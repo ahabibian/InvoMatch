@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request
 
 from invomatch.api.reconciliation_schemas import (
+    CreateRunRequest,
     RunDetailResponse,
     RunListResponse,
     to_run_detail_response,
@@ -36,6 +38,17 @@ def list_reconciliation_runs(
         limit=limit,
         offset=offset,
     )
+
+
+
+
+@router.post("", response_model=RunDetailResponse, status_code=201)
+def create_reconciliation_run(payload: CreateRunRequest, request: Request) -> RunDetailResponse:
+    run = request.app.state.reconcile_and_save(
+        invoice_csv_path=Path(payload.invoice_csv_path),
+        payment_csv_path=Path(payload.payment_csv_path),
+    )
+    return to_run_detail_response(run)
 
 
 @router.get("/{run_id}", response_model=RunDetailResponse)

@@ -3,11 +3,17 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
-from invomatch.api.reconciliation_runs import get_reconciliation_run, list_reconciliation_runs
+from invomatch.api.reconciliation_runs import create_reconciliation_run, get_reconciliation_run, list_reconciliation_runs
+from invomatch.api.reconciliation_schemas import CreateRunRequest
+from invomatch.services.reconciliation import reconcile
 from invomatch.services.reconciliation_runs import save_reconciliation_run
 from invomatch.services.run_registry import RunRegistry
 from invomatch.domain.models import ReconciliationReport
+
+
+ROOT_DIR = Path(__file__).resolve().parents[1]
 
 
 def _report(matched: int, unmatched: int) -> ReconciliationReport:
@@ -102,3 +108,62 @@ def test_get_reconciliation_run_detail_returns_404_for_missing_run(tmp_path: Pat
         get_reconciliation_run("missing-run", request=_request_for_store(store_path))
 
     assert exc_info.value.status_code == 404
+
+
+
+
+def _request_for_store_with_executor(store_path: Path) -> SimpleNamespace:
+    def reconcile_and_save_for_test(*, invoice_csv_path: Path, payment_csv_path: Path):
+        report = reconcile(invoice_csv_path, payment_csv_path)
+        return save_reconciliation_run(
+            report=report,
+            invoice_csv_path=invoice_csv_path,
+            payment_csv_path=payment_csv_path,
+            store_path=store_path,
+        )
+
+    app = SimpleNamespace(
+        state=SimpleNamespace(
+            run_registry=RunRegistry(store_path=store_path),
+            reconcile_and_save=reconcile_and_save_for_test,
+        )
+    )
+    return SimpleNamespace(app=app)
+
+
+def test_create_reconciliation_run_returns_201_and_detail_payload(tmp_path: Path):
+    store_path = tmp_path / "reconciliation_runs.json"
+
+    response = create_reconciliation_run(
+        payload=CreateRunRequest(
+            invoice_csv_path=str(ROOT_DIR / "sample-data" / "invoices.csv"),
+            payment_csv_path=str(ROOT_DIR / "sample-data" / "payments.csv"),
+        ),
+        request=_request_for_store_with_executor(store_path),
+    )
+
+    assert response.run_id
+    assert response.status == "completed"
+    assert response.report["total_invoices"] == 50
+
+
+def test_create_reconciliation_run_rejects_invalid_request_body():
+    with pytest.raises(ValidationError):
+        CreateRunRequest(invoice_csv_path="", payment_csv_path="")
+
+
+def test_create_reconciliation_run_persists_and_can_be_retrieved(tmp_path: Path):
+    store_path = tmp_path / "reconciliation_runs.json"
+    request = _request_for_store_with_executor(store_path)
+
+    create_response = create_reconciliation_run(
+        payload=CreateRunRequest(
+            invoice_csv_path=str(ROOT_DIR / "sample-data" / "invoices.csv"),
+            payment_csv_path=str(ROOT_DIR / "sample-data" / "payments.csv"),
+        ),
+        request=request,
+    )
+
+    fetch_response = get_reconciliation_run(create_response.run_id, request=request)
+
+    assert fetch_response.run_id == create_response.run_id
