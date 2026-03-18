@@ -1,13 +1,33 @@
+from functools import partial
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
-from invomatch.api.reconciliation_runs import get_reconciliation_run, list_reconciliation_runs
+from invomatch.api.reconciliation_runs import (
+    create_reconciliation_run,
+    get_reconciliation_run,
+    list_reconciliation_runs,
+)
+from invomatch.api.reconciliation_schemas import CreateRunRequest
+from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.reconciliation_runs import save_reconciliation_run
 from invomatch.services.run_registry import RunRegistry
 from invomatch.domain.models import ReconciliationReport
+
+
+@pytest.fixture
+def reconciliation_request(tmp_path: Path):
+    store_path = tmp_path / "reconciliation_runs.json"
+    app = SimpleNamespace(
+        state=SimpleNamespace(
+            run_registry=RunRegistry(store_path=store_path),
+            reconcile_and_save=partial(reconcile_and_save, store_path=store_path),
+        )
+    )
+    return SimpleNamespace(app=app), store_path
 
 
 def _report(matched: int, unmatched: int) -> ReconciliationReport:
@@ -38,8 +58,63 @@ def _seed_runs(store_path: Path) -> list[str]:
 
 
 def _request_for_store(store_path: Path) -> SimpleNamespace:
-    app = SimpleNamespace(state=SimpleNamespace(run_registry=RunRegistry(store_path=store_path)))
+    app = SimpleNamespace(
+        state=SimpleNamespace(
+            run_registry=RunRegistry(store_path=store_path),
+            reconcile_and_save=partial(reconcile_and_save, store_path=store_path),
+        )
+    )
     return SimpleNamespace(app=app)
+
+
+def test_create_reconciliation_run_returns_created_run(reconciliation_request):
+    request, store_path = reconciliation_request
+
+    response = create_reconciliation_run(
+        request_body=CreateRunRequest(
+            invoice_csv_path="sample-data/invoices.csv",
+            payment_csv_path="sample-data/payments.csv",
+        ),
+        request=request,
+    )
+
+    assert response.status == "completed"
+    assert response.invoice_csv_path == "sample-data/invoices.csv"
+    assert response.payment_csv_path == "sample-data/payments.csv"
+    assert response.report["matched"] == 20
+
+    list_response = list_reconciliation_runs(request=_request_for_store(store_path))
+    assert list_response.total == 1
+    assert list_response.items[0].run_id == response.run_id
+
+
+def test_create_reconciliation_run_rejects_invalid_request():
+    with pytest.raises(ValidationError):
+        CreateRunRequest(
+            invoice_csv_path="",
+            payment_csv_path="sample-data/payments.csv",
+        )
+
+
+
+def test_create_then_retrieve_reconciliation_run_returns_persisted_payload(reconciliation_request):
+    request, _ = reconciliation_request
+
+    created_run = create_reconciliation_run(
+        request_body=CreateRunRequest(
+            invoice_csv_path="sample-data/invoices.csv",
+            payment_csv_path="sample-data/payments.csv",
+        ),
+        request=request,
+    )
+
+    response = get_reconciliation_run(created_run.run_id, request=request)
+
+    assert response.run_id == created_run.run_id
+    assert response.status == "completed"
+    assert response.report["total_invoices"] == 50
+    assert response.report["matched"] == 20
+    assert response.report["unmatched"] == 10
 
 
 def test_get_reconciliation_runs_returns_paginated_list(tmp_path: Path):

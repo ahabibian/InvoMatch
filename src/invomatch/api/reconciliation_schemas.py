@@ -3,9 +3,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from invomatch.domain.models import ReconciliationRun
+
+
+class CreateRunRequest(BaseModel):
+    invoice_csv_path: str = Field(min_length=1)
+    payment_csv_path: str = Field(min_length=1)
 
 
 class RunSummaryResponse(BaseModel):

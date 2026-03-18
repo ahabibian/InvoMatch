@@ -1,18 +1,31 @@
 from __future__ import annotations
 
-from typing import Literal
+from pathlib import Path
+from typing import Callable, Literal
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, status
 
 from invomatch.api.reconciliation_schemas import (
+    CreateRunRequest,
     RunDetailResponse,
     RunListResponse,
     to_run_detail_response,
     to_run_summary_response,
 )
+from invomatch.domain.models import ReconciliationRun
 from invomatch.services.run_registry import RunRegistry
 
 router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-runs"])
+
+
+@router.post("", response_model=RunDetailResponse, status_code=status.HTTP_201_CREATED)
+def create_reconciliation_run(request_body: CreateRunRequest, request: Request) -> RunDetailResponse:
+    reconcile_and_save: Callable[[Path, Path], ReconciliationRun] = request.app.state.reconcile_and_save
+    run = reconcile_and_save(
+        Path(request_body.invoice_csv_path),
+        Path(request_body.payment_csv_path),
+    )
+    return to_run_detail_response(run)
 
 
 @router.get("", response_model=RunListResponse)
