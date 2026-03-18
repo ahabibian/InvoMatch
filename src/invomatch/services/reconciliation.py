@@ -13,7 +13,7 @@ from invomatch.domain.models import (
 )
 from invomatch.services.ingestion import load_invoices_from_csv, parse_payment_row
 from invomatch.services.matching_engine import match
-from invomatch.services.reconciliation_runs import save_reconciliation_run
+from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH, save_reconciliation_run
 
 
 def _load_payments_by_invoice(path: Path) -> dict[str, list[Payment]]:
@@ -57,10 +57,15 @@ def reconcile(invoice_csv_path: Path, payment_csv_path: Path) -> ReconciliationR
     return ReconciliationReport(results=results, **summary)
 
 
-def reconcile_and_save(invoice_csv_path: Path, payment_csv_path: Path) -> ReconciliationRun:
+def reconcile_and_save(
+    invoice_csv_path: Path,
+    payment_csv_path: Path,
+    store_path: Path = DEFAULT_RUN_STORE_PATH,
+) -> ReconciliationRun:
     report = reconcile(invoice_csv_path, payment_csv_path)
     return save_reconciliation_run(
         report=report,
         invoice_csv_path=invoice_csv_path,
         payment_csv_path=payment_csv_path,
+        store_path=store_path,
     )
