@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from invomatch.services.reconciliation import reconcile, reconcile_and_save
+from invomatch.services.reconciliation_errors import ReconciliationExecutionError, ReconciliationInputValidationError
 from invomatch.services.reconciliation_runs import load_reconciliation_run
 from invomatch.services.run_store import InMemoryRunStore, JsonRunStore
 
@@ -79,7 +80,7 @@ def test_reconcile_and_save_marks_run_failed_when_execution_raises(tmp_path: Pat
 
     monkeypatch.setattr("invomatch.services.reconciliation.reconcile", boom)
 
-    with pytest.raises(RuntimeError, match="reconciliation exploded"):
+    with pytest.raises(ReconciliationExecutionError, match="Reconciliation execution failed: reconciliation exploded"):
         reconcile_and_save(
             ROOT_DIR / "sample-data" / "invoices.csv",
             ROOT_DIR / "sample-data" / "payments.csv",
@@ -94,3 +95,31 @@ def test_reconcile_and_save_marks_run_failed_when_execution_raises(tmp_path: Pat
     assert failed_run["finished_at"] is not None
     assert failed_run["error_message"] == "reconciliation exploded"
     assert failed_run["report"] is None
+
+
+def test_reconcile_and_save_rejects_missing_invoice_file(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+
+    with pytest.raises(ReconciliationInputValidationError, match="invoice_csv_path does not exist"):
+        reconcile_and_save(
+            ROOT_DIR / "sample-data" / "missing.csv",
+            ROOT_DIR / "sample-data" / "payments.csv",
+            run_store=run_store,
+        )
+
+    assert run_store.load_runs() == []
+
+
+def test_reconcile_and_save_rejects_wrong_extension(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    invoice_path = tmp_path / "invoices.txt"
+    invoice_path.write_text("id,date,amount`nINV-1,2024-01-01,10.00`n", encoding="utf-8")
+
+    with pytest.raises(ReconciliationInputValidationError, match="invoice_csv_path must point to a .csv file"):
+        reconcile_and_save(
+            invoice_path,
+            ROOT_DIR / "sample-data" / "payments.csv",
+            run_store=run_store,
+        )
+
+    assert run_store.load_runs() == []
