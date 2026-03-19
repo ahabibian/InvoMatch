@@ -4,6 +4,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+RunStatus = Literal["pending", "running", "completed", "failed"]
+
 
 class Invoice(BaseModel):
     id: str
@@ -56,7 +58,28 @@ class ReconciliationReport(BaseModel):
 
 class ReconciliationRun(BaseModel):
     run_id: str
+    status: RunStatus
     created_at: datetime
+    updated_at: datetime
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
     invoice_csv_path: str
     payment_csv_path: str
-    report: ReconciliationReport
+    error_message: str | None = None
+    report: ReconciliationReport | None = None
+
+
+def is_terminal_status(status: RunStatus) -> bool:
+    return status in {"completed", "failed"}
+
+
+_ALLOWED_TRANSITIONS: dict[RunStatus, set[RunStatus]] = {
+    "pending": {"pending", "running", "failed"},
+    "running": {"running", "completed", "failed"},
+    "completed": {"completed"},
+    "failed": {"failed"},
+}
+
+
+def can_transition(current_status: RunStatus, next_status: RunStatus) -> bool:
+    return next_status in _ALLOWED_TRANSITIONS[current_status]
