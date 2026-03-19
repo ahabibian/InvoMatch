@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
+from typing import Callable, Literal
 
 from fastapi import APIRouter, HTTPException, Request, status
 
@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-runs
 
 @router.post("", response_model=RunDetailResponse, status_code=status.HTTP_201_CREATED)
 def create_reconciliation_run(request_body: CreateRunRequest, request: Request) -> RunDetailResponse:
-    reconcile_and_save: Callable[[Path, Path], ReconciliationRun] = request.app.state.reconcile_and_save
+    reconcile_and_save: Callable[..., ReconciliationRun] = request.app.state.reconcile_and_save
     run = reconcile_and_save(
         Path(request_body.invoice_csv_path),
         Path(request_body.payment_csv_path),
@@ -34,7 +34,7 @@ def list_reconciliation_runs(
     status: RunStatus | None = None,
     limit: int = 50,
     offset: int = 0,
-    sort_order: str = "desc",
+    sort_order: Literal["asc", "desc"] = "desc",
 ) -> RunListResponse:
     registry: RunRegistry = request.app.state.run_registry
     runs, total = registry.list_runs(
