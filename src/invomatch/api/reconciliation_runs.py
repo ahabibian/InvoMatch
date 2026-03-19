@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Callable
 
 from fastapi import APIRouter, HTTPException, Request, status
 
@@ -12,7 +12,7 @@ from invomatch.api.reconciliation_schemas import (
     to_run_detail_response,
     to_run_summary_response,
 )
-from invomatch.domain.models import ReconciliationRun
+from invomatch.domain.models import ReconciliationRun, RunStatus
 from invomatch.services.run_registry import RunRegistry
 
 router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-runs"])
@@ -31,10 +31,10 @@ def create_reconciliation_run(request_body: CreateRunRequest, request: Request) 
 @router.get("", response_model=RunListResponse)
 def list_reconciliation_runs(
     request: Request,
-    status: Literal["completed"] | None = None,
+    status: RunStatus | None = None,
     limit: int = 50,
     offset: int = 0,
-    sort_order: Literal["asc", "desc"] = "desc",
+    sort_order: str = "desc",
 ) -> RunListResponse:
     registry: RunRegistry = request.app.state.run_registry
     runs, total = registry.list_runs(

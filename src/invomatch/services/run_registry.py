@@ -3,11 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from invomatch.domain.models import ReconciliationRun
-from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH, _read_store
+from invomatch.domain.models import ReconciliationRun, RunStatus
+from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH, _load_runs
 
 SortOrder = Literal["asc", "desc"]
-RunStatus = Literal["completed"]
 
 
 class RunRegistry:
@@ -22,10 +21,10 @@ class RunRegistry:
         offset: int = 0,
         sort_order: SortOrder = "desc",
     ) -> tuple[list[ReconciliationRun], int]:
-        runs = [ReconciliationRun.model_validate(payload) for payload in _read_store(self._store_path)]
+        runs = _load_runs(self._store_path)
 
         if status is not None:
-            runs = [run for run in runs if self._status_for(run) == status]
+            runs = [run for run in runs if run.status == status]
 
         reverse = sort_order == "desc"
         runs.sort(key=lambda run: run.created_at, reverse=reverse)
@@ -34,11 +33,7 @@ class RunRegistry:
         return runs[offset : offset + limit], total
 
     def get_run(self, run_id: str) -> ReconciliationRun | None:
-        for payload in _read_store(self._store_path):
-            if payload.get("run_id") == run_id:
-                return ReconciliationRun.model_validate(payload)
+        for run in _load_runs(self._store_path):
+            if run.run_id == run_id:
+                return run
         return None
-
-    @staticmethod
-    def _status_for(_: ReconciliationRun) -> RunStatus:
-        return "completed"
