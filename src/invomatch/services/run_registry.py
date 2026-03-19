@@ -1,17 +1,17 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Literal
 
 from invomatch.domain.models import ReconciliationRun, RunStatus
-from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH, _load_runs
+from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE
+from invomatch.services.run_store import RunStore
 
 SortOrder = Literal["asc", "desc"]
 
 
 class RunRegistry:
-    def __init__(self, store_path: Path = DEFAULT_RUN_STORE_PATH):
-        self._store_path = store_path
+    def __init__(self, run_store: RunStore = DEFAULT_RUN_STORE):
+        self._run_store = run_store
 
     def list_runs(
         self,
@@ -21,7 +21,7 @@ class RunRegistry:
         offset: int = 0,
         sort_order: SortOrder = "desc",
     ) -> tuple[list[ReconciliationRun], int]:
-        runs = _load_runs(self._store_path)
+        runs = self._run_store.load_runs()
 
         if status is not None:
             runs = [run for run in runs if run.status == status]
@@ -33,7 +33,7 @@ class RunRegistry:
         return runs[offset : offset + limit], total
 
     def get_run(self, run_id: str) -> ReconciliationRun | None:
-        for run in _load_runs(self._store_path):
+        for run in self._run_store.load_runs():
             if run.run_id == run_id:
                 return run
         return None

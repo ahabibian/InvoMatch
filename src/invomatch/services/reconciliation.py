@@ -13,11 +13,8 @@ from invomatch.domain.models import (
 )
 from invomatch.services.ingestion import load_invoices_from_csv, parse_payment_row
 from invomatch.services.matching_engine import match
-from invomatch.services.reconciliation_runs import (
-    DEFAULT_RUN_STORE_PATH,
-    create_reconciliation_run,
-    update_reconciliation_run,
-)
+from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE, create_reconciliation_run, update_reconciliation_run
+from invomatch.services.run_store import RunStore
 
 
 def _load_payments_by_invoice(path: Path) -> dict[str, list[Payment]]:
@@ -64,14 +61,14 @@ def reconcile(invoice_csv_path: Path, payment_csv_path: Path) -> ReconciliationR
 def reconcile_and_save(
     invoice_csv_path: Path,
     payment_csv_path: Path,
-    store_path: Path = DEFAULT_RUN_STORE_PATH,
+    run_store: RunStore = DEFAULT_RUN_STORE,
 ) -> ReconciliationRun:
     run = create_reconciliation_run(
         invoice_csv_path=invoice_csv_path,
         payment_csv_path=payment_csv_path,
-        store_path=store_path,
+        run_store=run_store,
     )
-    run = update_reconciliation_run(run.run_id, status="running", store_path=store_path)
+    run = update_reconciliation_run(run.run_id, status="running", run_store=run_store)
 
     try:
         report = reconcile(invoice_csv_path, payment_csv_path)
@@ -80,7 +77,7 @@ def reconcile_and_save(
             run.run_id,
             status="failed",
             error_message=str(exc),
-            store_path=store_path,
+            run_store=run_store,
         )
         raise
 
@@ -88,5 +85,5 @@ def reconcile_and_save(
         run.run_id,
         status="completed",
         report=report,
-        store_path=store_path,
+        run_store=run_store,
     )

@@ -1,9 +1,11 @@
+import json
 from pathlib import Path
 
 import pytest
 
 from invomatch.services.reconciliation import reconcile, reconcile_and_save
 from invomatch.services.reconciliation_runs import load_reconciliation_run
+from invomatch.services.run_store import InMemoryRunStore, JsonRunStore
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
@@ -33,15 +35,15 @@ def test_reconcile_results_are_bound_to_invoice_ids():
 
 
 def test_reconcile_and_save_moves_run_through_completed_lifecycle(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
 
     run = reconcile_and_save(
         ROOT_DIR / "sample-data" / "invoices.csv",
         ROOT_DIR / "sample-data" / "payments.csv",
-        store_path=store_path,
+        run_store=run_store,
     )
 
-    persisted_run = load_reconciliation_run(run.run_id, store_path=store_path)
+    persisted_run = load_reconciliation_run(run.run_id, run_store=run_store)
 
     assert run.status == "completed"
     assert run.started_at is not None
@@ -53,8 +55,24 @@ def test_reconcile_and_save_moves_run_through_completed_lifecycle(tmp_path: Path
     assert persisted_run.report is not None
 
 
+def test_reconcile_and_save_supports_injected_in_memory_store():
+    run_store = InMemoryRunStore()
+
+    run = reconcile_and_save(
+        ROOT_DIR / "sample-data" / "invoices.csv",
+        ROOT_DIR / "sample-data" / "payments.csv",
+        run_store=run_store,
+    )
+
+    persisted_run = load_reconciliation_run(run.run_id, run_store=run_store)
+
+    assert run.status == "completed"
+    assert persisted_run.run_id == run.run_id
+    assert persisted_run.report is not None
+
+
 def test_reconcile_and_save_marks_run_failed_when_execution_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    store_path = tmp_path / "reconciliation_runs.json"
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
 
     def boom(invoice_csv_path: Path, payment_csv_path: Path):
         raise RuntimeError("reconciliation exploded")
@@ -65,10 +83,10 @@ def test_reconcile_and_save_marks_run_failed_when_execution_raises(tmp_path: Pat
         reconcile_and_save(
             ROOT_DIR / "sample-data" / "invoices.csv",
             ROOT_DIR / "sample-data" / "payments.csv",
-            store_path=store_path,
+            run_store=run_store,
         )
 
-    persisted_runs = __import__("json").loads(store_path.read_text(encoding="utf-8"))
+    persisted_runs = json.loads(run_store.path.read_text(encoding="utf-8"))
     assert len(persisted_runs) == 1
     failed_run = persisted_runs[0]
     assert failed_run["status"] == "failed"
