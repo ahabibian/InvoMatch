@@ -3,14 +3,29 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from invomatch.domain.models import ReconciliationRun, RunStatus
+from invomatch.services.reconciliation_errors import ReconciliationServiceError
 
 
 class CreateRunRequest(BaseModel):
     invoice_csv_path: str = Field(min_length=1)
     payment_csv_path: str = Field(min_length=1)
+
+    @field_validator("invoice_csv_path", "payment_csv_path")
+    @classmethod
+    def _strip_and_validate_non_blank(cls, value: str) -> str:
+        normalized = value.strip()
+        if not normalized:
+            raise ValueError("Path must not be empty")
+        return normalized
+
+
+class ApiErrorResponse(BaseModel):
+    error_code: str
+    message: str
+    run_id: str | None = None
 
 
 class RunSummaryResponse(BaseModel):
@@ -46,6 +61,14 @@ class RunDetailResponse(BaseModel):
     payment_csv_path: str
     error_message: str | None
     report: dict[str, Any] | None
+
+
+def to_api_error_response(error: ReconciliationServiceError) -> ApiErrorResponse:
+    return ApiErrorResponse(
+        error_code=error.error_code,
+        message=error.message,
+        run_id=error.run_id,
+    )
 
 
 def to_run_summary_response(run: ReconciliationRun) -> RunSummaryResponse:

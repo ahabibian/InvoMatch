@@ -10,6 +10,7 @@ from invomatch.api.reconciliation_runs import (
     create_reconciliation_run,
     get_reconciliation_run,
     list_reconciliation_runs,
+    router,
 )
 from invomatch.api.reconciliation_schemas import CreateRunRequest
 from invomatch.domain.models import ReconciliationReport
@@ -122,9 +123,111 @@ def test_create_reconciliation_run_supports_injected_in_memory_store():
 def test_create_reconciliation_run_rejects_invalid_request():
     with pytest.raises(ValidationError):
         CreateRunRequest(
-            invoice_csv_path="",
+            invoice_csv_path="   ",
             payment_csv_path="sample-data/payments.csv",
         )
+
+
+def test_post_reconciliation_route_declares_201_status_code():
+    post_route = next(route for route in router.routes if route.path == "/api/reconciliation/runs" and "POST" in route.methods)
+
+    assert post_route.status_code == 201
+
+
+def test_create_reconciliation_run_returns_400_for_missing_invoice_file(reconciliation_request):
+    request, _ = reconciliation_request
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_reconciliation_run(
+            request_body=CreateRunRequest(
+                invoice_csv_path="sample-data/missing.csv",
+                payment_csv_path="sample-data/payments.csv",
+            ),
+            request=request,
+        )
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == {
+        "error_code": "input_validation_failed",
+        "message": "invoice_csv_path does not exist: sample-data/missing.csv",
+    }
+
+
+def test_create_reconciliation_run_returns_400_for_missing_payment_file(reconciliation_request):
+    request, _ = reconciliation_request
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_reconciliation_run(
+            request_body=CreateRunRequest(
+                invoice_csv_path="sample-data/invoices.csv",
+                payment_csv_path="sample-data/missing.csv",
+            ),
+            request=request,
+        )
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == {
+        "error_code": "input_validation_failed",
+        "message": "payment_csv_path does not exist: sample-data/missing.csv",
+    }
+
+
+def test_create_reconciliation_run_returns_400_for_wrong_extension(reconciliation_request, tmp_path: Path):
+    request, _ = reconciliation_request
+    invoice_path = tmp_path / "invoices.txt"
+    invoice_path.write_text("id,date,amount`nINV-1,2024-01-01,10.00`n", encoding="utf-8")
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_reconciliation_run(
+            request_body=CreateRunRequest(
+                invoice_csv_path=str(invoice_path),
+                payment_csv_path="sample-data/payments.csv",
+            ),
+            request=request,
+        )
+
+    assert exc_info.value.status_code == 400
+    assert exc_info.value.detail == {
+        "error_code": "input_validation_failed",
+        "message": "invoice_csv_path must point to a .csv file",
+    }
+
+
+def test_create_reconciliation_run_returns_structured_execution_failure_and_persists_failed_run(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+):
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    request = _request_for_store(run_store)
+
+    def boom(invoice_csv_path: Path, payment_csv_path: Path):
+        raise RuntimeError("reconciliation exploded")
+
+    monkeypatch.setattr("invomatch.services.reconciliation.reconcile", boom)
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_reconciliation_run(
+            request_body=CreateRunRequest(
+                invoice_csv_path="sample-data/invoices.csv",
+                payment_csv_path="sample-data/payments.csv",
+            ),
+            request=request,
+        )
+
+    assert exc_info.value.status_code == 500
+    detail = exc_info.value.detail
+    assert detail["error_code"] == "execution_failed"
+    assert detail["message"] == "Reconciliation execution failed: reconciliation exploded"
+    assert detail["run_id"]
+
+    persisted_runs = run_store.load_runs()
+    assert len(persisted_runs) == 1
+    failed_run = persisted_runs[0]
+    assert failed_run.run_id == detail["run_id"]
+    assert failed_run.status == "failed"
+    assert failed_run.error_message == "reconciliation exploded"
+    assert failed_run.report is None
+    assert failed_run.finished_at is not None
 
 
 def test_create_then_retrieve_reconciliation_run_returns_persisted_payload(reconciliation_request):
