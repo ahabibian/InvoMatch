@@ -20,18 +20,23 @@ from invomatch.services.reconciliation_runs import (
     update_reconciliation_run,
 )
 from invomatch.services.run_registry import RunRegistry
+from invomatch.services.run_store import InMemoryRunStore, JsonRunStore, RunStore
+
+
+def _request_for_store(run_store: RunStore) -> SimpleNamespace:
+    app = SimpleNamespace(
+        state=SimpleNamespace(
+            run_registry=RunRegistry(run_store=run_store),
+            reconcile_and_save=partial(reconcile_and_save, run_store=run_store),
+        )
+    )
+    return SimpleNamespace(app=app)
 
 
 @pytest.fixture
 def reconciliation_request(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
-    app = SimpleNamespace(
-        state=SimpleNamespace(
-            run_registry=RunRegistry(store_path=store_path),
-            reconcile_and_save=partial(reconcile_and_save, store_path=store_path),
-        )
-    )
-    return SimpleNamespace(app=app), store_path
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    return _request_for_store(run_store), run_store
 
 
 def _report(matched: int, unmatched: int) -> ReconciliationReport:
@@ -45,45 +50,35 @@ def _report(matched: int, unmatched: int) -> ReconciliationReport:
     )
 
 
-def _seed_runs(store_path: Path) -> list[str]:
+def _seed_runs(run_store: RunStore) -> list[str]:
     pending = create_run_record(
         invoice_csv_path=Path("sample-data/invoices-pending.csv"),
         payment_csv_path=Path("sample-data/payments-pending.csv"),
-        store_path=store_path,
+        run_store=run_store,
     )
     failed = create_run_record(
         invoice_csv_path=Path("sample-data/invoices-failed.csv"),
         payment_csv_path=Path("sample-data/payments-failed.csv"),
-        store_path=store_path,
+        run_store=run_store,
     )
-    update_reconciliation_run(failed.run_id, status="running", store_path=store_path)
+    update_reconciliation_run(failed.run_id, status="running", run_store=run_store)
     update_reconciliation_run(
         failed.run_id,
         status="failed",
         error_message="import failed",
-        store_path=store_path,
+        run_store=run_store,
     )
     completed = save_reconciliation_run(
         report=_report(matched=4, unmatched=3),
         invoice_csv_path=Path("sample-data/invoices-completed.csv"),
         payment_csv_path=Path("sample-data/payments-completed.csv"),
-        store_path=store_path,
+        run_store=run_store,
     )
     return [pending.run_id, failed.run_id, completed.run_id]
 
 
-def _request_for_store(store_path: Path) -> SimpleNamespace:
-    app = SimpleNamespace(
-        state=SimpleNamespace(
-            run_registry=RunRegistry(store_path=store_path),
-            reconcile_and_save=partial(reconcile_and_save, store_path=store_path),
-        )
-    )
-    return SimpleNamespace(app=app)
-
-
 def test_create_reconciliation_run_returns_completed_run(reconciliation_request):
-    request, store_path = reconciliation_request
+    request, run_store = reconciliation_request
 
     response = create_reconciliation_run(
         request_body=CreateRunRequest(
@@ -102,9 +97,26 @@ def test_create_reconciliation_run_returns_completed_run(reconciliation_request)
     assert response.report is not None
     assert response.report["matched"] == 20
 
-    list_response = list_reconciliation_runs(request=_request_for_store(store_path))
+    list_response = list_reconciliation_runs(request=_request_for_store(run_store))
     assert list_response.total == 1
     assert list_response.items[0].run_id == response.run_id
+
+
+def test_create_reconciliation_run_supports_injected_in_memory_store():
+    run_store = InMemoryRunStore()
+    request = _request_for_store(run_store)
+
+    response = create_reconciliation_run(
+        request_body=CreateRunRequest(
+            invoice_csv_path="sample-data/invoices.csv",
+            payment_csv_path="sample-data/payments.csv",
+        ),
+        request=request,
+    )
+
+    assert response.status == "completed"
+    assert len(run_store.load_runs()) == 1
+    assert run_store.load_runs()[0].run_id == response.run_id
 
 
 def test_create_reconciliation_run_rejects_invalid_request():
@@ -139,10 +151,10 @@ def test_create_then_retrieve_reconciliation_run_returns_persisted_payload(recon
 
 
 def test_get_reconciliation_runs_returns_paginated_list(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
-    _seed_runs(store_path)
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    _seed_runs(run_store)
 
-    response = list_reconciliation_runs(request=_request_for_store(store_path))
+    response = list_reconciliation_runs(request=_request_for_store(run_store))
 
     assert response.total == 3
     assert response.limit == 50
@@ -152,10 +164,10 @@ def test_get_reconciliation_runs_returns_paginated_list(tmp_path: Path):
 
 
 def test_get_reconciliation_runs_filters_by_status(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
-    run_ids = _seed_runs(store_path)
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    run_ids = _seed_runs(run_store)
 
-    response = list_reconciliation_runs(request=_request_for_store(store_path), status="failed")
+    response = list_reconciliation_runs(request=_request_for_store(run_store), status="failed")
 
     assert response.total == 1
     assert [item.run_id for item in response.items] == [run_ids[1]]
@@ -164,11 +176,11 @@ def test_get_reconciliation_runs_filters_by_status(tmp_path: Path):
 
 
 def test_get_reconciliation_runs_applies_pagination(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
-    run_ids = _seed_runs(store_path)
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    run_ids = _seed_runs(run_store)
 
     response = list_reconciliation_runs(
-        request=_request_for_store(store_path),
+        request=_request_for_store(run_store),
         limit=1,
         offset=1,
         sort_order="asc",
@@ -182,10 +194,10 @@ def test_get_reconciliation_runs_applies_pagination(tmp_path: Path):
 
 
 def test_get_reconciliation_run_detail_returns_failed_payload(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
-    run_ids = _seed_runs(store_path)
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    run_ids = _seed_runs(run_store)
 
-    response = get_reconciliation_run(run_ids[1], request=_request_for_store(store_path))
+    response = get_reconciliation_run(run_ids[1], request=_request_for_store(run_store))
 
     assert response.run_id == run_ids[1]
     assert response.status == "failed"
@@ -195,10 +207,10 @@ def test_get_reconciliation_run_detail_returns_failed_payload(tmp_path: Path):
 
 
 def test_get_reconciliation_run_detail_returns_404_for_missing_run(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
-    _seed_runs(store_path)
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    _seed_runs(run_store)
 
     with pytest.raises(HTTPException) as exc_info:
-        get_reconciliation_run("missing-run", request=_request_for_store(store_path))
+        get_reconciliation_run("missing-run", request=_request_for_store(run_store))
 
     assert exc_info.value.status_code == 404

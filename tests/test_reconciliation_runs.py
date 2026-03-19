@@ -11,6 +11,7 @@ from invomatch.services.reconciliation_runs import (
     save_reconciliation_run,
     update_reconciliation_run,
 )
+from invomatch.services.run_store import JsonRunStore
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
@@ -25,12 +26,12 @@ def test_lifecycle_helpers_enforce_terminal_status_and_valid_transitions():
 
 
 def test_create_reconciliation_run_persists_pending_lifecycle(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
 
     run = create_reconciliation_run(
         invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
         payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
-        store_path=store_path,
+        run_store=run_store,
     )
 
     assert run.status == "pending"
@@ -39,7 +40,7 @@ def test_create_reconciliation_run_persists_pending_lifecycle(tmp_path: Path):
     assert run.finished_at is None
     assert run.error_message is None
     assert run.report is None
-    assert store_path.exists()
+    assert run_store.path.exists()
 
 
 def test_update_reconciliation_run_persists_all_lifecycle_fields(tmp_path: Path):
@@ -47,21 +48,21 @@ def test_update_reconciliation_run_persists_all_lifecycle_fields(tmp_path: Path)
         ROOT_DIR / "sample-data" / "invoices.csv",
         ROOT_DIR / "sample-data" / "payments.csv",
     )
-    store_path = tmp_path / "reconciliation_runs.json"
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
 
     run = create_reconciliation_run(
         invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
         payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
-        store_path=store_path,
+        run_store=run_store,
     )
-    running_run = update_reconciliation_run(run.run_id, status="running", store_path=store_path)
+    running_run = update_reconciliation_run(run.run_id, status="running", run_store=run_store)
     completed_run = update_reconciliation_run(
         run.run_id,
         status="completed",
         report=report,
-        store_path=store_path,
+        run_store=run_store,
     )
-    loaded_run = load_reconciliation_run(run.run_id, store_path=store_path)
+    loaded_run = load_reconciliation_run(run.run_id, run_store=run_store)
 
     assert running_run.status == "running"
     assert running_run.started_at is not None
@@ -80,21 +81,21 @@ def test_update_reconciliation_run_persists_all_lifecycle_fields(tmp_path: Path)
 
 
 def test_update_reconciliation_run_rejects_invalid_transition(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
     run = create_reconciliation_run(
         invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
         payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
-        store_path=store_path,
+        run_store=run_store,
     )
-    update_reconciliation_run(run.run_id, status="running", store_path=store_path)
-    update_reconciliation_run(run.run_id, status="completed", report=None, store_path=store_path)
+    update_reconciliation_run(run.run_id, status="running", run_store=run_store)
+    update_reconciliation_run(run.run_id, status="completed", report=None, run_store=run_store)
 
     with pytest.raises(ValueError, match="Invalid reconciliation run transition"):
-        update_reconciliation_run(run.run_id, status="running", store_path=store_path)
+        update_reconciliation_run(run.run_id, status="running", run_store=run_store)
 
 
 def test_load_reconciliation_run_backfills_legacy_completed_payload(tmp_path: Path):
-    store_path = tmp_path / "reconciliation_runs.json"
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
     report = reconcile(
         ROOT_DIR / "sample-data" / "invoices.csv",
         ROOT_DIR / "sample-data" / "payments.csv",
@@ -108,9 +109,9 @@ def test_load_reconciliation_run_backfills_legacy_completed_payload(tmp_path: Pa
             "report": report.model_dump(mode="json"),
         }
     ]
-    store_path.write_text(json.dumps(legacy_payload), encoding="utf-8")
+    run_store.path.write_text(json.dumps(legacy_payload), encoding="utf-8")
 
-    loaded_run = load_reconciliation_run("legacy-run", store_path=store_path)
+    loaded_run = load_reconciliation_run("legacy-run", run_store=run_store)
 
     assert loaded_run.status == "completed"
     assert loaded_run.updated_at == loaded_run.created_at
@@ -125,15 +126,15 @@ def test_save_reconciliation_run_preserves_summary_and_result_structure(tmp_path
         ROOT_DIR / "sample-data" / "invoices.csv",
         ROOT_DIR / "sample-data" / "payments.csv",
     )
-    store_path = tmp_path / "reconciliation_runs.json"
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
 
     saved_run = save_reconciliation_run(
         report=report,
         invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
         payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
-        store_path=store_path,
+        run_store=run_store,
     )
-    loaded_run = load_reconciliation_run(saved_run.run_id, store_path=store_path)
+    loaded_run = load_reconciliation_run(saved_run.run_id, run_store=run_store)
 
     assert loaded_run.status == "completed"
     assert loaded_run.report is not None
