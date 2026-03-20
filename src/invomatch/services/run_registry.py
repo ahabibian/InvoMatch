@@ -21,19 +21,12 @@ class RunRegistry:
         offset: int = 0,
         sort_order: SortOrder = "desc",
     ) -> tuple[list[ReconciliationRun], int]:
-        runs = self._run_store.load_runs()
-
-        if status is not None:
-            runs = [run for run in runs if run.status == status]
-
-        reverse = sort_order == "desc"
-        runs.sort(key=lambda run: run.created_at, reverse=reverse)
-
-        total = len(runs)
-        return runs[offset : offset + limit], total
+        return self._run_store.list_runs(
+            status=status,
+            limit=limit,
+            offset=offset,
+            sort_order=sort_order,
+        )
 
     def get_run(self, run_id: str) -> ReconciliationRun | None:
-        for run in self._run_store.load_runs():
-            if run.run_id == run_id:
-                return run
-        return None
+        return self._run_store.get_run(run_id)

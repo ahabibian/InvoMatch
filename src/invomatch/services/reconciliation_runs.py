@@ -38,10 +38,7 @@ def create_reconciliation_run(
         error_message=None,
         report=None,
     )
-    runs = run_store.load_runs()
-    runs.append(run)
-    run_store.save_runs(runs)
-    return run
+    return run_store.create_run(run)
 
 
 def update_reconciliation_run(
@@ -52,41 +49,35 @@ def update_reconciliation_run(
     error_message: str | None = None,
     run_store: RunStore = DEFAULT_RUN_STORE,
 ) -> ReconciliationRun:
-    runs = run_store.load_runs()
+    run = run_store.get_run(run_id)
+    if run is None:
+        raise KeyError(f"Reconciliation run not found: {run_id}")
 
-    for index, run in enumerate(runs):
-        if run.run_id != run_id:
-            continue
+    if not can_transition(run.status, status):
+        raise ValueError(f"Invalid reconciliation run transition: {run.status} -> {status}")
 
-        if not can_transition(run.status, status):
-            raise ValueError(f"Invalid reconciliation run transition: {run.status} -> {status}")
+    now = _utcnow()
+    started_at = run.started_at
+    finished_at = run.finished_at
 
-        now = _utcnow()
-        started_at = run.started_at
-        finished_at = run.finished_at
-
-        if status == "running" and started_at is None:
+    if status == "running" and started_at is None:
+        started_at = now
+    if status in {"completed", "failed"}:
+        if started_at is None:
             started_at = now
-        if status in {"completed", "failed"}:
-            if started_at is None:
-                started_at = now
-            finished_at = now
+        finished_at = now
 
-        updated_run = run.model_copy(
-            update={
-                "status": status,
-                "updated_at": now,
-                "started_at": started_at,
-                "finished_at": finished_at,
-                "error_message": error_message,
-                "report": report,
-            }
-        )
-        runs[index] = updated_run
-        run_store.save_runs(runs)
-        return updated_run
-
-    raise KeyError(f"Reconciliation run not found: {run_id}")
+    updated_run = run.model_copy(
+        update={
+            "status": status,
+            "updated_at": now,
+            "started_at": started_at,
+            "finished_at": finished_at,
+            "error_message": error_message,
+            "report": report,
+        }
+    )
+    return run_store.update_run(updated_run)
 
 
 def save_reconciliation_run(
@@ -110,7 +101,7 @@ def save_reconciliation_run(
 
 
 def load_reconciliation_run(run_id: str, run_store: RunStore = DEFAULT_RUN_STORE) -> ReconciliationRun:
-    for run in run_store.load_runs():
-        if run.run_id == run_id:
-            return run
-    raise KeyError(f"Reconciliation run not found: {run_id}")
+    run = run_store.get_run(run_id)
+    if run is None:
+        raise KeyError(f"Reconciliation run not found: {run_id}")
+    return run
