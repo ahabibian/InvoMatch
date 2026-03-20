@@ -116,8 +116,10 @@ def test_create_reconciliation_run_supports_injected_in_memory_store():
     )
 
     assert response.status == "completed"
-    assert len(run_store.load_runs()) == 1
-    assert run_store.load_runs()[0].run_id == response.run_id
+    runs, total = run_store.list_runs()
+    assert total == 1
+    assert len(runs) == 1
+    assert runs[0].run_id == response.run_id
 
 
 def test_create_reconciliation_run_rejects_invalid_request():
@@ -220,7 +222,8 @@ def test_create_reconciliation_run_returns_structured_execution_failure_and_pers
     assert detail["message"] == "Reconciliation execution failed: reconciliation exploded"
     assert detail["run_id"]
 
-    persisted_runs = run_store.load_runs()
+    persisted_runs, total = run_store.list_runs()
+    assert total == 1
     assert len(persisted_runs) == 1
     failed_run = persisted_runs[0]
     assert failed_run.run_id == detail["run_id"]

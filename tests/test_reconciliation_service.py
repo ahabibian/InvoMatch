@@ -107,7 +107,9 @@ def test_reconcile_and_save_rejects_missing_invoice_file(tmp_path: Path):
             run_store=run_store,
         )
 
-    assert run_store.load_runs() == []
+    runs, total = run_store.list_runs()
+    assert runs == []
+    assert total == 0
 
 
 def test_reconcile_and_save_rejects_wrong_extension(tmp_path: Path):
@@ -122,4 +124,6 @@ def test_reconcile_and_save_rejects_wrong_extension(tmp_path: Path):
             run_store=run_store,
         )
 
-    assert run_store.load_runs() == []
+    runs, total = run_store.list_runs()
+    assert runs == []
+    assert total == 0

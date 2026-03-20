@@ -41,6 +41,9 @@ def test_create_reconciliation_run_persists_pending_lifecycle(tmp_path: Path):
     assert run.error_message is None
     assert run.report is None
     assert run_store.path.exists()
+    persisted_run = run_store.get_run(run.run_id)
+    assert persisted_run is not None
+    assert persisted_run.status == "pending"
 
 
 def test_update_reconciliation_run_persists_all_lifecycle_fields(tmp_path: Path):
@@ -119,6 +122,51 @@ def test_load_reconciliation_run_backfills_legacy_completed_payload(tmp_path: Pa
     assert loaded_run.finished_at == loaded_run.created_at
     assert loaded_run.error_message is None
     assert loaded_run.report is not None
+
+
+def test_json_run_store_lists_runs_with_filtering_and_pagination(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    pending = create_reconciliation_run(
+        invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
+        payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
+        run_store=run_store,
+    )
+    failed = create_reconciliation_run(
+        invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
+        payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
+        run_store=run_store,
+    )
+    update_reconciliation_run(failed.run_id, status="running", run_store=run_store)
+    update_reconciliation_run(
+        failed.run_id,
+        status="failed",
+        error_message="import failed",
+        run_store=run_store,
+    )
+
+    all_runs, total = run_store.list_runs(sort_order="asc")
+    failed_runs, failed_total = run_store.list_runs(status="failed", limit=1, offset=0, sort_order="asc")
+    paginated_runs, paginated_total = run_store.list_runs(limit=1, offset=1, sort_order="asc")
+
+    assert total == 2
+    assert [run.run_id for run in all_runs] == [pending.run_id, failed.run_id]
+    assert failed_total == 1
+    assert [run.run_id for run in failed_runs] == [failed.run_id]
+    assert paginated_total == 2
+    assert [run.run_id for run in paginated_runs] == [failed.run_id]
+
+
+def test_json_run_store_update_requires_existing_run(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    run = create_reconciliation_run(
+        invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
+        payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
+        run_store=run_store,
+    )
+    missing_run = run.model_copy(update={"run_id": "missing-run"})
+
+    with pytest.raises(KeyError, match="Reconciliation run not found: missing-run"):
+        run_store.update_run(missing_run)
 
 
 def test_save_reconciliation_run_preserves_summary_and_result_structure(tmp_path: Path):
