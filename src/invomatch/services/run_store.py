@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any, Literal, Protocol
 
+from invomatch.services.sqlite_run_store import SqliteRunStore
+
 from invomatch.domain.models import ReconciliationRun, RunStatus
 
 SortOrder = Literal["asc", "desc"]

@@ -11,7 +11,7 @@ from invomatch.services.reconciliation_runs import (
     save_reconciliation_run,
     update_reconciliation_run,
 )
-from invomatch.services.run_store import InMemoryRunStore, JsonRunStore
+from invomatch.services.run_store import InMemoryRunStore, JsonRunStore, SqliteRunStore
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 
@@ -32,7 +32,7 @@ def test_lifecycle_helpers_enforce_terminal_status_and_valid_transitions():
     assert can_transition("completed", "running") is False
 
 
-@pytest.mark.parametrize("store_factory", [JsonRunStore, lambda path: InMemoryRunStore()])
+@pytest.mark.parametrize("store_factory", [JsonRunStore, SqliteRunStore, lambda path: InMemoryRunStore()])
 def test_run_store_create_get_update_and_list_operations(tmp_path: Path, store_factory):
     run_store = store_factory(tmp_path / "reconciliation_runs.json")
     created_run = create_reconciliation_run(
@@ -57,7 +57,7 @@ def test_run_store_create_get_update_and_list_operations(tmp_path: Path, store_f
     assert persisted_run.status == "failed"
 
 
-@pytest.mark.parametrize("store_factory", [JsonRunStore, lambda path: InMemoryRunStore()])
+@pytest.mark.parametrize("store_factory", [JsonRunStore, SqliteRunStore, lambda path: InMemoryRunStore()])
 def test_run_store_list_operations_support_status_filter_pagination_and_sort(tmp_path: Path, store_factory):
     run_store = store_factory(tmp_path / "reconciliation_runs.json")
     pending = create_reconciliation_run(
@@ -90,7 +90,7 @@ def test_run_store_list_operations_support_status_filter_pagination_and_sort(tmp
     assert pending.run_id != completed.run_id
 
 
-@pytest.mark.parametrize("store_factory", [JsonRunStore, lambda path: InMemoryRunStore()])
+@pytest.mark.parametrize("store_factory", [JsonRunStore, SqliteRunStore, lambda path: InMemoryRunStore()])
 def test_run_store_returns_copies_from_queries(tmp_path: Path, store_factory):
     run_store = store_factory(tmp_path / "reconciliation_runs.json")
     created_run = create_reconciliation_run(
