@@ -1,4 +1,7 @@
-﻿from __future__ import annotations
+codex/sqlite-runstore-hardening
+﻿from __future__ import annotation
+from __future__ import annotations
+main
 
 import json
 import sqlite3
@@ -10,9 +13,11 @@ from invomatch.domain.models import ReconciliationRun, RunStatus
 from invomatch.services.reconciliation_errors import RunStorageError
 
 SortOrder = Literal["asc", "desc"]
+codex/sqlite-runstore-hardening
 _SCHEMA_VERSION = 1
 _REPORT_PAYLOAD_VERSION = 1
 _SQLITE_TIMEOUT_SECONDS = 30.0
+main
 
 
 class SqliteRunStore:
@@ -157,7 +162,11 @@ class SqliteRunStore:
                         report_json
                     FROM reconciliation_runs
                     {where_clause}
+codex/sqlite-runstore-hardening
                     ORDER BY created_at {order_by}, run_id {order_by}
+
+                    ORDER BY created_at {order_by}
+            main
                     LIMIT ? OFFSET ?
                     """,
                     [*parameters, limit, offset],
@@ -187,6 +196,7 @@ class SqliteRunStore:
                 """
             )
             connection.execute(
+codex/sqlite-runstore-hardening
                 """
                 CREATE TABLE IF NOT EXISTS schema_meta (
                     schema_version INTEGER NOT NULL
@@ -231,6 +241,19 @@ class SqliteRunStore:
                 }
             )
 
+                "CREATE INDEX IF NOT EXISTS idx_reconciliation_runs_status_created_at ON reconciliation_runs (status, created_at)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_reconciliation_runs_created_at ON reconciliation_runs (created_at)"
+            )
+
+    def _connect(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(self.path)
+        connection.row_factory = sqlite3.Row
+        return connection
+
+    def _serialize_run(self, run: ReconciliationRun) -> dict[str, str | None]:
+main
         return {
             "run_id": run.run_id,
             "status": run.status,
@@ -241,7 +264,10 @@ class SqliteRunStore:
             "invoice_csv_path": run.invoice_csv_path,
             "payment_csv_path": run.payment_csv_path,
             "error_message": run.error_message,
+codex/sqlite-runstore-hardening
             "report_json": report_payload,
+            "report_json": None if run.report is None else json.dumps(run.report.model_dump(mode="json")),
+main
         }
 
     def _deserialize_row(self, row: sqlite3.Row) -> ReconciliationRun:
@@ -256,6 +282,7 @@ class SqliteRunStore:
             "invoice_csv_path": row["invoice_csv_path"],
             "payment_csv_path": row["payment_csv_path"],
             "error_message": row["error_message"],
+codex/sqlite-runstore-hardening
             "report": self._deserialize_report_payload(report_json),
         }
         return ReconciliationRun.model_validate(payload)
@@ -274,6 +301,11 @@ class SqliteRunStore:
             raise ValueError("Report payload must be a JSON object")
         return payload
 
+            "report": None if report_json is None else json.loads(report_json),
+        }
+        return ReconciliationRun.model_validate(payload)
+
+main
     @staticmethod
     def _serialize_datetime(value: datetime) -> str:
         return value.isoformat()

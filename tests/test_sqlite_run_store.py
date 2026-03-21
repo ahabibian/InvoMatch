@@ -1,4 +1,8 @@
+codex/sqlite-runstore-hardening
 ﻿import json
+
+import json
+main
 import sqlite3
 from pathlib import Path
 
@@ -23,11 +27,15 @@ def test_sqlite_run_store_bootstraps_schema_on_initialization(tmp_path: Path):
                 "SELECT name FROM sqlite_master WHERE type = 'table'"
             ).fetchall()
         }
+codex/sqlite-runstore-hardening
         schema_version = connection.execute("SELECT schema_version FROM schema_meta").fetchone()
 
     assert "reconciliation_runs" in table_names
     assert "schema_meta" in table_names
     assert schema_version == (1,)
+
+    assert "reconciliation_runs" in table_names
+ main
 
 
 def test_sqlite_run_store_persists_nullable_fields_and_report_payload(tmp_path: Path):
@@ -65,7 +73,22 @@ def test_sqlite_run_store_persists_nullable_fields_and_report_payload(tmp_path: 
     assert row[1] is not None
     assert row[2] is None
     persisted_report = json.loads(row[3])
+codex/sqlite-runstore-hardening
     assert persisted_report["version"] == 1
     assert persisted_report["payload"]["matched"] == report.matched
     assert persisted_report["payload"]["results"][0]["invoice_id"].startswith("INV-")
     assert completed_run.report is not None
+    assert persisted_report["matched"] == report.matched
+    assert persisted_report["results"][0]["invoice_id"].startswith("INV-")
+    assert completed_run.report is not None
+
+
+def test_create_app_can_compose_sqlite_run_store(tmp_path: Path):
+    database_path = tmp_path / "app_runs.sqlite3"
+
+    app = create_app(run_store_backend="sqlite", run_store_path=database_path)
+
+    assert isinstance(app.state.run_store, SqliteRunStore)
+    assert app.state.run_store.path == database_path
+    assert database_path.exists()
+main
