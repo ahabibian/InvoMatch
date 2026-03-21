@@ -27,7 +27,7 @@ def test_sqlite_run_store_bootstraps_schema_on_initialization(tmp_path: Path):
 
     assert "reconciliation_runs" in table_names
     assert "schema_meta" in table_names
-    assert schema_version == (2,)
+    assert schema_version == (3,)
 
 
 def test_sqlite_run_store_persists_nullable_fields_and_report_payload(tmp_path: Path):

@@ -27,3 +27,8 @@ class RunStorageError(ReconciliationServiceError):
 class ConcurrencyConflictError(RunStorageError):
     def __init__(self, message: str, *, run_id: str | None = None):
         super().__init__(message, run_id=run_id)
+
+
+class RunLeaseConflictError(RunStorageError):
+    def __init__(self, message: str, *, run_id: str | None = None):
+        super().__init__(message, run_id=run_id)

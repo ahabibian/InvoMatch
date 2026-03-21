@@ -1,7 +1,7 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from invomatch.domain.models import ReconciliationReport, ReconciliationRun, RunStatus
@@ -11,6 +11,7 @@ from invomatch.services.run_store import JsonRunStore, RunStore
 
 DEFAULT_RUN_STORE_PATH = Path("output") / "reconciliation_runs.json"
 DEFAULT_RUN_STORE = JsonRunStore(DEFAULT_RUN_STORE_PATH)
+DEFAULT_LEASE_SECONDS = 60
 
 
 def _normalize_path_for_storage(path: Path) -> str:
@@ -35,12 +36,59 @@ def create_reconciliation_run(
         updated_at=now,
         started_at=None,
         finished_at=None,
+        claimed_by=None,
+        claimed_at=None,
+        lease_expires_at=None,
+        attempt_count=0,
         invoice_csv_path=_normalize_path_for_storage(invoice_csv_path),
         payment_csv_path=_normalize_path_for_storage(payment_csv_path),
         error_message=None,
         report=None,
     )
     return run_store.create_run(run)
+
+
+def claim_reconciliation_run(
+    run_id: str,
+    *,
+    worker_id: str,
+    lease_seconds: int = DEFAULT_LEASE_SECONDS,
+    run_store: RunStore = DEFAULT_RUN_STORE,
+) -> ReconciliationRun:
+    run = run_store.get_run(run_id)
+    if run is None:
+        raise KeyError(f"Reconciliation run not found: {run_id}")
+
+    now = _utcnow()
+    lease_expires_at = now + timedelta(seconds=lease_seconds)
+
+    return run_store.claim_run(
+        run_id=run_id,
+        worker_id=worker_id,
+        claimed_at=now,
+        lease_expires_at=lease_expires_at,
+        expected_version=run.version,
+    )
+
+
+def heartbeat_reconciliation_run(
+    run_id: str,
+    *,
+    worker_id: str,
+    lease_seconds: int = DEFAULT_LEASE_SECONDS,
+    run_store: RunStore = DEFAULT_RUN_STORE,
+) -> ReconciliationRun:
+    run = run_store.get_run(run_id)
+    if run is None:
+        raise KeyError(f"Reconciliation run not found: {run_id}")
+
+    lease_expires_at = _utcnow() + timedelta(seconds=lease_seconds)
+    return run_store.heartbeat_run(
+        run_id=run_id,
+        worker_id=worker_id,
+        lease_expires_at=lease_expires_at,
+        expected_version=run.version,
+    )
 
 
 def update_reconciliation_run(

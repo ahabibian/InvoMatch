@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import sqlite3
@@ -7,10 +7,14 @@ from pathlib import Path
 from typing import Any, Literal
 
 from invomatch.domain.models import ReconciliationRun, RunStatus
-from invomatch.services.reconciliation_errors import ConcurrencyConflictError, RunStorageError
+from invomatch.services.reconciliation_errors import (
+    ConcurrencyConflictError,
+    RunLeaseConflictError,
+    RunStorageError,
+)
 
 SortOrder = Literal["asc", "desc"]
-_SCHEMA_VERSION = 2
+_SCHEMA_VERSION = 3
 _REPORT_PAYLOAD_VERSION = 1
 _SQLITE_TIMEOUT_SECONDS = 30.0
 
@@ -34,11 +38,15 @@ class SqliteRunStore:
                         updated_at,
                         started_at,
                         finished_at,
+                        claimed_by,
+                        claimed_at,
+                        lease_expires_at,
+                        attempt_count,
                         invoice_csv_path,
                         payment_csv_path,
                         error_message,
                         report_json
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         payload["run_id"],
@@ -48,6 +56,10 @@ class SqliteRunStore:
                         payload["updated_at"],
                         payload["started_at"],
                         payload["finished_at"],
+                        payload["claimed_by"],
+                        payload["claimed_at"],
+                        payload["lease_expires_at"],
+                        payload["attempt_count"],
                         payload["invoice_csv_path"],
                         payload["payment_csv_path"],
                         payload["error_message"],
@@ -76,6 +88,10 @@ class SqliteRunStore:
                         updated_at = ?,
                         started_at = ?,
                         finished_at = ?,
+                        claimed_by = ?,
+                        claimed_at = ?,
+                        lease_expires_at = ?,
+                        attempt_count = ?,
                         invoice_csv_path = ?,
                         payment_csv_path = ?,
                         error_message = ?,
@@ -89,6 +105,10 @@ class SqliteRunStore:
                         payload["updated_at"],
                         payload["started_at"],
                         payload["finished_at"],
+                        payload["claimed_by"],
+                        payload["claimed_at"],
+                        payload["lease_expires_at"],
+                        payload["attempt_count"],
                         payload["invoice_csv_path"],
                         payload["payment_csv_path"],
                         payload["error_message"],
@@ -116,6 +136,210 @@ class SqliteRunStore:
 
         return run.model_copy(deep=True)
 
+    def claim_run(
+        self,
+        *,
+        run_id: str,
+        worker_id: str,
+        claimed_at: datetime,
+        lease_expires_at: datetime,
+        expected_version: int,
+    ) -> ReconciliationRun:
+        claimed_at_str = self._serialize_datetime(claimed_at)
+        lease_expires_at_str = self._serialize_datetime(lease_expires_at)
+
+        try:
+            with self._connect() as connection:
+                existing = connection.execute(
+                    """
+                    SELECT *
+                    FROM reconciliation_runs
+                    WHERE run_id = ?
+                    """,
+                    (run_id,),
+                ).fetchone()
+                if existing is None:
+                    raise KeyError(f"Reconciliation run not found: {run_id}")
+
+                if existing["version"] != expected_version:
+                    raise ConcurrencyConflictError(
+                        f"Reconciliation run version conflict: expected {expected_version}, "
+                        f"found {existing['version']}",
+                        run_id=run_id,
+                    )
+
+                if (
+                    existing["claimed_by"] is not None
+                    and existing["lease_expires_at"] is not None
+                    and self._deserialize_datetime(existing["lease_expires_at"]) >= claimed_at
+                ):
+                    raise RunLeaseConflictError(
+                        f"Reconciliation run is already leased by {existing['claimed_by']}",
+                        run_id=run_id,
+                    )
+
+                cursor = connection.execute(
+                    """
+                    UPDATE reconciliation_runs
+                    SET status = 'running',
+                        version = version + 1,
+                        updated_at = ?,
+                        started_at = COALESCE(started_at, ?),
+                        claimed_by = ?,
+                        claimed_at = ?,
+                        lease_expires_at = ?,
+                        attempt_count = attempt_count + 1
+                    WHERE run_id = ?
+                      AND version = ?
+                    """,
+                    (
+                        claimed_at_str,
+                        claimed_at_str,
+                        worker_id,
+                        claimed_at_str,
+                        lease_expires_at_str,
+                        run_id,
+                        expected_version,
+                    ),
+                )
+                if cursor.rowcount == 0:
+                    refreshed = connection.execute(
+                        "SELECT version FROM reconciliation_runs WHERE run_id = ?",
+                        (run_id,),
+                    ).fetchone()
+                    if refreshed is None:
+                        raise KeyError(f"Reconciliation run not found: {run_id}")
+                    raise ConcurrencyConflictError(
+                        f"Reconciliation run version conflict: expected {expected_version}, "
+                        f"found {refreshed['version']}",
+                        run_id=run_id,
+                    )
+
+                row = connection.execute(
+                    """
+                    SELECT
+                        run_id,
+                        status,
+                        version,
+                        created_at,
+                        updated_at,
+                        started_at,
+                        finished_at,
+                        claimed_by,
+                        claimed_at,
+                        lease_expires_at,
+                        attempt_count,
+                        invoice_csv_path,
+                        payment_csv_path,
+                        error_message,
+                        report_json
+                    FROM reconciliation_runs
+                    WHERE run_id = ?
+                    """,
+                    (run_id,),
+                ).fetchone()
+        except (KeyError, ConcurrencyConflictError, RunLeaseConflictError):
+            raise
+        except sqlite3.Error as exc:
+            raise RunStorageError(f"Failed to claim reconciliation run: {exc}", run_id=run_id) from exc
+
+        return self._deserialize_row(row)
+
+    def heartbeat_run(
+        self,
+        *,
+        run_id: str,
+        worker_id: str,
+        lease_expires_at: datetime,
+        expected_version: int,
+    ) -> ReconciliationRun:
+        lease_expires_at_str = self._serialize_datetime(lease_expires_at)
+
+        try:
+            with self._connect() as connection:
+                existing = connection.execute(
+                    """
+                    SELECT claimed_by, version
+                    FROM reconciliation_runs
+                    WHERE run_id = ?
+                    """,
+                    (run_id,),
+                ).fetchone()
+                if existing is None:
+                    raise KeyError(f"Reconciliation run not found: {run_id}")
+                if existing["version"] != expected_version:
+                    raise ConcurrencyConflictError(
+                        f"Reconciliation run version conflict: expected {expected_version}, "
+                        f"found {existing['version']}",
+                        run_id=run_id,
+                    )
+                if existing["claimed_by"] != worker_id:
+                    raise RunLeaseConflictError(
+                        f"Reconciliation run is not claimed by worker {worker_id}",
+                        run_id=run_id,
+                    )
+
+                cursor = connection.execute(
+                    """
+                    UPDATE reconciliation_runs
+                    SET version = version + 1,
+                        updated_at = ?,
+                        lease_expires_at = ?
+                    WHERE run_id = ?
+                      AND version = ?
+                      AND claimed_by = ?
+                    """,
+                    (
+                        lease_expires_at_str,
+                        lease_expires_at_str,
+                        run_id,
+                        expected_version,
+                        worker_id,
+                    ),
+                )
+                if cursor.rowcount == 0:
+                    refreshed = connection.execute(
+                        "SELECT version FROM reconciliation_runs WHERE run_id = ?",
+                        (run_id,),
+                    ).fetchone()
+                    if refreshed is None:
+                        raise KeyError(f"Reconciliation run not found: {run_id}")
+                    raise ConcurrencyConflictError(
+                        f"Reconciliation run version conflict: expected {expected_version}, "
+                        f"found {refreshed['version']}",
+                        run_id=run_id,
+                    )
+
+                row = connection.execute(
+                    """
+                    SELECT
+                        run_id,
+                        status,
+                        version,
+                        created_at,
+                        updated_at,
+                        started_at,
+                        finished_at,
+                        claimed_by,
+                        claimed_at,
+                        lease_expires_at,
+                        attempt_count,
+                        invoice_csv_path,
+                        payment_csv_path,
+                        error_message,
+                        report_json
+                    FROM reconciliation_runs
+                    WHERE run_id = ?
+                    """,
+                    (run_id,),
+                ).fetchone()
+        except (KeyError, ConcurrencyConflictError, RunLeaseConflictError):
+            raise
+        except sqlite3.Error as exc:
+            raise RunStorageError(f"Failed to heartbeat reconciliation run: {exc}", run_id=run_id) from exc
+
+        return self._deserialize_row(row)
+
     def get_run(self, run_id: str) -> ReconciliationRun | None:
         try:
             with self._connect() as connection:
@@ -129,6 +353,10 @@ class SqliteRunStore:
                         updated_at,
                         started_at,
                         finished_at,
+                        claimed_by,
+                        claimed_at,
+                        lease_expires_at,
+                        attempt_count,
                         invoice_csv_path,
                         payment_csv_path,
                         error_message,
@@ -177,6 +405,10 @@ class SqliteRunStore:
                         updated_at,
                         started_at,
                         finished_at,
+                        claimed_by,
+                        claimed_at,
+                        lease_expires_at,
+                        attempt_count,
                         invoice_csv_path,
                         payment_csv_path,
                         error_message,
@@ -206,6 +438,10 @@ class SqliteRunStore:
                     updated_at TEXT NOT NULL,
                     started_at TEXT NULL,
                     finished_at TEXT NULL,
+                    claimed_by TEXT NULL,
+                    claimed_at TEXT NULL,
+                    lease_expires_at TEXT NULL,
+                    attempt_count INTEGER NOT NULL DEFAULT 0,
                     invoice_csv_path TEXT NOT NULL,
                     payment_csv_path TEXT NOT NULL,
                     error_message TEXT NULL,
@@ -213,7 +449,7 @@ class SqliteRunStore:
                 )
                 """
             )
-            self._ensure_version_column(connection)
+            self._ensure_version_and_lease_columns(connection)
             connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -229,7 +465,7 @@ class SqliteRunStore:
             )
             self._ensure_schema_version(connection)
 
-    def _ensure_version_column(self, connection: sqlite3.Connection) -> None:
+    def _ensure_version_and_lease_columns(self, connection: sqlite3.Connection) -> None:
         columns = {
             row["name"]
             for row in connection.execute("PRAGMA table_info(reconciliation_runs)").fetchall()
@@ -237,6 +473,16 @@ class SqliteRunStore:
         if "version" not in columns:
             connection.execute(
                 "ALTER TABLE reconciliation_runs ADD COLUMN version INTEGER NOT NULL DEFAULT 0"
+            )
+        if "claimed_by" not in columns:
+            connection.execute("ALTER TABLE reconciliation_runs ADD COLUMN claimed_by TEXT NULL")
+        if "claimed_at" not in columns:
+            connection.execute("ALTER TABLE reconciliation_runs ADD COLUMN claimed_at TEXT NULL")
+        if "lease_expires_at" not in columns:
+            connection.execute("ALTER TABLE reconciliation_runs ADD COLUMN lease_expires_at TEXT NULL")
+        if "attempt_count" not in columns:
+            connection.execute(
+                "ALTER TABLE reconciliation_runs ADD COLUMN attempt_count INTEGER NOT NULL DEFAULT 0"
             )
 
     def _ensure_schema_version(self, connection: sqlite3.Connection) -> None:
@@ -277,6 +523,10 @@ class SqliteRunStore:
             "updated_at": self._serialize_datetime(run.updated_at),
             "started_at": self._serialize_optional_datetime(run.started_at),
             "finished_at": self._serialize_optional_datetime(run.finished_at),
+            "claimed_by": run.claimed_by,
+            "claimed_at": self._serialize_optional_datetime(run.claimed_at),
+            "lease_expires_at": self._serialize_optional_datetime(run.lease_expires_at),
+            "attempt_count": run.attempt_count,
             "invoice_csv_path": run.invoice_csv_path,
             "payment_csv_path": run.payment_csv_path,
             "error_message": run.error_message,
@@ -293,6 +543,10 @@ class SqliteRunStore:
             "updated_at": self._deserialize_datetime(row["updated_at"]),
             "started_at": self._deserialize_optional_datetime(row["started_at"]),
             "finished_at": self._deserialize_optional_datetime(row["finished_at"]),
+            "claimed_by": row["claimed_by"],
+            "claimed_at": self._deserialize_optional_datetime(row["claimed_at"]),
+            "lease_expires_at": self._deserialize_optional_datetime(row["lease_expires_at"]),
+            "attempt_count": row["attempt_count"],
             "invoice_csv_path": row["invoice_csv_path"],
             "payment_csv_path": row["payment_csv_path"],
             "error_message": row["error_message"],
