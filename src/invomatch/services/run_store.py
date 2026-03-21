@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -7,6 +7,7 @@ from typing import Any, Literal, Protocol
 from invomatch.services.sqlite_run_store import SqliteRunStore
 
 from invomatch.domain.models import ReconciliationRun, RunStatus
+from invomatch.services.sqlite_run_store import SqliteRunStore
 
 SortOrder = Literal["asc", "desc"]
 
@@ -156,7 +157,8 @@ def _query_runs(
         runs = [run for run in runs if run.status == status]
 
     reverse = sort_order == "desc"
-    runs.sort(key=lambda run: run.created_at, reverse=reverse)
+    runs.sort(key=lambda run: (run.created_at, run.run_id), reverse=reverse)
 
     total = len(runs)
     return runs[offset : offset + limit], total
+
