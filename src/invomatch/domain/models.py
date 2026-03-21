@@ -59,6 +59,7 @@ class ReconciliationReport(BaseModel):
 class ReconciliationRun(BaseModel):
     run_id: str
     status: RunStatus
+    version: int = 0
     created_at: datetime
     updated_at: datetime
     started_at: datetime | None = None

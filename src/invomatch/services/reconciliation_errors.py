@@ -22,3 +22,8 @@ class ReconciliationExecutionError(ReconciliationServiceError):
 class RunStorageError(ReconciliationServiceError):
     def __init__(self, message: str, *, run_id: str | None = None):
         super().__init__(error_code="run_storage_failed", message=message, run_id=run_id)
+
+
+class ConcurrencyConflictError(RunStorageError):
+    def __init__(self, message: str, *, run_id: str | None = None):
+        super().__init__(message, run_id=run_id)

@@ -46,8 +46,8 @@ def test_run_store_create_get_update_and_list_operations(tmp_path: Path, store_f
     assert fetched_run.run_id == created_run.run_id
     assert fetched_run.status == "pending"
 
-    updated_run = created_run.model_copy(update={"status": "failed", "error_message": "boom"})
-    persisted_run = run_store.update_run(updated_run)
+    updated_run = created_run.model_copy(update={"status": "failed", "version": created_run.version + 1, "error_message": "boom"})
+    persisted_run = run_store.update_run(updated_run, expected_version=created_run.version)
 
     runs, total = run_store.list_runs()
     assert total == 1
@@ -76,8 +76,14 @@ def test_run_store_list_operations_support_status_filter_pagination_and_sort(tmp
         run_store=run_store,
     )
 
-    run_store.update_run(failed.model_copy(update={"status": "failed", "error_message": "import failed"}))
-    run_store.update_run(completed.model_copy(update={"status": "completed"}))
+    run_store.update_run(
+        failed.model_copy(update={"status": "failed", "version": failed.version + 1, "error_message": "import failed"}),
+        expected_version=failed.version,
+    )
+    run_store.update_run(
+        completed.model_copy(update={"status": "completed", "version": completed.version + 1}),
+        expected_version=completed.version,
+    )
 
     failed_runs, failed_total = run_store.list_runs(status="failed")
     assert failed_total == 1

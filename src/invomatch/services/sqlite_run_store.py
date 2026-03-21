@@ -7,10 +7,10 @@ from pathlib import Path
 from typing import Any, Literal
 
 from invomatch.domain.models import ReconciliationRun, RunStatus
-from invomatch.services.reconciliation_errors import RunStorageError
+from invomatch.services.reconciliation_errors import ConcurrencyConflictError, RunStorageError
 
 SortOrder = Literal["asc", "desc"]
-_SCHEMA_VERSION = 1
+_SCHEMA_VERSION = 2
 _REPORT_PAYLOAD_VERSION = 1
 _SQLITE_TIMEOUT_SECONDS = 30.0
 
@@ -29,6 +29,7 @@ class SqliteRunStore:
                     INSERT INTO reconciliation_runs (
                         run_id,
                         status,
+                        version,
                         created_at,
                         updated_at,
                         started_at,
@@ -37,11 +38,12 @@ class SqliteRunStore:
                         payment_csv_path,
                         error_message,
                         report_json
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         payload["run_id"],
                         payload["status"],
+                        payload["version"],
                         payload["created_at"],
                         payload["updated_at"],
                         payload["started_at"],
@@ -56,7 +58,13 @@ class SqliteRunStore:
             raise RunStorageError(f"Failed to create reconciliation run: {exc}", run_id=run.run_id) from exc
         return run.model_copy(deep=True)
 
-    def update_run(self, run: ReconciliationRun) -> ReconciliationRun:
+    def update_run(self, run: ReconciliationRun, *, expected_version: int) -> ReconciliationRun:
+        if run.version != expected_version + 1:
+            raise ValueError(
+                f"Updated reconciliation run version must be expected_version + 1; "
+                f"expected {expected_version + 1}, got {run.version}"
+            )
+
         payload = self._serialize_run(run)
         try:
             with self._connect() as connection:
@@ -64,6 +72,7 @@ class SqliteRunStore:
                     """
                     UPDATE reconciliation_runs
                     SET status = ?,
+                        version = ?,
                         updated_at = ?,
                         started_at = ?,
                         finished_at = ?,
@@ -72,9 +81,11 @@ class SqliteRunStore:
                         error_message = ?,
                         report_json = ?
                     WHERE run_id = ?
+                      AND version = ?
                     """,
                     (
                         payload["status"],
+                        payload["version"],
                         payload["updated_at"],
                         payload["started_at"],
                         payload["finished_at"],
@@ -83,13 +94,26 @@ class SqliteRunStore:
                         payload["error_message"],
                         payload["report_json"],
                         payload["run_id"],
+                        expected_version,
                     ),
                 )
+                if cursor.rowcount == 0:
+                    existing = connection.execute(
+                        "SELECT version FROM reconciliation_runs WHERE run_id = ?",
+                        (run.run_id,),
+                    ).fetchone()
+                    if existing is None:
+                        raise KeyError(f"Reconciliation run not found: {run.run_id}")
+                    raise ConcurrencyConflictError(
+                        f"Reconciliation run version conflict: expected {expected_version}, "
+                        f"found {existing['version']}",
+                        run_id=run.run_id,
+                    )
+        except (KeyError, ConcurrencyConflictError):
+            raise
         except sqlite3.Error as exc:
             raise RunStorageError(f"Failed to update reconciliation run: {exc}", run_id=run.run_id) from exc
 
-        if cursor.rowcount == 0:
-            raise KeyError(f"Reconciliation run not found: {run.run_id}")
         return run.model_copy(deep=True)
 
     def get_run(self, run_id: str) -> ReconciliationRun | None:
@@ -100,6 +124,7 @@ class SqliteRunStore:
                     SELECT
                         run_id,
                         status,
+                        version,
                         created_at,
                         updated_at,
                         started_at,
@@ -147,6 +172,7 @@ class SqliteRunStore:
                     SELECT
                         run_id,
                         status,
+                        version,
                         created_at,
                         updated_at,
                         started_at,
@@ -175,6 +201,7 @@ class SqliteRunStore:
                 CREATE TABLE IF NOT EXISTS reconciliation_runs (
                     run_id TEXT PRIMARY KEY,
                     status TEXT NOT NULL,
+                    version INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     started_at TEXT NULL,
@@ -186,6 +213,7 @@ class SqliteRunStore:
                 )
                 """
             )
+            self._ensure_version_column(connection)
             connection.execute(
                 """
                 CREATE TABLE IF NOT EXISTS schema_meta (
@@ -201,13 +229,23 @@ class SqliteRunStore:
             )
             self._ensure_schema_version(connection)
 
+    def _ensure_version_column(self, connection: sqlite3.Connection) -> None:
+        columns = {
+            row["name"]
+            for row in connection.execute("PRAGMA table_info(reconciliation_runs)").fetchall()
+        }
+        if "version" not in columns:
+            connection.execute(
+                "ALTER TABLE reconciliation_runs ADD COLUMN version INTEGER NOT NULL DEFAULT 0"
+            )
+
     def _ensure_schema_version(self, connection: sqlite3.Connection) -> None:
         row = connection.execute("SELECT schema_version FROM schema_meta LIMIT 1").fetchone()
         if row is None:
             connection.execute("INSERT INTO schema_meta (schema_version) VALUES (?)", (_SCHEMA_VERSION,))
             return
 
-        if row[0] is None:
+        if row[0] is None or row[0] < _SCHEMA_VERSION:
             connection.execute("UPDATE schema_meta SET schema_version = ?", (_SCHEMA_VERSION,))
 
     def _connect(self) -> sqlite3.Connection:
@@ -221,7 +259,7 @@ class SqliteRunStore:
         connection.execute("PRAGMA synchronous=NORMAL")
         return connection
 
-    def _serialize_run(self, run: ReconciliationRun) -> dict[str, str | None]:
+    def _serialize_run(self, run: ReconciliationRun) -> dict[str, str | int | None]:
         report_payload = None
         if run.report is not None:
             report_payload = json.dumps(
@@ -234,6 +272,7 @@ class SqliteRunStore:
         return {
             "run_id": run.run_id,
             "status": run.status,
+            "version": run.version,
             "created_at": self._serialize_datetime(run.created_at),
             "updated_at": self._serialize_datetime(run.updated_at),
             "started_at": self._serialize_optional_datetime(run.started_at),
@@ -249,6 +288,7 @@ class SqliteRunStore:
         payload = {
             "run_id": row["run_id"],
             "status": row["status"],
+            "version": row["version"],
             "created_at": self._deserialize_datetime(row["created_at"]),
             "updated_at": self._deserialize_datetime(row["updated_at"]),
             "started_at": self._deserialize_optional_datetime(row["started_at"]),

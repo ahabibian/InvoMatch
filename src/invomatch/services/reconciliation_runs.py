@@ -30,6 +30,7 @@ def create_reconciliation_run(
     run = ReconciliationRun(
         run_id=uuid.uuid4().hex,
         status="pending",
+        version=0,
         created_at=now,
         updated_at=now,
         started_at=None,
@@ -75,6 +76,7 @@ def update_reconciliation_run(
     updated_run = run.model_copy(
         update={
             "status": status,
+            "version": run.version + 1,
             "updated_at": now,
             "started_at": started_at,
             "finished_at": finished_at,
@@ -82,7 +84,7 @@ def update_reconciliation_run(
             "report": report,
         }
     )
-    return run_store.update_run(updated_run)
+    return run_store.update_run(updated_run, expected_version=run.version)
 
 
 def save_reconciliation_run(
