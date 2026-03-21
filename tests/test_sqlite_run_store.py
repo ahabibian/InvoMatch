@@ -23,8 +23,11 @@ def test_sqlite_run_store_bootstraps_schema_on_initialization(tmp_path: Path):
                 "SELECT name FROM sqlite_master WHERE type = 'table'"
             ).fetchall()
         }
+        schema_version = connection.execute("SELECT schema_version FROM schema_meta").fetchone()
 
     assert "reconciliation_runs" in table_names
+    assert "schema_meta" in table_names
+    assert schema_version == (1,)
 
 
 def test_sqlite_run_store_persists_nullable_fields_and_report_payload(tmp_path: Path):
@@ -62,9 +65,110 @@ def test_sqlite_run_store_persists_nullable_fields_and_report_payload(tmp_path: 
     assert row[1] is not None
     assert row[2] is None
     persisted_report = json.loads(row[3])
-    assert persisted_report["matched"] == report.matched
-    assert persisted_report["results"][0]["invoice_id"].startswith("INV-")
+    assert persisted_report["version"] == 1
+    assert persisted_report["payload"]["matched"] == report.matched
+    assert persisted_report["payload"]["results"][0]["invoice_id"].startswith("INV-")
     assert completed_run.report is not None
+
+
+def test_sqlite_run_store_reads_legacy_report_payload_without_version_envelope(tmp_path: Path):
+    run_store = SqliteRunStore(tmp_path / "reconciliation_runs.sqlite3")
+    report = reconcile(
+        ROOT_DIR / "sample-data" / "invoices.csv",
+        ROOT_DIR / "sample-data" / "payments.csv",
+    )
+
+    with sqlite3.connect(run_store.path) as connection:
+        connection.execute(
+            """
+            INSERT INTO reconciliation_runs (
+                run_id,
+                status,
+                created_at,
+                updated_at,
+                started_at,
+                finished_at,
+                invoice_csv_path,
+                payment_csv_path,
+                error_message,
+                report_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                "legacy-run",
+                "completed",
+                "2026-03-18T10:00:00+00:00",
+                "2026-03-18T10:00:00+00:00",
+                "2026-03-18T10:00:00+00:00",
+                "2026-03-18T10:00:00+00:00",
+                "sample-data/invoices.csv",
+                "sample-data/payments.csv",
+                None,
+                json.dumps(report.model_dump(mode="json")),
+            ),
+        )
+
+    loaded_run = run_store.get_run("legacy-run")
+
+    assert loaded_run is not None
+    assert loaded_run.report is not None
+    assert loaded_run.report.matched == report.matched
+    assert loaded_run.report.results[0].invoice_id == report.results[0].invoice_id
+
+
+def test_sqlite_run_store_list_runs_uses_deterministic_tiebreak_ordering(tmp_path: Path):
+    run_store = SqliteRunStore(tmp_path / "reconciliation_runs.sqlite3")
+    created_at = "2026-03-18T10:00:00+00:00"
+
+    with sqlite3.connect(run_store.path) as connection:
+        connection.executemany(
+            """
+            INSERT INTO reconciliation_runs (
+                run_id,
+                status,
+                created_at,
+                updated_at,
+                started_at,
+                finished_at,
+                invoice_csv_path,
+                payment_csv_path,
+                error_message,
+                report_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            [
+                (
+                    "run-b",
+                    "pending",
+                    created_at,
+                    created_at,
+                    None,
+                    None,
+                    "sample-data/invoices-b.csv",
+                    "sample-data/payments-b.csv",
+                    None,
+                    None,
+                ),
+                (
+                    "run-a",
+                    "pending",
+                    created_at,
+                    created_at,
+                    None,
+                    None,
+                    "sample-data/invoices-a.csv",
+                    "sample-data/payments-a.csv",
+                    None,
+                    None,
+                ),
+            ],
+        )
+
+    asc_runs, _ = run_store.list_runs(sort_order="asc")
+    desc_runs, _ = run_store.list_runs(sort_order="desc")
+
+    assert [run.run_id for run in asc_runs] == ["run-a", "run-b"]
+    assert [run.run_id for run in desc_runs] == ["run-b", "run-a"]
 
 
 def test_create_app_can_compose_sqlite_run_store(tmp_path: Path):

@@ -156,7 +156,7 @@ def _query_runs(
         runs = [run for run in runs if run.status == status]
 
     reverse = sort_order == "desc"
-    runs.sort(key=lambda run: run.created_at, reverse=reverse)
+    runs.sort(key=lambda run: (run.created_at, run.run_id), reverse=reverse)
 
     total = len(runs)
     return runs[offset : offset + limit], total

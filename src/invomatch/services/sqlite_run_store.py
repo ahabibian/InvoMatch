@@ -10,6 +10,9 @@ from invomatch.domain.models import ReconciliationRun, RunStatus
 from invomatch.services.reconciliation_errors import RunStorageError
 
 SortOrder = Literal["asc", "desc"]
+_SCHEMA_VERSION = 1
+_REPORT_PAYLOAD_VERSION = 1
+_SQLITE_TIMEOUT_SECONDS = 30.0
 
 
 class SqliteRunStore:
@@ -154,7 +157,7 @@ class SqliteRunStore:
                         report_json
                     FROM reconciliation_runs
                     {where_clause}
-                    ORDER BY created_at {order_by}
+                    ORDER BY created_at {order_by}, run_id {order_by}
                     LIMIT ? OFFSET ?
                     """,
                     [*parameters, limit, offset],
@@ -184,18 +187,50 @@ class SqliteRunStore:
                 """
             )
             connection.execute(
-                "CREATE INDEX IF NOT EXISTS idx_reconciliation_runs_status_created_at ON reconciliation_runs (status, created_at)"
+                """
+                CREATE TABLE IF NOT EXISTS schema_meta (
+                    schema_version INTEGER NOT NULL
+                )
+                """
             )
             connection.execute(
-                "CREATE INDEX IF NOT EXISTS idx_reconciliation_runs_created_at ON reconciliation_runs (created_at)"
+                "CREATE INDEX IF NOT EXISTS idx_reconciliation_runs_status_created_at ON reconciliation_runs (status, created_at, run_id)"
             )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_reconciliation_runs_created_at ON reconciliation_runs (created_at, run_id)"
+            )
+            self._ensure_schema_version(connection)
+
+    def _ensure_schema_version(self, connection: sqlite3.Connection) -> None:
+        row = connection.execute("SELECT schema_version FROM schema_meta LIMIT 1").fetchone()
+        if row is None:
+            connection.execute("INSERT INTO schema_meta (schema_version) VALUES (?)", (_SCHEMA_VERSION,))
+            return
+
+        if row[0] is None:
+            connection.execute("UPDATE schema_meta SET schema_version = ?", (_SCHEMA_VERSION,))
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path)
+        connection = sqlite3.connect(
+            self.path,
+            timeout=_SQLITE_TIMEOUT_SECONDS,
+            check_same_thread=False,
+        )
         connection.row_factory = sqlite3.Row
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("PRAGMA synchronous=NORMAL")
         return connection
 
     def _serialize_run(self, run: ReconciliationRun) -> dict[str, str | None]:
+        report_payload = None
+        if run.report is not None:
+            report_payload = json.dumps(
+                {
+                    "version": _REPORT_PAYLOAD_VERSION,
+                    "payload": run.report.model_dump(mode="json"),
+                }
+            )
+
         return {
             "run_id": run.run_id,
             "status": run.status,
@@ -206,7 +241,7 @@ class SqliteRunStore:
             "invoice_csv_path": run.invoice_csv_path,
             "payment_csv_path": run.payment_csv_path,
             "error_message": run.error_message,
-            "report_json": None if run.report is None else json.dumps(run.report.model_dump(mode="json")),
+            "report_json": report_payload,
         }
 
     def _deserialize_row(self, row: sqlite3.Row) -> ReconciliationRun:
@@ -221,9 +256,23 @@ class SqliteRunStore:
             "invoice_csv_path": row["invoice_csv_path"],
             "payment_csv_path": row["payment_csv_path"],
             "error_message": row["error_message"],
-            "report": None if report_json is None else json.loads(report_json),
+            "report": self._deserialize_report_payload(report_json),
         }
         return ReconciliationRun.model_validate(payload)
+
+    def _deserialize_report_payload(self, report_json: str | None) -> dict[str, Any] | None:
+        if report_json is None:
+            return None
+
+        payload = json.loads(report_json)
+        if isinstance(payload, dict) and payload.get("version") == _REPORT_PAYLOAD_VERSION and "payload" in payload:
+            versioned_payload = payload["payload"]
+            if not isinstance(versioned_payload, dict):
+                raise ValueError("Versioned report payload must contain an object payload")
+            return versioned_payload
+        if not isinstance(payload, dict):
+            raise ValueError("Report payload must be a JSON object")
+        return payload
 
     @staticmethod
     def _serialize_datetime(value: datetime) -> str:
