@@ -4,7 +4,8 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from invomatch.domain.models import ReconciliationReport, ReconciliationRun, RunStatus, can_transition
+from invomatch.domain.models import ReconciliationReport, ReconciliationRun, RunStatus
+from invomatch.domain.run_lifecycle import InvalidRunStateTransition, assert_transition_allowed
 from invomatch.services.run_store import JsonRunStore, RunStore
 
 
@@ -53,8 +54,12 @@ def update_reconciliation_run(
     if run is None:
         raise KeyError(f"Reconciliation run not found: {run_id}")
 
-    if not can_transition(run.status, status):
-        raise ValueError(f"Invalid reconciliation run transition: {run.status} -> {status}")
+    try:
+        assert_transition_allowed(run.status, status)
+    except InvalidRunStateTransition as exc:
+        raise ValueError(
+            f"Invalid reconciliation run transition: {run.status} -> {status}"
+        ) from exc
 
     now = _utcnow()
     started_at = run.started_at
@@ -100,7 +105,10 @@ def save_reconciliation_run(
     )
 
 
-def load_reconciliation_run(run_id: str, run_store: RunStore = DEFAULT_RUN_STORE) -> ReconciliationRun:
+def load_reconciliation_run(
+    run_id: str,
+    run_store: RunStore = DEFAULT_RUN_STORE,
+) -> ReconciliationRun:
     run = run_store.get_run(run_id)
     if run is None:
         raise KeyError(f"Reconciliation run not found: {run_id}")
