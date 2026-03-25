@@ -1,0 +1,1 @@
+# Postgres schema placeholder
