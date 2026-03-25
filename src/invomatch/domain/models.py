@@ -1,4 +1,4 @@
-from datetime import date, datetime
+﻿from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -59,10 +59,15 @@ class ReconciliationReport(BaseModel):
 class ReconciliationRun(BaseModel):
     run_id: str
     status: RunStatus
+    version: int = 0
     created_at: datetime
     updated_at: datetime
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    claimed_by: str | None = None
+    claimed_at: datetime | None = None
+    lease_expires_at: datetime | None = None
+    attempt_count: int = 0
     invoice_csv_path: str
     payment_csv_path: str
     error_message: str | None = None
