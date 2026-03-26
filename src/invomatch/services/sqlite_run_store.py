@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import sqlite3
@@ -17,6 +17,9 @@ SortOrder = Literal["asc", "desc"]
 _SCHEMA_VERSION = 3
 _REPORT_PAYLOAD_VERSION = 1
 _SQLITE_TIMEOUT_SECONDS = 30.0
+_SQLITE_BUSY_TIMEOUT_MS = int(_SQLITE_TIMEOUT_SECONDS * 1000)
+_SQLITE_JOURNAL_MODE = "WAL"
+_SQLITE_SYNCHRONOUS = "NORMAL"
 
 
 class SqliteRunStore:
