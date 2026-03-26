@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import sqlite3
@@ -17,6 +17,9 @@ SortOrder = Literal["asc", "desc"]
 _SCHEMA_VERSION = 3
 _REPORT_PAYLOAD_VERSION = 1
 _SQLITE_TIMEOUT_SECONDS = 30.0
+_SQLITE_BUSY_TIMEOUT_MS = int(_SQLITE_TIMEOUT_SECONDS * 1000)
+_SQLITE_JOURNAL_MODE = "WAL"
+_SQLITE_SYNCHRONOUS = "NORMAL"
 
 
 class SqliteRunStore:
@@ -501,8 +504,10 @@ class SqliteRunStore:
             check_same_thread=False,
         )
         connection.row_factory = sqlite3.Row
-        connection.execute("PRAGMA journal_mode=WAL")
-        connection.execute("PRAGMA synchronous=NORMAL")
+        connection.execute(f"PRAGMA busy_timeout={_SQLITE_BUSY_TIMEOUT_MS}")
+        connection.execute("PRAGMA foreign_keys=ON")
+        connection.execute(f"PRAGMA journal_mode={_SQLITE_JOURNAL_MODE}")
+        connection.execute(f"PRAGMA synchronous={_SQLITE_SYNCHRONOUS}")
         return connection
 
     def _serialize_run(self, run: ReconciliationRun) -> dict[str, str | int | None]:
