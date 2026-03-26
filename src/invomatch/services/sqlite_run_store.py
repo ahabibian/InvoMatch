@@ -498,15 +498,17 @@ class SqliteRunStore:
             connection.execute("UPDATE schema_meta SET schema_version = ?", (_SCHEMA_VERSION,))
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(
-            self.path,
-            timeout=_SQLITE_TIMEOUT_SECONDS,
-            check_same_thread=False,
-        )
-        connection.row_factory = sqlite3.Row
-        connection.execute("PRAGMA journal_mode=WAL")
-        connection.execute("PRAGMA synchronous=NORMAL")
-        return connection
+    connection = sqlite3.connect(
+        self.path,
+        timeout=_SQLITE_TIMEOUT_SECONDS,
+        check_same_thread=False,
+    )
+    connection.row_factory = sqlite3.Row
+    connection.execute(f"PRAGMA busy_timeout={_SQLITE_BUSY_TIMEOUT_MS}")
+    connection.execute("PRAGMA foreign_keys=ON")
+    connection.execute(f"PRAGMA journal_mode={_SQLITE_JOURNAL_MODE}")
+    connection.execute(f"PRAGMA synchronous={_SQLITE_SYNCHRONOUS}")
+    return connection
 
     def _serialize_run(self, run: ReconciliationRun) -> dict[str, str | int | None]:
         report_payload = None
