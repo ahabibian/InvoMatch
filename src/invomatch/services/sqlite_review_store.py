@@ -7,7 +7,10 @@ from pathlib import Path
 from typing import Optional
 
 from invomatch.domain.review.models import (
+    AuditEvent,
     DecisionType,
+    EligibilityStatus,
+    LearningEligibilityRecord,
     ReviewItem,
     ReviewItemStatus,
     ReviewSession,
@@ -71,6 +74,38 @@ class SqliteReviewStore:
                 )
                 """
             )
+
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS review_audit_events (
+                    audit_event_id TEXT PRIMARY KEY,
+                    entity_type TEXT NOT NULL,
+                    entity_id TEXT NOT NULL,
+                    action_type TEXT NOT NULL,
+                    actor_id TEXT NOT NULL,
+                    occurred_at TEXT NOT NULL,
+                    context_reference TEXT NULL,
+                    event_payload_json TEXT NULL
+                )
+                """
+            )
+
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS review_eligibility_records (
+                    eligibility_id TEXT PRIMARY KEY,
+                    review_item_id TEXT NOT NULL,
+                    feedback_id TEXT NOT NULL,
+                    eligibility_status TEXT NOT NULL,
+                    eligibility_reason TEXT NULL,
+                    derived_payload_json TEXT NULL,
+                    created_at TEXT NOT NULL,
+                    created_by_system TEXT NOT NULL,
+                    invalidated_at TEXT NULL
+                )
+                """
+            )
+
             conn.commit()
 
     # -------------------------------------------------------------------------
@@ -104,7 +139,6 @@ class SqliteReviewStore:
                 ),
             )
             conn.commit()
-
         return session
 
     def get_review_session(self, review_session_id: str) -> Optional[ReviewSession]:
@@ -177,7 +211,6 @@ class SqliteReviewStore:
                 ),
             )
             conn.commit()
-
         return item
 
     def get_review_item(self, review_item_id: str) -> Optional[ReviewItem]:
@@ -217,4 +250,140 @@ class SqliteReviewStore:
             reviewed_at=_parse_dt(row["reviewed_at"]),
             requires_followup=bool(row["requires_followup"]),
             learning_eligible=bool(row["learning_eligible"]),
+        )
+
+    # -------------------------------------------------------------------------
+    # Audit events
+    # -------------------------------------------------------------------------
+
+    def save_audit_event(self, event: AuditEvent) -> AuditEvent:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO review_audit_events (
+                    audit_event_id,
+                    entity_type,
+                    entity_id,
+                    action_type,
+                    actor_id,
+                    occurred_at,
+                    context_reference,
+                    event_payload_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    event.audit_event_id,
+                    event.entity_type,
+                    event.entity_id,
+                    event.action_type,
+                    event.actor_id,
+                    _dt(event.occurred_at),
+                    event.context_reference,
+                    json.dumps(event.event_payload, sort_keys=True) if event.event_payload is not None else None,
+                ),
+            )
+            conn.commit()
+        return event
+
+    def get_audit_event(self, audit_event_id: str) -> Optional[AuditEvent]:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT
+                    audit_event_id,
+                    entity_type,
+                    entity_id,
+                    action_type,
+                    actor_id,
+                    occurred_at,
+                    context_reference,
+                    event_payload_json
+                FROM review_audit_events
+                WHERE audit_event_id = ?
+                """,
+                (audit_event_id,),
+            ).fetchone()
+
+        if row is None:
+            return None
+
+        return AuditEvent(
+            audit_event_id=row["audit_event_id"],
+            entity_type=row["entity_type"],
+            entity_id=row["entity_id"],
+            action_type=row["action_type"],
+            actor_id=row["actor_id"],
+            occurred_at=_parse_dt(row["occurred_at"]),
+            context_reference=row["context_reference"],
+            event_payload=json.loads(row["event_payload_json"]) if row["event_payload_json"] else None,
+        )
+
+    # -------------------------------------------------------------------------
+    # Eligibility records
+    # -------------------------------------------------------------------------
+
+    def save_eligibility_record(self, record: LearningEligibilityRecord) -> LearningEligibilityRecord:
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO review_eligibility_records (
+                    eligibility_id,
+                    review_item_id,
+                    feedback_id,
+                    eligibility_status,
+                    eligibility_reason,
+                    derived_payload_json,
+                    created_at,
+                    created_by_system,
+                    invalidated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    record.eligibility_id,
+                    record.review_item_id,
+                    record.feedback_id,
+                    record.eligibility_status.value,
+                    record.eligibility_reason,
+                    json.dumps(record.derived_payload, sort_keys=True) if record.derived_payload is not None else None,
+                    _dt(record.created_at),
+                    str(record.created_by_system),
+                    _dt(record.invalidated_at),
+                ),
+            )
+            conn.commit()
+        return record
+
+    def get_eligibility_record(self, eligibility_id: str) -> Optional[LearningEligibilityRecord]:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT
+                    eligibility_id,
+                    review_item_id,
+                    feedback_id,
+                    eligibility_status,
+                    eligibility_reason,
+                    derived_payload_json,
+                    created_at,
+                    created_by_system,
+                    invalidated_at
+                FROM review_eligibility_records
+                WHERE eligibility_id = ?
+                """,
+                (eligibility_id,),
+            ).fetchone()
+
+        if row is None:
+            return None
+
+        return LearningEligibilityRecord(
+            eligibility_id=row["eligibility_id"],
+            review_item_id=row["review_item_id"],
+            feedback_id=row["feedback_id"],
+            eligibility_status=EligibilityStatus(row["eligibility_status"]),
+            eligibility_reason=row["eligibility_reason"],
+            derived_payload=json.loads(row["derived_payload_json"]) if row["derived_payload_json"] else None,
+            created_at=_parse_dt(row["created_at"]) or datetime.now(),
+            created_by_system=row["created_by_system"],
+            invalidated_at=_parse_dt(row["invalidated_at"]),
         )

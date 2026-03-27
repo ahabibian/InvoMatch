@@ -94,3 +94,59 @@ def test_save_and_get_review_item_round_trip(tmp_path: Path) -> None:
     assert loaded.reviewed_by == item.reviewed_by
     assert loaded.requires_followup is False
     assert loaded.learning_eligible is True
+
+def test_save_and_get_audit_event_round_trip(tmp_path):
+    from invomatch.domain.review.models import AuditEvent
+    from datetime import datetime, timezone
+
+    db_path = tmp_path / "review.db"
+    store = SqliteReviewStore(db_path)
+
+    event = AuditEvent(
+        audit_event_id="ae_001",
+        entity_type="review_item",
+        entity_id="ri_001",
+        action_type="TEST_ACTION",
+        actor_id="tester",
+        occurred_at=datetime.now(timezone.utc),
+        context_reference="test_context",
+        event_payload={"k": "v"},
+    )
+
+    store.save_audit_event(event)
+    loaded = store.get_audit_event("ae_001")
+
+    assert loaded is not None
+    assert loaded.audit_event_id == event.audit_event_id
+    assert loaded.entity_type == event.entity_type
+    assert loaded.action_type == event.action_type
+    assert loaded.event_payload == event.event_payload
+
+def test_save_and_get_eligibility_record_round_trip(tmp_path):
+    from invomatch.domain.review.models import (
+        LearningEligibilityRecord,
+        EligibilityStatus,
+    )
+    from datetime import datetime, timezone
+
+    db_path = tmp_path / "review.db"
+    store = SqliteReviewStore(db_path)
+
+    record = LearningEligibilityRecord(
+        eligibility_id="el_001",
+        review_item_id="ri_001",
+        feedback_id="fb_001",
+        eligibility_status=EligibilityStatus.ELIGIBLE,
+        eligibility_reason="approved",
+        derived_payload={"x": 1},
+        created_at=datetime.now(timezone.utc),
+        created_by_system=True,
+    )
+
+    store.save_eligibility_record(record)
+    loaded = store.get_eligibility_record("el_001")
+
+    assert loaded is not None
+    assert loaded.eligibility_id == record.eligibility_id
+    assert loaded.eligibility_status == record.eligibility_status
+    assert loaded.derived_payload == record.derived_payload
