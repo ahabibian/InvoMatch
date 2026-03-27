@@ -1,0 +1,9 @@
+{
+  "epic_number": 7,
+  "epic_name": "Replay & Evaluation Engine",
+  "required_architecture_file": "REPLAY_EVALUATION_ARCHITECTURE.md",
+  "required_closure_file": "EPIC_7_CLOSURE.md",
+  "required_code_paths": [],
+  "required_test_paths": [],
+  "auto_detect_blocked": false
+}
