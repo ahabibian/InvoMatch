@@ -8,10 +8,11 @@ from invomatch.domain.review.models import (
     ReviewItem,
     ReviewItemStatus,
 )
+from invomatch.services.review_service import ReviewService
 from invomatch.services.sqlite_review_store import SqliteReviewStore
 
 
-def test_sqlite_store_creates_db_and_table(tmp_path: Path) -> None:
+def test_sqlite_store_creates_db_and_tables(tmp_path: Path) -> None:
     db_path = tmp_path / "review.db"
 
     SqliteReviewStore(db_path)
@@ -19,15 +20,43 @@ def test_sqlite_store_creates_db_and_table(tmp_path: Path) -> None:
     assert db_path.exists()
 
     conn = sqlite3.connect(db_path)
-    cursor = conn.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' AND name='review_items'"
-    )
-    row = cursor.fetchone()
 
-    assert row is not None
-    assert row[0] == "review_items"
+    row_sessions = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='review_sessions'"
+    ).fetchone()
+    row_items = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='review_items'"
+    ).fetchone()
+
+    assert row_sessions is not None
+    assert row_sessions[0] == "review_sessions"
+    assert row_items is not None
+    assert row_items[0] == "review_items"
 
     conn.close()
+
+
+def test_save_and_get_review_session_round_trip(tmp_path: Path) -> None:
+    db_path = tmp_path / "review.db"
+    store = SqliteReviewStore(db_path)
+    service = ReviewService()
+
+    session = service.create_review_session(
+        created_by="system",
+        assigned_reviewer_id="reviewer_sqlite",
+        session_notes="sqlite session persistence test",
+    )
+
+    store.save_review_session(session)
+    loaded = store.get_review_session(session.review_session_id)
+
+    assert loaded is not None
+    assert loaded.review_session_id == session.review_session_id
+    assert loaded.created_by == session.created_by
+    assert loaded.session_status == session.session_status
+    assert loaded.assigned_reviewer_id == session.assigned_reviewer_id
+    assert loaded.session_notes == session.session_notes
+    assert loaded.assigned_at is not None
 
 
 def test_save_and_get_review_item_round_trip(tmp_path: Path) -> None:
