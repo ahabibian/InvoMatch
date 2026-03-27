@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from invomatch.domain.feedback.enums import (
     CorrectionType,
@@ -16,6 +16,13 @@ from invomatch.domain.feedback.enums import (
 
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
+
+
+FeedbackAction = Literal[
+    "confirm_match",
+    "reject_match",
+    "select_alternative",
+]
 
 
 class FeatureSnapshotRef(BaseModel):
@@ -136,3 +143,25 @@ class CandidateRuleRecommendation(BaseModel):
             if not self.replay_test_passed:
                 raise ValueError("approved or active recommendation requires replay_test_passed=True")
         return self
+
+
+class FeedbackRecord(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    feedback_id: str = Field(min_length=1)
+    run_id: str = Field(min_length=1)
+    match_id: str = Field(min_length=1)
+
+    original_status: str = Field(min_length=1)
+    corrected_status: str = Field(min_length=1)
+
+    selected_payment_id: str | None = None
+    action: FeedbackAction
+    created_at: datetime
+
+    @field_validator("created_at")
+    @classmethod
+    def validate_created_at_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.tzinfo.utcoffset(value) is None:
+            raise ValueError("created_at must be timezone-aware (UTC required)")
+        return value
