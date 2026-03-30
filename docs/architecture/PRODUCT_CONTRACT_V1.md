@@ -72,3 +72,41 @@ suggested | accepted | rejected | manual | exception
 
 low | medium | high
 
+
+---
+
+## 3. Review Case
+
+The Review Case represents situations that require user decision.
+
+### Schema
+
+{
+  "case_id": "case_01JX9C88A1B2C",
+  "type": "ambiguity",
+  "invoice": {
+    "id": "inv_10023",
+    "invoice_number": "INV-2026-00123",
+    "amount": 1250.00,
+    "currency": "SEK"
+  },
+  "candidates": [
+    {
+      "payment_id": "pay_88421",
+      "amount": 1250.00,
+      "date": "2026-03-05",
+      "confidence": "medium"
+    }
+  ],
+  "recommended_action": "select_best_match",
+  "explanation": "Multiple payments match the same invoice amount."
+}
+
+### Types
+
+ambiguity | conflict | unmatched
+
+### Actions
+
+select_best_match | review_manually | mark_as_exception
+
