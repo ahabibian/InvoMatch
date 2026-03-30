@@ -110,3 +110,108 @@ ambiguity | conflict | unmatched
 
 select_best_match | review_manually | mark_as_exception
 
+
+---
+
+## 4. User Action Model
+
+The User Action Model defines the actions a user can submit from the product UI.
+
+### Action Envelope
+
+{
+  "action": "accept_match",
+  "run_id": "run_01JX8Y7K9M3P4Q",
+  "payload": {}
+}
+
+### accept_match
+
+Required inputs:
+- match_id
+
+Expected effect:
+- the selected match becomes accepted
+- the item leaves the review queue
+- run summary is updated
+
+{
+  "action": "accept_match",
+  "run_id": "run_01JX8Y7K9M3P4Q",
+  "payload": {
+    "match_id": "match_01JX9A2BC3D4E"
+  }
+}
+
+### reject_match
+
+Required inputs:
+- match_id
+
+Optional inputs:
+- reason
+
+Expected effect:
+- the selected match is rejected
+- the item is removed from accepted results
+- run summary is updated
+
+{
+  "action": "reject_match",
+  "run_id": "run_01JX8Y7K9M3P4Q",
+  "payload": {
+    "match_id": "match_01JX9A2BC3D4E",
+    "reason": "Wrong payment selected"
+  }
+}
+
+### manual_link
+
+Required inputs:
+- invoice_id
+- payment_id
+
+Optional inputs:
+- note
+
+Expected effect:
+- a manual match is created
+- the item leaves the review queue
+- the result state becomes manual
+
+{
+  "action": "manual_link",
+  "run_id": "run_01JX8Y7K9M3P4Q",
+  "payload": {
+    "invoice_id": "inv_10023",
+    "payment_id": "pay_88421",
+    "note": "Confirmed manually by reviewer"
+  }
+}
+
+### mark_exception
+
+Required inputs:
+- invoice_id
+
+Optional inputs:
+- reason
+
+Expected effect:
+- the item is marked as an exception
+- the item leaves review or unmatched queues
+- run summary is updated
+
+{
+  "action": "mark_exception",
+  "run_id": "run_01JX8Y7K9M3P4Q",
+  "payload": {
+    "invoice_id": "inv_10023",
+    "reason": "Invoice should be excluded from reconciliation"
+  }
+}
+
+### Supported Actions
+
+accept_match | reject_match | manual_link | mark_exception
+
