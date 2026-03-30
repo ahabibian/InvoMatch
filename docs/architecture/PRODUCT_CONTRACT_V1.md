@@ -215,3 +215,63 @@ Expected effect:
 
 accept_match | reject_match | manual_link | mark_exception
 
+
+---
+
+## 5. Export Model
+
+The Export Model represents the final output of a reconciliation run.
+
+### Schema
+
+{
+  "run_id": "run_01JX8Y7K9M3P4Q",
+  "generated_at": "2026-03-30T19:00:00Z",
+  "final_matches": [],
+  "unmatched": [],
+  "exceptions": [],
+  "audit": {}
+}
+
+### final_matches
+
+[
+  {
+    "match_id": "match_01",
+    "invoice_id": "inv_10023",
+    "payment_id": "pay_88421",
+    "amount": 1250.00,
+    "currency": "SEK",
+    "status": "accepted"
+  }
+]
+
+### unmatched
+
+[
+  {
+    "invoice_id": "inv_10050",
+    "amount": 900.00,
+    "currency": "SEK"
+  }
+]
+
+### exceptions
+
+[
+  {
+    "invoice_id": "inv_10077",
+    "reason": "Marked as exception by user"
+  }
+]
+
+### audit
+
+{
+  "total_invoices": 128,
+  "matched": 89,
+  "unmatched": 12,
+  "exceptions": 6,
+  "reviewed": 21
+}
+
