@@ -30,3 +30,45 @@
 ### Status
 
 queued | processing | review_required | completed | failed | cancelled
+
+---
+
+## 2. Match Result (User-facing)
+
+The Match Result model represents a suggested or final match in a user-facing format.
+
+### Schema
+
+{
+  "match_id": "match_01JX9A2BC3D4E",
+  "state": "suggested",
+  "invoice": {
+    "id": "inv_10023",
+    "invoice_number": "INV-2026-00123",
+    "date": "2026-03-01",
+    "amount": 1250.00,
+    "currency": "SEK",
+    "vendor_name": "Nordic Office AB"
+  },
+  "payment": {
+    "id": "pay_88421",
+    "payment_reference": "PAY-2026-88421",
+    "date": "2026-03-05",
+    "amount": 1250.00,
+    "currency": "SEK",
+    "payer_name": "Nordic Office AB"
+  },
+  "suggested_match": true,
+  "confidence": "high",
+  "reason": "Amount, currency, and vendor name are aligned.",
+  "requires_review": false
+}
+
+### State Values
+
+suggested | accepted | rejected | manual | exception
+
+### Confidence Values
+
+low | medium | high
+
