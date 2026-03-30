@@ -275,3 +275,200 @@ The Export Model represents the final output of a reconciliation run.
   "reviewed": 21
 }
 
+
+---
+
+## 6. API Surface (v1)
+
+The API Surface defines the user-facing API for the InvoMatch product.
+
+### GET /runs
+
+Request shape:
+
+{
+  "query": {
+    "status": "optional",
+    "limit": "optional",
+    "cursor": "optional"
+  }
+}
+
+Response shape:
+
+{
+  "items": [
+    {
+      "id": "run_01JX8Y7K9M3P4Q",
+      "status": "processing",
+      "progress": {
+        "percentage": 50,
+        "stage_label": "Matching records"
+      },
+      "summary": {
+        "total_invoices": 128,
+        "total_payments": 121,
+        "matched": 89,
+        "requires_review": 21,
+        "unmatched": 12,
+        "exceptions": 6
+      },
+      "timestamps": {
+        "created_at": "2026-03-30T18:10:00Z",
+        "updated_at": "2026-03-30T18:14:32Z",
+        "completed_at": null
+      },
+      "error": null
+    }
+  ],
+  "next_cursor": null
+}
+
+### GET /runs/{id}
+
+Request shape:
+
+{
+  "path": {
+    "id": "run id"
+  }
+}
+
+Response shape:
+
+{
+  "id": "run_01JX8Y7K9M3P4Q",
+  "status": "review_required",
+  "progress": {
+    "percentage": 100,
+    "stage_label": "Building review queue"
+  },
+  "summary": {
+    "total_invoices": 128,
+    "total_payments": 121,
+    "matched": 89,
+    "requires_review": 21,
+    "unmatched": 12,
+    "exceptions": 6
+  },
+  "timestamps": {
+    "created_at": "2026-03-30T18:10:00Z",
+    "updated_at": "2026-03-30T18:18:51Z",
+    "completed_at": null
+  },
+  "error": null
+}
+
+### GET /runs/{id}/review
+
+Request shape:
+
+{
+  "path": {
+    "id": "run id"
+  }
+}
+
+Response shape:
+
+{
+  "run_id": "run_01JX8Y7K9M3P4Q",
+  "items": [
+    {
+      "case_id": "case_01JX9C88A1B2C",
+      "type": "ambiguity",
+      "invoice": {
+        "id": "inv_10023",
+        "invoice_number": "INV-2026-00123",
+        "amount": 1250.00,
+        "currency": "SEK"
+      },
+      "candidates": [
+        {
+          "payment_id": "pay_88421",
+          "amount": 1250.00,
+          "date": "2026-03-05",
+          "confidence": "medium"
+        }
+      ],
+      "recommended_action": "select_best_match",
+      "explanation": "Multiple payments match the same invoice amount."
+    }
+  ]
+}
+
+### POST /runs/{id}/actions
+
+Request shape:
+
+{
+  "action": "accept_match",
+  "payload": {
+    "match_id": "match_01JX9A2BC3D4E"
+  }
+}
+
+Response shape:
+
+{
+  "run_id": "run_01JX8Y7K9M3P4Q",
+  "action": "accept_match",
+  "result": "accepted",
+  "message": "The action was applied successfully.",
+  "updated_summary": {
+    "total_invoices": 128,
+    "total_payments": 121,
+    "matched": 90,
+    "requires_review": 20,
+    "unmatched": 12,
+    "exceptions": 6
+  }
+}
+
+### GET /runs/{id}/export
+
+Request shape:
+
+{
+  "path": {
+    "id": "run id"
+  }
+}
+
+Response shape:
+
+{
+  "run_id": "run_01JX8Y7K9M3P4Q",
+  "generated_at": "2026-03-30T19:00:00Z",
+  "final_matches": [
+    {
+      "match_id": "match_01",
+      "invoice_id": "inv_10023",
+      "payment_id": "pay_88421",
+      "amount": 1250.00,
+      "currency": "SEK",
+      "status": "accepted"
+    }
+  ],
+  "unmatched": [
+    {
+      "invoice_id": "inv_10050",
+      "amount": 900.00,
+      "currency": "SEK"
+    }
+  ],
+  "exceptions": [
+    {
+      "invoice_id": "inv_10077",
+      "reason": "Marked as exception by user"
+    }
+  ],
+  "audit": {
+    "total_invoices": 128,
+    "matched": 89,
+    "unmatched": 12,
+    "exceptions": 6,
+    "reviewed": 21
+  }
+}
+
