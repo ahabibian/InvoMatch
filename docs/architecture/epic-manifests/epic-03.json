@@ -1,0 +1,9 @@
+{
+  "epic_number": 3,
+  "epic_name": "Matching Intelligence Engine",
+  "required_architecture_file": "MATCH_ENGINE_DESIGN.md",
+  "required_closure_file": "EPIC_3_CLOSURE.md",
+  "required_code_paths": [],
+  "required_test_paths": [],
+  "auto_detect_blocked": false
+}

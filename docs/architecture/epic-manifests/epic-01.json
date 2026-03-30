@@ -1,0 +1,9 @@
+{
+  "epic_number": 1,
+  "epic_name": "Execution Lifecycle Engine",
+  "required_architecture_file": "EXECUTION_LIFECYCLE.md",
+  "required_closure_file": "EPIC_1_CLOSURE.md",
+  "required_code_paths": [],
+  "required_test_paths": [],
+  "auto_detect_blocked": false
+}

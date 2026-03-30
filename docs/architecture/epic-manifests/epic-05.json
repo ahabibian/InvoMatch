@@ -1,0 +1,9 @@
+{
+  "epic_number": 5,
+  "epic_name": "Review & Audit System",
+  "required_architecture_file": "REVIEW_SYSTEM_ARCHITECTURE.md",
+  "required_closure_file": "EPIC_5_CLOSURE.md",
+  "required_code_paths": [],
+  "required_test_paths": [],
+  "auto_detect_blocked": false
+}

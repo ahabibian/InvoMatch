@@ -1,0 +1,9 @@
+{
+  "epic_number": 6,
+  "epic_name": "Rule Engine & Governance",
+  "required_architecture_file": "RULE_GOVERNANCE_ARCHITECTURE.md",
+  "required_closure_file": "EPIC_6_CLOSURE.md",
+  "required_code_paths": [],
+  "required_test_paths": [],
+  "auto_detect_blocked": false
+}

@@ -1,0 +1,9 @@
+{
+  "epic_number": 8,
+  "epic_name": "API & Product Layer",
+  "required_architecture_file": "API_PRODUCT_ARCHITECTURE.md",
+  "required_closure_file": "EPIC_8_CLOSURE.md",
+  "required_code_paths": [],
+  "required_test_paths": [],
+  "auto_detect_blocked": false
+}

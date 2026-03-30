@@ -1,0 +1,9 @@
+{
+  "epic_number": 4,
+  "epic_name": "Feedback & Learning System",
+  "required_architecture_file": "LEARNING_LOOP_ARCHITECTURE.md",
+  "required_closure_file": "EPIC_4_CLOSURE.md",
+  "required_code_paths": [],
+  "required_test_paths": [],
+  "auto_detect_blocked": false
+}
