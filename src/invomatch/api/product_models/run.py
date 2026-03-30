@@ -18,14 +18,21 @@ class ProductRunSummary(BaseModel):
         default=None,
         description="Last product-visible update timestamp.",
     )
-    invoice_count: int = Field(..., ge=0, description="Number of invoices in the run.")
-    payment_count: int = Field(..., ge=0, description="Number of payments in the run.")
-    match_count: int = Field(..., ge=0, description="Number of produced match results.")
+    match_count: int = Field(default=0, ge=0, description="Number of produced match results.")
     review_required_count: int = Field(
         default=0,
         ge=0,
         description="Number of cases currently requiring review.",
     )
+
+
+class ProductRunListResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    items: list[ProductRunSummary] = Field(default_factory=list)
+    total: int = Field(..., ge=0)
+    limit: int = Field(..., ge=0)
+    offset: int = Field(..., ge=0)
 
 
 class ProductRunDetail(BaseModel):
@@ -38,9 +45,7 @@ class ProductRunDetail(BaseModel):
         default=None,
         description="Last product-visible update timestamp.",
     )
-    invoice_count: int = Field(..., ge=0, description="Number of invoices in the run.")
-    payment_count: int = Field(..., ge=0, description="Number of payments in the run.")
-    match_count: int = Field(..., ge=0, description="Number of produced match results.")
+    match_count: int = Field(default=0, ge=0, description="Number of produced match results.")
     review_required_count: int = Field(
         default=0,
         ge=0,

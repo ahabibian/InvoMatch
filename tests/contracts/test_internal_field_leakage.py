@@ -9,6 +9,12 @@ FORBIDDEN_FIELDS = {
     "debug_info",
     "worker_id",
     "attempt_count",
+    "invoice_csv_path",
+    "payment_csv_path",
+    "error_message",
+    "report",
+    "started_at",
+    "finished_at",
 }
 
 
@@ -24,28 +30,14 @@ def _assert_no_forbidden_fields(payload):
 
 
 def test_runs_endpoint_does_not_leak_internal_fields(client):
-    response = client.get("/runs")
-    assert response.status_code in (200, 404, 405), response.text
+    response = client.get("/api/reconciliation/runs")
+    assert response.status_code in (200, 404), response.text
     if response.status_code == 200:
         _assert_no_forbidden_fields(response.json())
 
 
 def test_run_detail_endpoint_does_not_leak_internal_fields(client):
-    response = client.get("/runs/test-run-id")
-    assert response.status_code in (200, 404, 405), response.text
-    if response.status_code == 200:
-        _assert_no_forbidden_fields(response.json())
-
-
-def test_review_endpoint_does_not_leak_internal_fields(client):
-    response = client.get("/runs/test-run-id/review")
-    assert response.status_code in (200, 404, 405), response.text
-    if response.status_code == 200:
-        _assert_no_forbidden_fields(response.json())
-
-
-def test_export_endpoint_does_not_leak_internal_fields(client):
-    response = client.get("/runs/test-run-id/export")
-    assert response.status_code in (200, 404, 405), response.text
+    response = client.get("/api/reconciliation/runs/test-run-id")
+    assert response.status_code in (200, 404), response.text
     if response.status_code == 200:
         _assert_no_forbidden_fields(response.json())

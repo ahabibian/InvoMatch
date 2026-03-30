@@ -4,6 +4,7 @@ from typing import Any, Iterable
 
 from invomatch.api.product_models.run import (
     ProductRunDetail,
+    ProductRunListResponse,
     ProductRunSummary,
 )
 from invomatch.api.product_models.match_result import ProductMatchResult
@@ -15,71 +16,72 @@ from invomatch.api.product_models.action import (
 from invomatch.api.product_models.export import ProductExportModel
 
 
-# =========================
-# RUN MAPPERS
-# =========================
+def _safe_match_count(run: Any) -> int:
+    report = getattr(run, "report", None)
+    if report is None:
+        return 0
+    return int(getattr(report, "matched", 0) or 0)
+
 
 def to_product_run_summary(run: Any) -> ProductRunSummary:
     return ProductRunSummary(
-        run_id=str(run.id),
+        run_id=str(run.run_id),
         status=str(run.status),
         created_at=run.created_at,
         updated_at=getattr(run, "updated_at", None),
-        invoice_count=int(getattr(run, "invoice_count", 0)),
-        payment_count=int(getattr(run, "payment_count", 0)),
-        match_count=int(getattr(run, "match_count", 0)),
-        review_required_count=int(getattr(run, "review_required_count", 0)),
+        match_count=_safe_match_count(run),
+        review_required_count=0,
     )
 
 
-def to_product_run_detail(run: Any, matches: Iterable[Any]) -> ProductRunDetail:
+def to_product_run_list_response(
+    runs: Iterable[Any],
+    total: int,
+    limit: int,
+    offset: int,
+) -> ProductRunListResponse:
+    return ProductRunListResponse(
+        items=[to_product_run_summary(run) for run in runs],
+        total=int(total),
+        limit=int(limit),
+        offset=int(offset),
+    )
+
+
+def to_product_run_detail(run: Any) -> ProductRunDetail:
     return ProductRunDetail(
-        run_id=str(run.id),
+        run_id=str(run.run_id),
         status=str(run.status),
         created_at=run.created_at,
         updated_at=getattr(run, "updated_at", None),
-        invoice_count=int(getattr(run, "invoice_count", 0)),
-        payment_count=int(getattr(run, "payment_count", 0)),
-        match_count=int(getattr(run, "match_count", 0)),
-        review_required_count=int(getattr(run, "review_required_count", 0)),
-        matches=[to_product_match_result(m) for m in matches],
+        match_count=_safe_match_count(run),
+        review_required_count=0,
+        matches=[],
     )
 
-
-# =========================
-# MATCH MAPPERS
-# =========================
 
 def to_product_match_result(match: Any) -> ProductMatchResult:
     return ProductMatchResult(
-        match_id=str(match.id),
-        invoice_id=str(match.invoice_id),
+        match_id=str(getattr(match, "match_id", getattr(match, "id", ""))),
+        invoice_id=str(getattr(match, "invoice_id", "")),
         payment_id=getattr(match, "payment_id", None),
-        status=str(match.status),
+        status=str(getattr(match, "status", "unmatched")),
         confidence=getattr(match, "confidence", None),
         explanation=[],
     )
 
 
-# =========================
-# REVIEW MAPPERS
-# =========================
-
 def to_product_review_case(case: Any) -> ProductReviewCase:
     return ProductReviewCase(
-        case_id=str(case.id),
+        case_id=str(getattr(case, "review_item_id", getattr(case, "id", ""))),
         run_id=str(case.run_id),
-        status=str(case.status),
-        reason_code=str(case.reason_code),
+        status=str(getattr(case, "item_status", getattr(case, "status", "open"))),
+        reason_code=str(getattr(case, "reason_code", "manual_review")),
         match_id=getattr(case, "match_id", None),
         explanation=[],
         recommended_action=getattr(case, "recommended_action", None),
     )
 
-
-# =========================
-# ACTION MAPPERS
-# =========================
 
 def to_internal_action_command(request: ProductActionRequest) -> dict[str, Any]:
     return {
@@ -106,15 +108,11 @@ def to_product_action_response(
     )
 
 
-# =========================
-# EXPORT MAPPERS
-# =========================
-
 def to_product_export_model(export: Any) -> ProductExportModel:
     return ProductExportModel(
         run_id=str(export.run_id),
-        export_status=str(export.status),
-        export_format=str(export.format),
+        export_status=str(getattr(export, "status", "not_ready")),
+        export_format=str(getattr(export, "format", "json")),
         download_url=getattr(export, "download_url", None),
         generated_at=getattr(export, "generated_at", None),
     )
