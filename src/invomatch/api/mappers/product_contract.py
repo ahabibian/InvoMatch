@@ -71,15 +71,15 @@ def to_product_match_result(match: Any) -> ProductMatchResult:
     )
 
 
-def to_product_review_case(case: Any) -> ProductReviewCase:
+def to_product_review_case(projection: Any) -> ProductReviewCase:
     return ProductReviewCase(
-        case_id=str(getattr(case, "review_item_id", getattr(case, "id", ""))),
-        run_id=str(case.run_id),
-        status=str(getattr(case, "item_status", getattr(case, "status", "open"))),
-        reason_code=str(getattr(case, "reason_code", "manual_review")),
-        match_id=getattr(case, "match_id", None),
+        case_id=str(projection.case_id),
+        run_id=str(projection.run_id),
+        status=str(projection.status),
+        reason_code=str(projection.reason_code),
+        match_id=getattr(projection, "match_id", None),
         explanation=[],
-        recommended_action=getattr(case, "recommended_action", None),
+        recommended_action=getattr(projection, "recommended_action", None),
     )
 
 
