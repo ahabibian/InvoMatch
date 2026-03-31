@@ -90,13 +90,14 @@ def test_create_reconciliation_run_returns_completed_run(reconciliation_request)
     )
 
     assert response.status == "completed"
-    assert response.started_at is not None
-    assert response.finished_at is not None
-    assert response.error_message is None
-    assert response.invoice_csv_path == "sample-data/invoices.csv"
-    assert response.payment_csv_path == "sample-data/payments.csv"
-    assert response.report is not None
-    assert response.report["matched"] == 20
+    assert response.updated_at is not None
+    assert not hasattr(response, "started_at")
+    assert not hasattr(response, "finished_at")
+    assert not hasattr(response, "error_message")
+    assert not hasattr(response, "invoice_csv_path")
+    assert not hasattr(response, "payment_csv_path")
+    assert not hasattr(response, "report")
+    assert response.match_count == 20
 
     list_response = list_reconciliation_runs(request=_request_for_store(run_store))
     assert list_response.total == 1
@@ -246,12 +247,11 @@ def test_create_then_retrieve_reconciliation_run_returns_persisted_payload(recon
 
     assert response.run_id == created_run.run_id
     assert response.status == "completed"
-    assert response.started_at is not None
-    assert response.finished_at is not None
-    assert response.report is not None
-    assert response.report["total_invoices"] == 50
-    assert response.report["matched"] == 20
-    assert response.report["unmatched"] == 10
+    assert response.updated_at is not None
+    assert not hasattr(response, "started_at")
+    assert not hasattr(response, "finished_at")
+    assert not hasattr(response, "report")
+    assert response.match_count == 20
 
 
 def test_get_reconciliation_runs_returns_paginated_list(tmp_path: Path):
@@ -276,7 +276,7 @@ def test_get_reconciliation_runs_filters_by_status(tmp_path: Path):
     assert response.total == 1
     assert [item.run_id for item in response.items] == [run_ids[1]]
     assert response.items[0].status == "failed"
-    assert response.items[0].error_message == "import failed"
+    assert not hasattr(response.items[0], "error_message")
 
 
 def test_get_reconciliation_runs_applies_pagination(tmp_path: Path):
@@ -305,9 +305,9 @@ def test_get_reconciliation_run_detail_returns_failed_payload(tmp_path: Path):
 
     assert response.run_id == run_ids[1]
     assert response.status == "failed"
-    assert response.error_message == "import failed"
-    assert response.report is None
-    assert response.finished_at is not None
+    assert not hasattr(response, "error_message")
+    assert not hasattr(response, "report")
+    assert not hasattr(response, "finished_at")
 
 
 def test_get_reconciliation_run_detail_returns_404_for_missing_run(tmp_path: Path):
