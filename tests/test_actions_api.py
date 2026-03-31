@@ -20,7 +20,20 @@ def test_post_reconciliation_run_action_accepts_resolve_review():
         ProductActionRequest(
             action_type="resolve_review",
             target_id="case-1",
-            payload={},
+            payload={
+                "decision": "APPROVE",
+                "reviewer_id": "reviewer-1",
+                "feedback_id": "feedback-1",
+                "review_session_id": "review-session-1",
+                "review_item_id": "review-item-1",
+                "source_type": "manual_review",
+                "source_reference": "case-1",
+                "feedback_type": "review_resolution",
+                "raw_payload": {"matched": False},
+                "submitted_by": "system",
+                "feedback_status": "UNDER_REVIEW",
+                "review_item_status": "IN_REVIEW",
+            },
             note="resolved by reviewer",
         ),
         request=request,
@@ -50,3 +63,23 @@ def test_post_reconciliation_run_action_accepts_export_run():
     assert response.action_type == "export_run"
     assert response.accepted is True
     assert response.status == "accepted"
+
+
+def test_post_reconciliation_run_action_rejects_invalid_resolve_review_payload():
+    request = _request_with_action_service(ActionService())
+
+    response = post_reconciliation_run_action(
+        "run-123",
+        ProductActionRequest(
+            action_type="resolve_review",
+            target_id="case-1",
+            payload={},
+            note="invalid request",
+        ),
+        request=request,
+    )
+
+    assert response.run_id == "run-123"
+    assert response.action_type == "resolve_review"
+    assert response.accepted is False
+    assert response.status == "invalid_request"
