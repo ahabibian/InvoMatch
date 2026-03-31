@@ -13,6 +13,23 @@ from invomatch.services.actions.result import ActionExecutionResult, ActionExecu
 from invomatch.services.review_service import ReviewService
 
 
+_TERMINAL_STATES = {
+    ReviewItemStatus.APPROVED,
+    ReviewItemStatus.REJECTED,
+    ReviewItemStatus.MODIFIED,
+    ReviewItemStatus.DEFERRED,
+    ReviewItemStatus.CLOSED,
+}
+
+_DECISION_TO_STATUS = {
+    DecisionType.APPROVE: ReviewItemStatus.APPROVED,
+    DecisionType.REJECT: ReviewItemStatus.REJECTED,
+    DecisionType.MODIFY: ReviewItemStatus.MODIFIED,
+    DecisionType.DEFER: ReviewItemStatus.DEFERRED,
+    DecisionType.REOPEN: ReviewItemStatus.IN_REVIEW,
+}
+
+
 class ResolveReviewActionHandler(BaseActionHandler):
     def __init__(self, review_service: ReviewService | None = None) -> None:
         self._review_service = review_service or ReviewService()
@@ -32,6 +49,7 @@ class ResolveReviewActionHandler(BaseActionHandler):
         submitted_by = payload.get("submitted_by", reviewer_id or "system")
         reason = payload.get("reason")
         reviewed_payload = payload.get("reviewed_payload")
+        current_decision_raw = payload.get("current_decision")
 
         if not decision_raw:
             raise ValueError("payload.decision is required for resolve_review")
@@ -47,6 +65,47 @@ class ResolveReviewActionHandler(BaseActionHandler):
         decision = DecisionType(str(decision_raw))
         feedback_status = FeedbackStatus(payload.get("feedback_status", FeedbackStatus.UNDER_REVIEW.value))
         review_item_status = ReviewItemStatus(payload.get("review_item_status", ReviewItemStatus.IN_REVIEW.value))
+        current_decision = DecisionType(str(current_decision_raw)) if current_decision_raw else None
+
+        expected_status = _DECISION_TO_STATUS[decision]
+
+        if review_item_status in _TERMINAL_STATES:
+            if current_decision == decision and review_item_status == expected_status:
+                return ActionExecutionResult(
+                    action_type=command.action_type,
+                    target_type="review_item",
+                    target_id=review_item_id,
+                    status=ActionExecutionStatus.NO_OP,
+                    state_changes=[],
+                    side_effects=[],
+                    audit_event_ids=[],
+                    response_payload={
+                        "review_item_id": review_item_id,
+                        "review_item_status": review_item_status.value,
+                        "feedback_status": feedback_status.value,
+                        "decision": decision.value,
+                        "eligibility_status": payload.get("eligibility_status"),
+                    },
+                )
+
+            return ActionExecutionResult(
+                action_type=command.action_type,
+                target_type="review_item",
+                target_id=review_item_id,
+                status=ActionExecutionStatus.CONFLICT,
+                state_changes=[],
+                side_effects=[],
+                audit_event_ids=[],
+                response_payload={
+                    "review_item_id": review_item_id,
+                    "review_item_status": review_item_status.value,
+                    "feedback_status": feedback_status.value,
+                    "decision": current_decision.value if current_decision else None,
+                },
+            )
+
+        if review_item_status not in {ReviewItemStatus.PENDING, ReviewItemStatus.IN_REVIEW}:
+            raise ValueError(f"resolve_review is not allowed from state={review_item_status.value}")
 
         feedback = FeedbackRecord(
             feedback_id=feedback_id,
@@ -64,6 +123,7 @@ class ResolveReviewActionHandler(BaseActionHandler):
             review_session_id=review_session_id,
             feedback_id=feedback_id,
             item_status=review_item_status,
+            current_decision=current_decision,
         )
 
         result = self._review_service.apply_decision(

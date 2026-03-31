@@ -20,15 +20,6 @@ class ActionExecutionResult:
 
 
 class ActionService:
-    """
-    Product-facing action dispatcher.
-
-    EPIC 7 integration scope:
-    - preserve product-facing contract behavior
-    - route resolve_review through the real review decision handler
-    - keep export_run as placeholder until export workflow is implemented
-    """
-
     SUPPORTED_ACTIONS = {
         "resolve_review",
         "export_run",
@@ -71,13 +62,22 @@ class ActionService:
                     message=str(exc),
                 )
 
-            if result.status in {ActionExecutionStatus.SUCCESS, ActionExecutionStatus.NO_OP}:
+            if result.status == ActionExecutionStatus.SUCCESS:
                 return ActionExecutionResult(
                     run_id=run_id,
                     action_type=action_type,
                     accepted=True,
                     status="accepted",
                     message="Review decision applied.",
+                )
+
+            if result.status == ActionExecutionStatus.NO_OP:
+                return ActionExecutionResult(
+                    run_id=run_id,
+                    action_type=action_type,
+                    accepted=True,
+                    status="accepted",
+                    message="Review decision already applied.",
                 )
 
             if result.status == ActionExecutionStatus.CONFLICT:
