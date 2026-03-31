@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+from pathlib import Path
 from types import SimpleNamespace
 
 from invomatch.api.actions import post_reconciliation_run_action
 from invomatch.api.product_models.action import ProductActionRequest
+from invomatch.domain.models import ReconciliationReport
 from invomatch.services.action_service import ActionService
+from invomatch.services.reconciliation_runs import (
+    create_reconciliation_run,
+    update_reconciliation_run,
+)
+from invomatch.services.run_store import JsonRunStore
 
 
 def _request_with_action_service(action_service: ActionService) -> SimpleNamespace:
@@ -46,10 +53,48 @@ def test_post_reconciliation_run_action_accepts_resolve_review():
 
 
 def test_post_reconciliation_run_action_accepts_export_run():
-    request = _request_with_action_service(ActionService())
+    run_store = JsonRunStore(Path("output") / "test_actions_api_runs.json")
+
+    invoice_path = Path("output") / "test_actions_api_invoices.csv"
+    payment_path = Path("output") / "test_actions_api_payments.csv"
+    export_dir = Path("output") / "test_actions_api_exports"
+
+    invoice_path.parent.mkdir(parents=True, exist_ok=True)
+    export_dir.mkdir(parents=True, exist_ok=True)
+
+    invoice_path.write_text("invoice_id,amount\ninv-1,100\n", encoding="utf-8")
+    payment_path.write_text("payment_id,amount\npay-1,100\n", encoding="utf-8")
+
+    run = create_reconciliation_run(
+        invoice_csv_path=invoice_path,
+        payment_csv_path=payment_path,
+        run_store=run_store,
+    )
+    update_reconciliation_run(run.run_id, status="running", run_store=run_store)
+
+    report = ReconciliationReport(
+        total_invoices=1,
+        matched=1,
+        unmatched=0,
+        duplicate_detected=0,
+        partial_match=0,
+        results=[],
+    )
+    completed = update_reconciliation_run(
+        run.run_id,
+        status="completed",
+        report=report,
+        run_store=run_store,
+    )
+
+    action_service = ActionService(
+        run_store=run_store,
+        export_base_dir=export_dir,
+    )
+    request = _request_with_action_service(action_service)
 
     response = post_reconciliation_run_action(
-        "run-123",
+        completed.run_id,
         ProductActionRequest(
             action_type="export_run",
             target_id=None,
@@ -59,7 +104,7 @@ def test_post_reconciliation_run_action_accepts_export_run():
         request=request,
     )
 
-    assert response.run_id == "run-123"
+    assert response.run_id == completed.run_id
     assert response.action_type == "export_run"
     assert response.accepted is True
     assert response.status == "accepted"
