@@ -7,6 +7,7 @@ from typing import Literal
 from fastapi import FastAPI
 
 from invomatch.api.actions import router as actions_router
+from invomatch.api.export import router as export_router
 from invomatch.api.health import router as health_router
 from invomatch.api.reconciliation_runs import router as reconciliation_runs_router
 from invomatch.api.review_cases import router as review_cases_router
@@ -49,6 +50,7 @@ def create_app(
     app.include_router(reconciliation_runs_router)
     app.include_router(review_cases_router)
     app.include_router(actions_router)
+    app.include_router(export_router)
     return app
 
 

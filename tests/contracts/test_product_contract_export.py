@@ -2,9 +2,9 @@ from __future__ import annotations
 
 
 def test_get_run_export_conforms_to_product_contract(client):
-    response = client.get("/runs/test-run-id/export")
+    response = client.get("/api/reconciliation/runs/test-run-id/export")
 
-    assert response.status_code in (200, 404, 405), response.text
+    assert response.status_code in (200, 404), response.text
     if response.status_code != 200:
         return
 
