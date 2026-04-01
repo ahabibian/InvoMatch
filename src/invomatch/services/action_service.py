@@ -86,7 +86,7 @@ class ActionService:
             if action_type == "resolve_review":
                 message = "Review decision applied."
             elif action_type == "export_run":
-                message = "Export generated."
+                message = f"Export generated (format={request.payload.get('format')})."
             return ActionExecutionResult(
                 run_id=run_id,
                 action_type=action_type,
