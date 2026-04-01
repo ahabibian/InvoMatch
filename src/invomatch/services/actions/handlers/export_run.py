@@ -2,15 +2,16 @@ from __future__ import annotations
 
 from uuid import uuid4
 
+from invomatch.domain.export import ExportFormat
 from invomatch.services.actions.command import ActionCommand
 from invomatch.services.actions.handlers.base import BaseActionHandler
 from invomatch.services.actions.result import ActionExecutionResult, ActionExecutionStatus
-from invomatch.services.export.export_workflow import ExportWorkflowService
+from invomatch.services.export.export_service import ExportService
 
 
 class ExportRunActionHandler(BaseActionHandler):
-    def __init__(self, workflow: ExportWorkflowService | None = None) -> None:
-        self._workflow = workflow or ExportWorkflowService()
+    def __init__(self, export_service: ExportService | None = None) -> None:
+        self._export_service = export_service or ExportService()
 
     def handle(self, command: ActionCommand) -> ActionExecutionResult:
         payload = command.payload or {}
@@ -19,9 +20,14 @@ class ExportRunActionHandler(BaseActionHandler):
         if not export_format:
             raise ValueError("payload.format is required for export_run")
 
-        result = self._workflow.execute(
+        try:
+            fmt = ExportFormat(str(export_format))
+        except ValueError:
+            raise ValueError(f"unsupported export format: {export_format}")
+
+        result = self._export_service.export(
             run_id=command.run_id,
-            export_format=str(export_format),
+            export_format=fmt,
         )
 
         audit_event_id = f"audit_export_{uuid4().hex}"
@@ -34,9 +40,9 @@ class ExportRunActionHandler(BaseActionHandler):
             state_changes=[],
             side_effects=[
                 {
-                    "type": "export_artifact_created",
-                    "format": result.export_format,
-                    "artifact_path": result.artifact_path,
+                    "type": "export_generated",
+                    "format": fmt.value,
+                    "filename": result.filename,
                 },
                 {
                     "type": "audit_event",
@@ -46,9 +52,10 @@ class ExportRunActionHandler(BaseActionHandler):
             ],
             audit_event_ids=[audit_event_id],
             response_payload={
-                "run_id": result.run_id,
-                "export_status": result.export_status,
-                "export_format": result.export_format,
-                "artifact_path": result.artifact_path,
+                "run_id": command.run_id,
+                "export_status": "completed",
+                "export_format": fmt.value,
+                "content_type": result.content_type,
+                "filename": result.filename,
             },
         )

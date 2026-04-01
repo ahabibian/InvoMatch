@@ -47,6 +47,7 @@ def parse_invoice_row(row: Mapping[str, str | None]) -> Invoice:
         date=_parse_date(_require_field(row, "date")),
         amount=_parse_amount(_require_field(row, "amount")),
         reference=normalize_reference(row.get("reference")),
+        currency=_require_field(row, "currency"),
     )
 
 
@@ -56,6 +57,7 @@ def parse_payment_row(row: Mapping[str, str | None]) -> Payment:
         date=_parse_date(_require_field(row, "date")),
         amount=_parse_amount(_require_field(row, "amount")),
         reference=normalize_reference(row.get("reference")),
+        currency=_require_field(row, "currency"),
     )
 
 

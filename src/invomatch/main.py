@@ -8,11 +8,11 @@ from fastapi import FastAPI
 
 from invomatch.api.actions import router as actions_router
 from invomatch.api.export import router as export_router
-from invomatch.api.export import router as export_router
 from invomatch.api.health import router as health_router
 from invomatch.api.reconciliation_runs import router as reconciliation_runs_router
 from invomatch.api.review_cases import router as review_cases_router
 from invomatch.services.action_service import ActionService
+from invomatch.services.export import ExportService, RunFinalizedResultReader
 from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH
 from invomatch.services.review_store import InMemoryReviewStore
@@ -36,7 +36,11 @@ def create_app(
     run_store_path: Path | None = None,
 ) -> FastAPI:
     app = FastAPI(title="InvoMatch")
-    resolved_run_store = run_store or _build_run_store(backend=run_store_backend, path=run_store_path)
+    resolved_run_store = run_store or _build_run_store(
+        backend=run_store_backend,
+        path=run_store_path,
+    )
+
     app.state.run_store = resolved_run_store
     app.state.run_registry = RunRegistry(run_store=resolved_run_store)
     app.state.reconcile_and_save = partial(reconcile_and_save, run_store=resolved_run_store)
@@ -47,11 +51,18 @@ def create_app(
     app.state.review_store = InMemoryReviewStore()
     app.state.action_service = ActionService()
 
+    app.state.export_service = ExportService(
+        reader=RunFinalizedResultReader(
+            run_store=resolved_run_store,
+            review_store=app.state.review_store,
+        ),
+        run_store=resolved_run_store,
+    )
+
     app.include_router(health_router)
     app.include_router(reconciliation_runs_router)
     app.include_router(review_cases_router)
     app.include_router(actions_router)
-    app.include_router(export_router)
     app.include_router(export_router)
     return app
 

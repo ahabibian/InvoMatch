@@ -1,4 +1,4 @@
-﻿from datetime import date, datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -12,6 +12,8 @@ class Invoice(BaseModel):
     date: date
     amount: Decimal
     reference: str | None = None
+    currency: str
+    currency: str
 
 
 class Payment(BaseModel):
@@ -19,6 +21,8 @@ class Payment(BaseModel):
     date: date
     amount: Decimal
     reference: str | None = None
+    currency: str
+    currency: str
 
 
 class MatchResult(BaseModel):

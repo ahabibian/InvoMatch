@@ -10,8 +10,7 @@ from invomatch.services.actions.execution_service import ActionExecutionService
 from invomatch.services.actions.handlers.export_run import ExportRunActionHandler
 from invomatch.services.actions.handlers.resolve_review import ResolveReviewActionHandler
 from invomatch.services.actions.result import ActionExecutionStatus
-from invomatch.services.export.export_workflow import ExportWorkflowService
-from invomatch.services.export.export_writer import ExportWriter
+from invomatch.services.export.export_service import ExportService
 from invomatch.services.run_store import RunStore
 
 
@@ -39,13 +38,12 @@ class ActionService:
         dispatcher = ActionDispatcher()
         dispatcher.register("resolve_review", ResolveReviewActionHandler)
 
-        export_workflow = ExportWorkflowService(
-            run_store=run_store,
-            writer=ExportWriter(export_base_dir),
-        )
+        export_service = ExportService(run_store=run_store)
+
         dispatcher.register(
-            "export_run",
-            lambda: ExportRunActionHandler(workflow=export_workflow),
+        "export_run",
+        lambda: ExportRunActionHandler(export_service=export_service),
+
         )
 
         self._execution_service = ActionExecutionService(dispatcher)
