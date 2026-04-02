@@ -6,7 +6,6 @@ from invomatch.domain.export import ExportFormat
 from invomatch.services.export import (
     ExportDataIncompleteError,
     ExportError,
-    ExportService,
     RunNotExportableError,
     RunNotFoundError,
     UnsupportedExportFormatError,
@@ -21,26 +20,31 @@ def export_reconciliation_run(
     format: str = "json",
     request: Request = None,
 ):
-    export_service = getattr(request.app.state, "export_service", None)
-    if export_service is None:
+    delivery_service = getattr(request.app.state, "export_delivery_service", None)
+    artifact_storage = getattr(request.app.state, "export_artifact_storage", None)
+
+    if delivery_service is None or artifact_storage is None:
         raise HTTPException(
             status_code=500,
-            detail="export_service is not configured on application state",
+            detail="export delivery services are not configured on application state",
         )
 
     try:
         export_format = _parse_format(format)
 
-        result = export_service.export(
+        artifact = delivery_service.create_export_artifact(
             run_id=run_id,
-            export_format=export_format,
+            format=export_format.value,
         )
 
+        with artifact_storage.open_read(artifact.storage_key) as handle:
+            content = handle.read()
+
         return Response(
-            content=result.content,
-            media_type=result.content_type,
+            content=content,
+            media_type=artifact.content_type,
             headers={
-                "Content-Disposition": f'attachment; filename="{result.filename}"'
+                "Content-Disposition": f'attachment; filename="{artifact.file_name}"'
             },
         )
 
@@ -58,6 +62,9 @@ def export_reconciliation_run(
 
     except ExportError as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 def _parse_format(value: str) -> ExportFormat:

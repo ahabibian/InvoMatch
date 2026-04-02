@@ -4,6 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from invomatch.api.product_models.action import ProductActionRequest
+from invomatch.repositories.export_artifact_repository_sqlite import (
+    SqliteExportArtifactRepository,
+)
 from invomatch.services.actions.command import ActionCommand
 from invomatch.services.actions.dispatcher import ActionDispatcher
 from invomatch.services.actions.execution_service import ActionExecutionService
@@ -11,7 +14,9 @@ from invomatch.services.actions.handlers.export_run import ExportRunActionHandle
 from invomatch.services.actions.handlers.resolve_review import ResolveReviewActionHandler
 from invomatch.services.actions.result import ActionExecutionStatus
 from invomatch.services.export.export_service import ExportService
+from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.run_store import RunStore
+from invomatch.services.storage.local_storage import LocalArtifactStorage
 
 
 @dataclass(slots=True)
@@ -38,12 +43,31 @@ class ActionService:
         dispatcher = ActionDispatcher()
         dispatcher.register("resolve_review", ResolveReviewActionHandler)
 
+        export_root = Path(export_base_dir or (Path("output") / "exports"))
+        export_root.mkdir(parents=True, exist_ok=True)
+
+        export_repository = SqliteExportArtifactRepository(
+            str(export_root / "export_artifacts.sqlite3")
+        )
+        export_storage = LocalArtifactStorage(export_root)
+
         export_service = ExportService(run_store=run_store)
 
-        dispatcher.register(
-        "export_run",
-        lambda: ExportRunActionHandler(export_service=export_service),
+        def export_generator(run_id: str, format: str) -> bytes:
+            return export_service.export(
+                run_id=run_id,
+                export_format=format_enum(format),
+            ).content
 
+        delivery_service = ExportDeliveryService(
+            repository=export_repository,
+            storage=export_storage,
+            export_generator=export_generator,
+        )
+
+        dispatcher.register(
+            "export_run",
+            lambda: ExportRunActionHandler(delivery_service=delivery_service),
         )
 
         self._execution_service = ActionExecutionService(dispatcher)
@@ -84,7 +108,7 @@ class ActionService:
             if action_type == "resolve_review":
                 message = "Review decision applied."
             elif action_type == "export_run":
-                message = f"Export generated (format={request.payload.get('format')})."
+                message = f"Export artifact created (format={request.payload.get('format')})."
             return ActionExecutionResult(
                 run_id=run_id,
                 action_type=action_type,
@@ -124,3 +148,9 @@ class ActionService:
             status="failed",
             message="Action could not be completed.",
         )
+
+
+def format_enum(value: str):
+    from invomatch.domain.export import ExportFormat
+
+    return ExportFormat(value)
