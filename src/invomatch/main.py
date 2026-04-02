@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 from invomatch.api.actions import router as actions_router
 from invomatch.api.export import router as export_router
+from invomatch.api.export_artifacts import router as export_artifacts_router
 from invomatch.api.health import router as health_router
 from invomatch.api.reconciliation_runs import router as reconciliation_runs_router
 from invomatch.api.review_cases import router as review_cases_router
@@ -15,6 +16,7 @@ from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
 )
 from invomatch.services.action_service import ActionService
+from invomatch.services.artifact_query_service import ArtifactQueryService
 from invomatch.services.export import ExportService, RunFinalizedResultReader
 from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.reconciliation import reconcile_and_save
@@ -85,11 +87,15 @@ def create_app(
         storage=export_artifact_storage,
         export_generator=export_generator,
     )
+    artifact_query_service = ArtifactQueryService(
+        repository=export_artifact_repository,
+    )
 
     app.state.export_service = export_service
     app.state.export_artifact_repository = export_artifact_repository
     app.state.export_artifact_storage = export_artifact_storage
     app.state.export_delivery_service = export_delivery_service
+    app.state.artifact_query_service = artifact_query_service
 
     app.state.action_service = ActionService(
         run_store=resolved_run_store,
@@ -101,6 +107,7 @@ def create_app(
     app.include_router(review_cases_router)
     app.include_router(actions_router)
     app.include_router(export_router)
+    app.include_router(export_artifacts_router)
     return app
 
 
