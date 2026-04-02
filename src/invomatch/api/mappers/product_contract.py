@@ -1,19 +1,27 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from typing import Any, Iterable
 
-from invomatch.api.product_models.run import (
-    ProductRunDetail,
-    ProductRunListResponse,
-    ProductRunSummary,
-)
-from invomatch.api.product_models.match_result import ProductMatchResult
-from invomatch.api.product_models.review_case import ProductReviewCase
 from invomatch.api.product_models.action import (
     ProductActionRequest,
     ProductActionResponse,
 )
 from invomatch.api.product_models.export import ProductExportModel
+from invomatch.api.product_models.export_artifact import (
+    ArtifactErrorResponse,
+    ArtifactLifecycleState,
+    ExportArtifactListResponse,
+    ExportArtifactMetadataResponse,
+    ExportArtifactResource,
+)
+from invomatch.api.product_models.match_result import ProductMatchResult
+from invomatch.api.product_models.review_case import ProductReviewCase
+from invomatch.api.product_models.run import (
+    ProductRunDetail,
+    ProductRunListResponse,
+    ProductRunSummary,
+)
 
 
 def _safe_match_count(run: Any) -> int:
@@ -21,6 +29,77 @@ def _safe_match_count(run: Any) -> int:
     if report is None:
         return 0
     return int(getattr(report, "matched", 0) or 0)
+
+
+def _normalize_datetime_for_comparison(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=timezone.utc)
+    return value.astimezone(timezone.utc)
+
+
+def _is_expired(expires_at: datetime | None) -> bool:
+    if expires_at is None:
+        return False
+
+    normalized_expires_at = _normalize_datetime_for_comparison(expires_at)
+    now_utc = datetime.now(timezone.utc)
+    return normalized_expires_at <= now_utc
+
+
+def _to_artifact_lifecycle_state(artifact: Any) -> ArtifactLifecycleState:
+    raw_status = str(getattr(artifact, "status", "") or "").strip().lower()
+    expires_at = getattr(artifact, "expires_at", None)
+
+    failed_statuses = {"failed", "error"}
+    deleted_statuses = {"deleted", "removed"}
+
+    if raw_status in failed_statuses:
+        return ArtifactLifecycleState.FAILED
+
+    if raw_status in deleted_statuses:
+        return ArtifactLifecycleState.DELETED
+
+    if _is_expired(expires_at):
+        return ArtifactLifecycleState.EXPIRED
+
+    return ArtifactLifecycleState.AVAILABLE
+
+
+def _artifact_download_available(artifact: Any) -> bool:
+    return _to_artifact_lifecycle_state(artifact) == ArtifactLifecycleState.AVAILABLE
+
+
+def _artifact_type(artifact: Any) -> str:
+    value = getattr(artifact, "artifact_type", None)
+    if value:
+        return str(value)
+    return "run_export"
+
+
+def _artifact_format(artifact: Any) -> str:
+    value = getattr(artifact, "format", None)
+    if value:
+        return str(value)
+    return "unknown"
+
+
+def _artifact_file_name(artifact: Any) -> str:
+    value = getattr(artifact, "file_name", None)
+    if value:
+        return str(value)
+    return "artifact"
+
+
+def _artifact_content_type(artifact: Any) -> str:
+    value = getattr(artifact, "content_type", None)
+    if value:
+        return str(value)
+    return "application/octet-stream"
+
+
+def _artifact_size_bytes(artifact: Any) -> int:
+    value = getattr(artifact, "byte_size", getattr(artifact, "size_bytes", 0))
+    return int(value or 0)
 
 
 def to_product_run_summary(run: Any) -> ProductRunSummary:
@@ -115,4 +194,57 @@ def to_product_export_model(export: Any) -> ProductExportModel:
         export_format=str(getattr(export, "format", "json")),
         download_url=getattr(export, "download_url", None),
         generated_at=getattr(export, "generated_at", None),
+    )
+
+
+def to_export_artifact_resource(artifact: Any) -> ExportArtifactResource:
+    return ExportArtifactResource(
+        artifact_id=str(getattr(artifact, "id")),
+        run_id=str(getattr(artifact, "run_id")),
+        artifact_type=_artifact_type(artifact),
+        format=_artifact_format(artifact),
+        file_name=_artifact_file_name(artifact),
+        content_type=_artifact_content_type(artifact),
+        size_bytes=_artifact_size_bytes(artifact),
+        state=_to_artifact_lifecycle_state(artifact),
+        created_at=getattr(artifact, "created_at"),
+        expires_at=getattr(artifact, "expires_at", None),
+        download_available=_artifact_download_available(artifact),
+    )
+
+
+def to_export_artifact_list_response(
+    run_id: str,
+    artifacts: Iterable[Any],
+) -> ExportArtifactListResponse:
+    sorted_artifacts = sorted(
+        list(artifacts),
+        key=lambda artifact: (
+            getattr(artifact, "created_at", datetime.min.replace(tzinfo=timezone.utc)),
+            str(getattr(artifact, "id", "")),
+        ),
+        reverse=True,
+    )
+
+    return ExportArtifactListResponse(
+        run_id=str(run_id),
+        artifacts=[to_export_artifact_resource(artifact) for artifact in sorted_artifacts],
+    )
+
+
+def to_export_artifact_metadata_response(
+    artifact: Any,
+) -> ExportArtifactMetadataResponse:
+    return ExportArtifactMetadataResponse(
+        artifact=to_export_artifact_resource(artifact),
+    )
+
+
+def to_artifact_error_response(
+    code: str,
+    message: str,
+) -> ArtifactErrorResponse:
+    return ArtifactErrorResponse(
+        code=code,
+        message=message,
     )
