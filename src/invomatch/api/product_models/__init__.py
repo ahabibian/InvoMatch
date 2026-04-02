@@ -3,6 +3,13 @@ from .action import (
     ProductActionResponse,
 )
 from .export import ProductExportModel
+from .export_artifact import (
+    ArtifactErrorResponse,
+    ArtifactLifecycleState,
+    ExportArtifactListResponse,
+    ExportArtifactMetadataResponse,
+    ExportArtifactResource,
+)
 from .match_result import (
     ProductMatchExplanation,
     ProductMatchResult,
@@ -20,6 +27,11 @@ __all__ = [
     "ProductActionRequest",
     "ProductActionResponse",
     "ProductExportModel",
+    "ArtifactErrorResponse",
+    "ArtifactLifecycleState",
+    "ExportArtifactListResponse",
+    "ExportArtifactMetadataResponse",
+    "ExportArtifactResource",
     "ProductMatchExplanation",
     "ProductMatchResult",
     "ProductReviewCase",
