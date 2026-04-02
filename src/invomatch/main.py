@@ -89,6 +89,7 @@ def create_app(
     )
     artifact_query_service = ArtifactQueryService(
         repository=export_artifact_repository,
+        storage=export_artifact_storage,
     )
 
     app.state.export_service = export_service
