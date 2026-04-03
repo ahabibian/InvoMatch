@@ -89,7 +89,7 @@ def test_create_reconciliation_run_returns_completed_run(reconciliation_request)
         request=request,
     )
 
-    assert response.status == "completed"
+    assert response.status == "review_required"
     assert response.updated_at is not None
     assert not hasattr(response, "started_at")
     assert not hasattr(response, "finished_at")
@@ -116,7 +116,7 @@ def test_create_reconciliation_run_supports_injected_in_memory_store():
         request=request,
     )
 
-    assert response.status == "completed"
+    assert response.status == "review_required"
     runs, total = run_store.list_runs()
     assert total == 1
     assert runs[0].run_id == response.run_id
@@ -246,7 +246,7 @@ def test_create_then_retrieve_reconciliation_run_returns_persisted_payload(recon
     response = get_reconciliation_run(created_run.run_id, request=request)
 
     assert response.run_id == created_run.run_id
-    assert response.status == "completed"
+    assert response.status == "review_required"
     assert response.updated_at is not None
     assert not hasattr(response, "started_at")
     assert not hasattr(response, "finished_at")

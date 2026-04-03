@@ -35,7 +35,7 @@ def test_reconcile_results_are_bound_to_invoice_ids():
     assert all(result.match_result.status in {"matched", "duplicate_detected", "partial_match", "unmatched"} for result in report.results)
 
 
-def test_reconcile_and_save_moves_run_through_completed_lifecycle(tmp_path: Path):
+def test_reconcile_and_save_moves_run_through_review_required_lifecycle(tmp_path: Path):
     run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
 
     run = reconcile_and_save(
@@ -46,13 +46,13 @@ def test_reconcile_and_save_moves_run_through_completed_lifecycle(tmp_path: Path
 
     persisted_run = load_reconciliation_run(run.run_id, run_store=run_store)
 
-    assert run.status == "completed"
+    assert run.status == "review_required"
     assert run.started_at is not None
-    assert run.finished_at is not None
+    assert run.finished_at is None
     assert run.updated_at >= run.created_at
     assert run.report is not None
     assert run.error_message is None
-    assert persisted_run.status == "completed"
+    assert persisted_run.status == "review_required"
     assert persisted_run.report is not None
 
 
@@ -67,7 +67,7 @@ def test_reconcile_and_save_supports_injected_in_memory_store():
 
     persisted_run = load_reconciliation_run(run.run_id, run_store=run_store)
 
-    assert run.status == "completed"
+    assert run.status == "review_required"
     assert persisted_run.run_id == run.run_id
     assert persisted_run.report is not None
 

@@ -13,6 +13,7 @@ from invomatch.domain.models import (
     ReconciliationReport,
     ReconciliationResult,
     ReconciliationRun,
+    RunStatus,
 )
 from invomatch.services.ingestion import load_invoices_from_csv, parse_payment_row
 from invomatch.services.match_record_store import MatchRecordStore
@@ -57,6 +58,16 @@ def _summarize(results: list[ReconciliationResult]) -> dict[str, int]:
         "partial_match": status_counts.get("partial_match", 0),
         "unmatched": status_counts.get("unmatched", 0),
     }
+
+
+def _report_requires_review(report: ReconciliationReport) -> bool:
+    return report.duplicate_detected > 0 or report.partial_match > 0
+
+
+def _final_run_status(report: ReconciliationReport) -> RunStatus:
+    if _report_requires_review(report):
+        return "review_required"
+    return "completed"
 
 
 def reconcile(invoice_csv_path: Path, payment_csv_path: Path) -> ReconciliationReport:
@@ -160,7 +171,7 @@ def reconcile_and_save(
 
     return update_reconciliation_run(
         run.run_id,
-        status="completed",
+        status=_final_run_status(report),
         report=report,
         run_store=run_store,
     )
