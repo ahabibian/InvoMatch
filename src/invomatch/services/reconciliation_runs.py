@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, UTC, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from invomatch.domain.models import ReconciliationReport, ReconciliationRun, RunStatus
-from invomatch.domain.run_lifecycle import InvalidRunStateTransition, assert_transition_allowed
+from invomatch.services.lifecycle import (
+    InvalidRunStateError,
+    InvalidRunTransitionError,
+    RunLifecycleService,
+    TerminalRunStateError,
+)
 from invomatch.services.run_store import JsonRunStore, RunStore
 
 
@@ -30,7 +35,7 @@ def create_reconciliation_run(
     now = _utcnow()
     run = ReconciliationRun(
         run_id=uuid.uuid4().hex,
-        status="pending",
+        status="queued",
         version=0,
         created_at=now,
         updated_at=now,
@@ -104,8 +109,8 @@ def update_reconciliation_run(
         raise KeyError(f"Reconciliation run not found: {run_id}")
 
     try:
-        assert_transition_allowed(run.status, status)
-    except InvalidRunStateTransition as exc:
+        RunLifecycleService.validate_transition(run.status, status)
+    except (InvalidRunStateError, InvalidRunTransitionError, TerminalRunStateError) as exc:
         raise ValueError(
             f"Invalid reconciliation run transition: {run.status} -> {status}"
         ) from exc
@@ -114,9 +119,10 @@ def update_reconciliation_run(
     started_at = run.started_at
     finished_at = run.finished_at
 
-    if status == "running" and started_at is None:
+    if status == "processing" and started_at is None:
         started_at = now
-    if status in {"completed", "failed"}:
+
+    if status in {"completed", "failed", "cancelled"}:
         if started_at is None:
             started_at = now
         finished_at = now
@@ -146,7 +152,7 @@ def save_reconciliation_run(
         payment_csv_path=payment_csv_path,
         run_store=run_store,
     )
-    run = update_reconciliation_run(run.run_id, status="running", run_store=run_store)
+    run = update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
     return update_reconciliation_run(
         run.run_id,
         status="completed",

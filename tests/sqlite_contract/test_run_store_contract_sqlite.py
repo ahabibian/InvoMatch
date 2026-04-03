@@ -110,7 +110,7 @@ class SqliteRunStoreContractAdapter:
 
         released = run.model_copy(
             update={
-                "status": "pending",
+                "status": "queued",
                 "version": run.version + 1,
                 "claimed_by": None,
                 "claimed_at": None,
@@ -126,7 +126,7 @@ class SqliteRunStoreContractAdapter:
         if run is None:
             return False
 
-        base_status = "pending" if str(run.status) == "running" else str(run.status)
+        base_status = "queued" if str(run.status) == "processing" else str(run.status)
         updated = run.model_copy(
             update={
                 "status": base_status,
@@ -274,7 +274,7 @@ class SqliteRunStoreContractAdapter:
 
         normalized = {
             "run_id": payload["run_id"],
-            "status": payload.get("status", "pending"),
+            "status": payload.get("status", "queued"),
             "version": payload.get("version", 0),
             "created_at": created_at,
             "updated_at": updated_at,

@@ -14,7 +14,9 @@ from invomatch.services.actions.handlers.export_run import ExportRunActionHandle
 from invomatch.services.actions.handlers.resolve_review import ResolveReviewActionHandler
 from invomatch.services.actions.result import ActionExecutionStatus
 from invomatch.services.export.export_service import ExportService
+from invomatch.services.export.run_finalized_result_reader import RunFinalizedResultReader
 from invomatch.services.export_delivery_service import ExportDeliveryService
+from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import RunStore
 from invomatch.services.storage.local_storage import LocalArtifactStorage
 
@@ -38,6 +40,7 @@ class ActionService:
         self,
         *,
         run_store: RunStore | None = None,
+        review_store: InMemoryReviewStore | None = None,
         export_base_dir: Path | None = None,
     ) -> None:
         dispatcher = ActionDispatcher()
@@ -51,7 +54,15 @@ class ActionService:
         )
         export_storage = LocalArtifactStorage(export_root)
 
-        export_service = ExportService(run_store=run_store)
+        export_reader = RunFinalizedResultReader(
+            run_store=run_store,
+            review_store=review_store or InMemoryReviewStore(),
+        )
+
+        export_service = ExportService(
+            run_store=run_store,
+            reader=export_reader,
+        )
 
         def export_generator(run_id: str, format: str) -> bytes:
             return export_service.export(

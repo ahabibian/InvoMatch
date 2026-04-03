@@ -57,7 +57,7 @@ def _completed_run_store(tmp_path: Path) -> tuple[JsonRunStore, str]:
         run_store=run_store,
     )
 
-    update_reconciliation_run(run.run_id, status="running", run_store=run_store)
+    update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
 
     report = ReconciliationReport(
         total_invoices=1,

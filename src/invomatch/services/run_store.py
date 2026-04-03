@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 from datetime import datetime
@@ -65,6 +65,14 @@ def _validate_next_version(run: ReconciliationRun, expected_version: int) -> Non
         )
 
 
+
+def _normalize_legacy_run_status(status: Any) -> Any:
+    if status == "pending":
+        return "queued"
+    if status == "running":
+        return "processing"
+    return status
+
 class JsonRunStore:
     def __init__(self, path: Path):
         self.path = path
@@ -122,7 +130,7 @@ class JsonRunStore:
 
             updated = persisted_run.model_copy(
                 update={
-                    "status": "running",
+                    "status": "processing",
                     "version": persisted_run.version + 1,
                     "claimed_by": worker_id,
                     "claimed_at": claimed_at,
@@ -287,7 +295,7 @@ class InMemoryRunStore:
 
             updated = persisted_run.model_copy(
                 update={
-                    "status": "running",
+                    "status": "processing",
                     "version": persisted_run.version + 1,
                     "claimed_by": worker_id,
                     "claimed_at": claimed_at,

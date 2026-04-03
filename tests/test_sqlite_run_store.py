@@ -44,7 +44,7 @@ def test_sqlite_run_store_persists_nullable_fields_and_report_payload(tmp_path: 
     )
     completed_run = update_reconciliation_run(
         run.run_id,
-        status="running",
+        status="processing",
         run_store=run_store,
     )
     completed_run = update_reconciliation_run(
@@ -139,7 +139,7 @@ def test_sqlite_run_store_list_runs_uses_deterministic_tiebreak_ordering(tmp_pat
             [
                 (
                     "run-b",
-                    "pending",
+                    "queued",
                     created_at,
                     created_at,
                     None,
@@ -151,7 +151,7 @@ def test_sqlite_run_store_list_runs_uses_deterministic_tiebreak_ordering(tmp_pat
                 ),
                 (
                     "run-a",
-                    "pending",
+                    "queued",
                     created_at,
                     created_at,
                     None,

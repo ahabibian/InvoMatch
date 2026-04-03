@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -18,7 +18,7 @@ def _build_run(run_id: str = "run-1") -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
         run_id=run_id,
-        status="pending",
+        status="queued",
         version=0,
         created_at=now,
         updated_at=now,
@@ -57,7 +57,7 @@ def test_claim_run_assigns_worker_and_increments_attempt_count(store):
         expected_version=created.version,
     )
 
-    assert claimed.status == "running"
+    assert claimed.status == "processing"
     assert claimed.claimed_by == "worker-a"
     assert claimed.attempt_count == 1
     assert claimed.version == 1

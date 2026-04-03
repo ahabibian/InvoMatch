@@ -14,14 +14,14 @@ def test_reconcile_and_save_persists_match_records(tmp_path: Path) -> None:
     match_db = tmp_path / "match_records.sqlite3"
 
     invoice_csv.write_text(
-        "id,date,amount,reference\n"
-        "inv-001,2026-03-01,100.00,ABC-1\n",
+        "id,date,amount,reference,currency\n"
+        "inv-001,2026-03-01,100.00,ABC-1,SEK\n",
         encoding="utf-8",
     )
 
     payment_csv.write_text(
-        "invoice_id,id,date,amount,reference\n"
-        "inv-001,pay-001,2026-03-02,100.00,ABC-1\n",
+        "invoice_id,id,date,amount,reference,currency\n"
+        "inv-001,pay-001,2026-03-02,100.00,ABC-1,SEK\n",
         encoding="utf-8",
     )
 

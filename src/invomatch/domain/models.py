@@ -4,7 +4,14 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-RunStatus = Literal["pending", "running", "completed", "failed"]
+RunStatus = Literal[
+    "queued",
+    "processing",
+    "review_required",
+    "completed",
+    "failed",
+    "cancelled",
+]
 
 
 class Invoice(BaseModel):
@@ -13,7 +20,6 @@ class Invoice(BaseModel):
     amount: Decimal
     reference: str | None = None
     currency: str
-    currency: str
 
 
 class Payment(BaseModel):
@@ -21,7 +27,6 @@ class Payment(BaseModel):
     date: date
     amount: Decimal
     reference: str | None = None
-    currency: str
     currency: str
 
 
@@ -79,14 +84,16 @@ class ReconciliationRun(BaseModel):
 
 
 def is_terminal_status(status: RunStatus) -> bool:
-    return status in {"completed", "failed"}
+    return status in {"completed", "failed", "cancelled"}
 
 
 _ALLOWED_TRANSITIONS: dict[RunStatus, set[RunStatus]] = {
-    "pending": {"pending", "running", "failed"},
-    "running": {"running", "completed", "failed"},
-    "completed": {"completed"},
-    "failed": {"failed"},
+    "queued": {"processing", "failed", "cancelled"},
+    "processing": {"review_required", "completed", "failed", "cancelled"},
+    "review_required": {"completed", "failed", "cancelled"},
+    "completed": set(),
+    "failed": set(),
+    "cancelled": set(),
 }
 
 

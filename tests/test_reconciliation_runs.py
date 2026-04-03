@@ -26,10 +26,10 @@ def _report() -> ReconciliationReport:
 def test_lifecycle_helpers_enforce_terminal_status_and_valid_transitions():
     assert is_terminal_status("completed") is True
     assert is_terminal_status("failed") is True
-    assert is_terminal_status("pending") is False
-    assert can_transition("pending", "running") is True
-    assert can_transition("running", "completed") is True
-    assert can_transition("completed", "running") is False
+    assert is_terminal_status("queued") is False
+    assert can_transition("queued", "processing") is True
+    assert can_transition("processing", "completed") is True
+    assert can_transition("completed", "processing") is False
 
 
 @pytest.mark.parametrize("store_factory", [JsonRunStore, SqliteRunStore, lambda path: InMemoryRunStore()])
@@ -44,7 +44,7 @@ def test_run_store_create_get_update_and_list_operations(tmp_path: Path, store_f
     fetched_run = run_store.get_run(created_run.run_id)
     assert fetched_run is not None
     assert fetched_run.run_id == created_run.run_id
-    assert fetched_run.status == "pending"
+    assert fetched_run.status == "queued"
 
     updated_run = created_run.model_copy(update={"status": "failed", "version": created_run.version + 1, "error_message": "boom"})
     persisted_run = run_store.update_run(updated_run, expected_version=created_run.version)
@@ -111,7 +111,7 @@ def test_run_store_returns_copies_from_queries(tmp_path: Path, store_factory):
 
     persisted_run = run_store.get_run(created_run.run_id)
     assert persisted_run is not None
-    assert persisted_run.status == "pending"
+    assert persisted_run.status == "queued"
 
 
 def test_create_reconciliation_run_persists_pending_lifecycle(tmp_path: Path):
@@ -123,7 +123,7 @@ def test_create_reconciliation_run_persists_pending_lifecycle(tmp_path: Path):
         run_store=run_store,
     )
 
-    assert run.status == "pending"
+    assert run.status == "queued"
     assert run.created_at == run.updated_at
     assert run.started_at is None
     assert run.finished_at is None
@@ -141,7 +141,7 @@ def test_update_reconciliation_run_persists_all_lifecycle_fields(tmp_path: Path)
         payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
         run_store=run_store,
     )
-    running_run = update_reconciliation_run(run.run_id, status="running", run_store=run_store)
+    running_run = update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
     completed_run = update_reconciliation_run(
         run.run_id,
         status="completed",
@@ -150,7 +150,7 @@ def test_update_reconciliation_run_persists_all_lifecycle_fields(tmp_path: Path)
     )
     loaded_run = load_reconciliation_run(run.run_id, run_store=run_store)
 
-    assert running_run.status == "running"
+    assert running_run.status == "processing"
     assert running_run.started_at is not None
     assert running_run.finished_at is None
     assert completed_run.status == "completed"
@@ -173,11 +173,11 @@ def test_update_reconciliation_run_rejects_invalid_transition(tmp_path: Path):
         payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
         run_store=run_store,
     )
-    update_reconciliation_run(run.run_id, status="running", run_store=run_store)
+    update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
     update_reconciliation_run(run.run_id, status="completed", report=None, run_store=run_store)
 
     with pytest.raises(ValueError, match="Invalid reconciliation run transition"):
-        update_reconciliation_run(run.run_id, status="running", run_store=run_store)
+        update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
 
 
 def test_load_reconciliation_run_backfills_legacy_completed_payload(tmp_path: Path):

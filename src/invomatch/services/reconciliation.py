@@ -3,7 +3,7 @@ from __future__ import annotations
 import csv
 import uuid
 from collections import Counter
-from datetime import datetime, UTC, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 from invomatch.domain.match_record import MatchRecord
@@ -137,7 +137,7 @@ def reconcile_and_save(
         payment_csv_path=payment_csv_path,
         run_store=run_store,
     )
-    run = update_reconciliation_run(run.run_id, status="running", run_store=run_store)
+    run = update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
 
     try:
         report = reconcile(invoice_csv_path, payment_csv_path)

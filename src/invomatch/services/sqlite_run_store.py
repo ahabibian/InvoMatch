@@ -20,6 +20,22 @@ _SQLITE_TIMEOUT_SECONDS = 30.0
 _SQLITE_BUSY_TIMEOUT_MS = int(_SQLITE_TIMEOUT_SECONDS * 1000)
 _SQLITE_JOURNAL_MODE = "WAL"
 _SQLITE_SYNCHRONOUS = "NORMAL"
+def _normalize_legacy_run_status(status: str | None) -> str | None:
+    if status == "pending":
+        return "queued"
+    if status == "running":
+        return "processing"
+    return status
+
+
+def _status_filter_values(status: RunStatus | None) -> tuple[str, ...]:
+    if status is None:
+        return ()
+    if status == "queued":
+        return ("queued", "pending")
+    if status == "processing":
+        return ("processing", "running")
+    return (status,)
 
 
 class SqliteRunStore:
@@ -184,7 +200,7 @@ class SqliteRunStore:
                 cursor = connection.execute(
                     """
                     UPDATE reconciliation_runs
-                    SET status = 'running',
+                    SET status = 'processing',
                         version = version + 1,
                         updated_at = ?,
                         started_at = COALESCE(started_at, ?),
@@ -386,9 +402,12 @@ class SqliteRunStore:
     ) -> tuple[list[ReconciliationRun], int]:
         where_clause = ""
         parameters: list[Any] = []
-        if status is not None:
-            where_clause = "WHERE status = ?"
-            parameters.append(status)
+
+        filter_values = _status_filter_values(status)
+        if filter_values:
+            placeholders = ", ".join("?" for _ in filter_values)
+            where_clause = f"WHERE status IN ({placeholders})"
+            parameters.extend(filter_values)
 
         order_by = "DESC" if sort_order == "desc" else "ASC"
 
@@ -542,7 +561,7 @@ class SqliteRunStore:
         report_json = row["report_json"]
         payload = {
             "run_id": row["run_id"],
-            "status": row["status"],
+            "status": _normalize_legacy_run_status(row["status"]),
             "version": row["version"],
             "created_at": self._deserialize_datetime(row["created_at"]),
             "updated_at": self._deserialize_datetime(row["updated_at"]),

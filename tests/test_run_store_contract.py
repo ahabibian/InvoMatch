@@ -34,7 +34,7 @@ def sample_run() -> dict[str, Any]:
     return {
         "run_id": "run-001",
         "tenant_id": "tenant-001",
-        "status": "pending",
+        "status": "queued",
         "current_stage": None,
         "claimed_by": None,
         "claim_expires_at": None,
@@ -84,7 +84,7 @@ def test_list_runs_is_deterministic(run_store: RunStore) -> None:
         {
             "run_id": "run-a",
             "tenant_id": "tenant-001",
-            "status": "pending",
+            "status": "queued",
             "current_stage": None,
             "claimed_by": None,
             "claim_expires_at": None,
@@ -107,7 +107,7 @@ def test_list_runs_is_deterministic(run_store: RunStore) -> None:
         {
             "run_id": "run-b",
             "tenant_id": "tenant-001",
-            "status": "pending",
+            "status": "queued",
             "current_stage": None,
             "claimed_by": None,
             "claim_expires_at": None,
@@ -291,7 +291,7 @@ def test_terminal_run_cannot_be_reopened_via_progress_update(
 
     updated = run_store.update_progress(
         run_id=sample_run["run_id"],
-        status="running",
+        status="processing",
         stage="matching",
     )
     assert updated is False

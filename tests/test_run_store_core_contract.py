@@ -60,7 +60,7 @@ def test_create_then_get_returns_authoritative_run(
     loaded = load_reconciliation_run(created.run_id, run_store=run_store)
 
     assert loaded.run_id == created.run_id
-    assert loaded.status == "pending"
+    assert loaded.status == "queued"
     assert loaded.invoice_csv_path == invoice_path.as_posix()
     assert loaded.payment_csv_path == payment_path.as_posix()
 
@@ -69,7 +69,7 @@ def test_duplicate_create_is_rejected(run_store: SqliteRunStore, tmp_path: Path)
     now = utc_now()
     run = ReconciliationRun(
         run_id="run-duplicate",
-        status="pending",
+        status="queued",
         version=0,
         created_at=now,
         updated_at=now,
@@ -135,7 +135,7 @@ def test_claim_known_run_by_id_updates_state(
     )
 
     assert claimed.run_id == run.run_id
-    assert claimed.status == "running"
+    assert claimed.status == "processing"
     assert claimed.claimed_by == "worker-1"
     assert claimed.lease_expires_at is not None
     assert claimed.version >= 1
@@ -215,7 +215,7 @@ def test_mark_completed_through_update_flow_is_terminal(
 
     running = update_reconciliation_run(
         run.run_id,
-        status="running",
+        status="processing",
         run_store=run_store,
     )
     completed = update_reconciliation_run(
@@ -230,7 +230,7 @@ def test_mark_completed_through_update_flow_is_terminal(
     with pytest.raises(ValueError):
         update_reconciliation_run(
             completed.run_id,
-            status="running",
+            status="processing",
             run_store=run_store,
         )
 
@@ -248,7 +248,7 @@ def test_mark_failed_through_update_flow_is_terminal(
 
     running = update_reconciliation_run(
         run.run_id,
-        status="running",
+        status="processing",
         run_store=run_store,
     )
     failed = update_reconciliation_run(
@@ -265,6 +265,6 @@ def test_mark_failed_through_update_flow_is_terminal(
     with pytest.raises(ValueError):
         update_reconciliation_run(
             failed.run_id,
-            status="running",
+            status="processing",
             run_store=run_store,
         )

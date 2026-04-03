@@ -6,10 +6,27 @@ from invomatch.services.matching_engine import match
 
 
 def test_match_returns_exact_match_with_date_and_reference_weighting():
-    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")
+    invoice = Invoice(
+        id="i1",
+        date=date(2024, 1, 10),
+        amount=Decimal("100.00"),
+        reference="INV-100",
+        currency="SEK",
+    )
     payments = [
-        Payment(id="p2", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100"),
-        Payment(id="p1", date=date(2024, 1, 11), amount=Decimal("25.00")),
+        Payment(
+            id="p2",
+            date=date(2024, 1, 10),
+            amount=Decimal("100.00"),
+            reference="INV-100",
+            currency="SEK",
+        ),
+        Payment(
+            id="p1",
+            date=date(2024, 1, 11),
+            amount=Decimal("25.00"),
+            currency="SEK",
+        ),
     ]
 
     result = match(invoice, payments)
@@ -22,8 +39,20 @@ def test_match_returns_exact_match_with_date_and_reference_weighting():
 
 
 def test_match_uses_date_tolerance_for_confidence_when_reference_missing():
-    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"))
-    payments = [Payment(id="p1", date=date(2024, 1, 13), amount=Decimal("100.00"))]
+    invoice = Invoice(
+        id="i1",
+        date=date(2024, 1, 10),
+        amount=Decimal("100.00"),
+        currency="SEK",
+    )
+    payments = [
+        Payment(
+            id="p1",
+            date=date(2024, 1, 13),
+            amount=Decimal("100.00"),
+            currency="SEK",
+        )
+    ]
 
     result = match(invoice, payments)
 
@@ -36,9 +65,21 @@ def test_match_uses_date_tolerance_for_confidence_when_reference_missing():
 
 
 def test_match_uses_far_date_score_and_omits_reference_reason_on_reference_mismatch():
-    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")
+    invoice = Invoice(
+        id="i1",
+        date=date(2024, 1, 10),
+        amount=Decimal("100.00"),
+        reference="INV-100",
+        currency="SEK",
+    )
     payments = [
-        Payment(id="p1", date=date(2024, 1, 20), amount=Decimal("100.00"), reference="OTHER")
+        Payment(
+            id="p1",
+            date=date(2024, 1, 20),
+            amount=Decimal("100.00"),
+            reference="OTHER",
+            currency="SEK",
+        )
     ]
 
     result = match(invoice, payments)
@@ -49,10 +90,28 @@ def test_match_uses_far_date_score_and_omits_reference_reason_on_reference_misma
 
 
 def test_match_detects_duplicate_exact_matches_deterministically_with_scoring():
-    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")
+    invoice = Invoice(
+        id="i1",
+        date=date(2024, 1, 10),
+        amount=Decimal("100.00"),
+        reference="INV-100",
+        currency="SEK",
+    )
     payments = [
-        Payment(id="p2", date=date(2024, 1, 12), amount=Decimal("100.00"), reference="wrong"),
-        Payment(id="p1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100"),
+        Payment(
+            id="p2",
+            date=date(2024, 1, 12),
+            amount=Decimal("100.00"),
+            reference="wrong",
+            currency="SEK",
+        ),
+        Payment(
+            id="p1",
+            date=date(2024, 1, 10),
+            amount=Decimal("100.00"),
+            reference="INV-100",
+            currency="SEK",
+        ),
     ]
 
     result = match(invoice, payments)
@@ -66,10 +125,25 @@ def test_match_detects_duplicate_exact_matches_deterministically_with_scoring():
 
 
 def test_match_detects_partial_payment_combination():
-    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"))
+    invoice = Invoice(
+        id="i1",
+        date=date(2024, 1, 10),
+        amount=Decimal("100.00"),
+        currency="SEK",
+    )
     payments = [
-        Payment(id="p2", date=date(2024, 1, 12), amount=Decimal("60.00")),
-        Payment(id="p1", date=date(2024, 1, 11), amount=Decimal("40.00")),
+        Payment(
+            id="p2",
+            date=date(2024, 1, 12),
+            amount=Decimal("60.00"),
+            currency="SEK",
+        ),
+        Payment(
+            id="p1",
+            date=date(2024, 1, 11),
+            amount=Decimal("40.00"),
+            currency="SEK",
+        ),
     ]
 
     result = match(invoice, payments)
@@ -82,8 +156,20 @@ def test_match_detects_partial_payment_combination():
 
 
 def test_match_returns_unmatched_with_clear_reason_taxonomy():
-    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"))
-    payments = [Payment(id="p1", date=date(2024, 1, 20), amount=Decimal("35.00"))]
+    invoice = Invoice(
+        id="i1",
+        date=date(2024, 1, 10),
+        amount=Decimal("100.00"),
+        currency="SEK",
+    )
+    payments = [
+        Payment(
+            id="p1",
+            date=date(2024, 1, 20),
+            amount=Decimal("35.00"),
+            currency="SEK",
+        )
+    ]
 
     result = match(invoice, payments)
 
@@ -95,10 +181,25 @@ def test_match_returns_unmatched_with_clear_reason_taxonomy():
 
 
 def test_duplicate_selection_is_deterministic_on_tied_scores():
-    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"))
+    invoice = Invoice(
+        id="i1",
+        date=date(2024, 1, 10),
+        amount=Decimal("100.00"),
+        currency="SEK",
+    )
     payments = [
-        Payment(id="p2", date=date(2024, 1, 11), amount=Decimal("100.00")),
-        Payment(id="p1", date=date(2024, 1, 11), amount=Decimal("100.00")),
+        Payment(
+            id="p2",
+            date=date(2024, 1, 11),
+            amount=Decimal("100.00"),
+            currency="SEK",
+        ),
+        Payment(
+            id="p1",
+            date=date(2024, 1, 11),
+            amount=Decimal("100.00"),
+            currency="SEK",
+        ),
     ]
 
     result = match(invoice, payments)
@@ -109,8 +210,22 @@ def test_duplicate_selection_is_deterministic_on_tied_scores():
 
 
 def test_explanation_contains_reasons_for_auditability():
-    invoice = Invoice(id="i1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")
-    payments = [Payment(id="p1", date=date(2024, 1, 10), amount=Decimal("100.00"), reference="INV-100")]
+    invoice = Invoice(
+        id="i1",
+        date=date(2024, 1, 10),
+        amount=Decimal("100.00"),
+        reference="INV-100",
+        currency="SEK",
+    )
+    payments = [
+        Payment(
+            id="p1",
+            date=date(2024, 1, 10),
+            amount=Decimal("100.00"),
+            reference="INV-100",
+            currency="SEK",
+        )
+    ]
 
     result = match(invoice, payments)
 

@@ -15,7 +15,7 @@ def _build_run(run_id: str = "run-1") -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
         run_id=run_id,
-        status="pending",
+        status="queued",
         version=0,
         created_at=now,
         updated_at=now,
@@ -42,7 +42,7 @@ def test_update_run_increments_version_when_expected_version_matches(store):
 
     updated = created.model_copy(
         update={
-            "status": "running",
+            "status": "processing",
             "version": created.version + 1,
             "updated_at": datetime.now(timezone.utc),
         }
@@ -54,7 +54,7 @@ def test_update_run_increments_version_when_expected_version_matches(store):
     loaded = store.get_run(created.run_id)
     assert loaded is not None
     assert loaded.version == 1
-    assert loaded.status == "running"
+    assert loaded.status == "processing"
 
 
 def test_update_run_rejects_stale_version(store):
@@ -62,7 +62,7 @@ def test_update_run_rejects_stale_version(store):
 
     first_update = created.model_copy(
         update={
-            "status": "running",
+            "status": "processing",
             "version": created.version + 1,
             "updated_at": datetime.now(timezone.utc),
         }
@@ -87,7 +87,7 @@ def test_update_run_requires_next_version(store):
 
     invalid_update = created.model_copy(
         update={
-            "status": "running",
+            "status": "processing",
             "version": created.version,
             "updated_at": datetime.now(timezone.utc),
         }

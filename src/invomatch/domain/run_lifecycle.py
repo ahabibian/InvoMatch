@@ -6,10 +6,12 @@ class InvalidRunStateTransition(ValueError):
 
 
 ALLOWED_TRANSITIONS: dict[RunStatus, set[RunStatus]] = {
-    "pending": {"pending", "running", "failed"},
-    "running": {"running", "completed", "failed"},
-    "completed": {"completed"},
-    "failed": {"failed"},
+    "queued": {"processing", "failed", "cancelled"},
+    "processing": {"review_required", "completed", "failed", "cancelled"},
+    "review_required": {"completed", "failed", "cancelled"},
+    "completed": set(),
+    "failed": set(),
+    "cancelled": set(),
 }
 
 

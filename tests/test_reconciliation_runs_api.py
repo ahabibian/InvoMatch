@@ -62,7 +62,7 @@ def _seed_runs(run_store: RunStore) -> list[str]:
         payment_csv_path=Path("sample-data/payments-failed.csv"),
         run_store=run_store,
     )
-    update_reconciliation_run(failed.run_id, status="running", run_store=run_store)
+    update_reconciliation_run(failed.run_id, status="processing", run_store=run_store)
     update_reconciliation_run(
         failed.run_id,
         status="failed",
@@ -264,7 +264,7 @@ def test_get_reconciliation_runs_returns_paginated_list(tmp_path: Path):
     assert response.limit == 50
     assert response.offset == 0
     assert len(response.items) == 3
-    assert {item.status for item in response.items} == {"pending", "failed", "completed"}
+    assert {item.status for item in response.items} == {"queued", "failed", "completed"}
 
 
 def test_get_reconciliation_runs_filters_by_status(tmp_path: Path):
