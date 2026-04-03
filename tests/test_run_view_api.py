@@ -135,26 +135,23 @@ def test_get_run_view_returns_default_projection_shape():
     assert body["match_summary"]["total_items"] == 10
     assert body["match_summary"]["matched_items"] == 7
     assert body["review_summary"]["status"] == "not_started"
+    assert body["review_summary"]["total_items"] == 0
     assert body["export_summary"]["status"] == "not_ready"
     assert body["artifacts"] == []
 
 
-def test_get_run_view_returns_review_and_sorted_artifacts():
+def test_get_run_view_returns_review_aggregate_and_sorted_artifacts():
     run = FakeRun(run_id="run_456", status="completed")
     review_store = FakeReviewStore(
         feedbacks={
-            "fb_1": FakeFeedback(
-                feedback_id="fb_1",
-                run_id="run_456",
-                raw_payload={"reason_code": "amount_mismatch", "match_id": "match_1"},
-            )
+            "fb_1": FakeFeedback(feedback_id="fb_1", run_id="run_456", raw_payload={"reason_code": "amount_mismatch"}),
+            "fb_2": FakeFeedback(feedback_id="fb_2", run_id="run_456", raw_payload={"reason_code": "date_mismatch"}),
+            "fb_other": FakeFeedback(feedback_id="fb_other", run_id="other_run"),
         },
         review_items=[
-            FakeReviewItem(
-                review_item_id="review_1",
-                feedback_id="fb_1",
-                item_status="APPROVED",
-            )
+            FakeReviewItem(review_item_id="review_1", feedback_id="fb_1", item_status="APPROVED"),
+            FakeReviewItem(review_item_id="review_2", feedback_id="fb_2", item_status="DEFERRED"),
+            FakeReviewItem(review_item_id="review_other", feedback_id="fb_other", item_status="IN_REVIEW"),
         ],
     )
     artifact_query_service = FakeArtifactQueryService(
@@ -185,8 +182,9 @@ def test_get_run_view_returns_review_and_sorted_artifacts():
 
     assert response.status_code == 200
     body = response.json()
-    assert body["review_summary"]["status"] == "completed"
-    assert body["review_summary"]["total_items"] == 1
+    assert body["review_summary"]["status"] == "in_review"
+    assert body["review_summary"]["total_items"] == 2
+    assert body["review_summary"]["open_items"] == 1
     assert body["review_summary"]["resolved_items"] == 1
     assert body["export_summary"]["status"] == "exported"
     assert body["export_summary"]["artifact_count"] == 2

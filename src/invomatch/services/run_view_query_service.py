@@ -10,7 +10,6 @@ from invomatch.api.product_models.run_view import (
     ProductRunReviewSummary,
     ProductRunView,
 )
-from invomatch.services.review_queries import ReviewQueryService
 
 
 def _utc_min_datetime() -> datetime:
@@ -22,6 +21,16 @@ def _safe_int(value: Any) -> int:
         return int(value or 0)
     except (TypeError, ValueError):
         return 0
+
+
+def _is_open_review_item_status(value: Any) -> bool:
+    normalized = str(value or "").upper()
+    return normalized in {"PENDING", "IN_REVIEW", "DEFERRED"}
+
+
+def _is_resolved_review_item_status(value: Any) -> bool:
+    normalized = str(value or "").upper()
+    return normalized in {"APPROVED", "REJECTED", "MODIFIED", "CLOSED"}
 
 
 class RunViewQueryService:
@@ -90,8 +99,10 @@ class RunViewQueryService:
                 resolved_items=0,
             )
 
-        projection = ReviewQueryService(review_store=self._review_store).get_review_case_for_run(run_id)
-        if projection is None:
+        list_review_items = getattr(self._review_store, "list_review_items", None)
+        get_feedback = getattr(self._review_store, "get_feedback", None)
+
+        if list_review_items is None or get_feedback is None:
             return ProductRunReviewSummary(
                 status="not_started",
                 total_items=0,
@@ -99,19 +110,39 @@ class RunViewQueryService:
                 resolved_items=0,
             )
 
-        normalized_status = str(getattr(projection, "status", "open")).lower()
-        if normalized_status == "open":
+        relevant_items = []
+        for review_item in list_review_items():
+            feedback = get_feedback(review_item.feedback_id)
+            if feedback is None:
+                continue
+            if str(getattr(feedback, "run_id", "")) != str(run_id):
+                continue
+            relevant_items.append(review_item)
+
+        total_items = len(relevant_items)
+        if total_items == 0:
+            return ProductRunReviewSummary(
+                status="not_started",
+                total_items=0,
+                open_items=0,
+                resolved_items=0,
+            )
+
+        open_items = sum(
+            1 for item in relevant_items if _is_open_review_item_status(getattr(item, "item_status", None))
+        )
+        resolved_items = sum(
+            1 for item in relevant_items if _is_resolved_review_item_status(getattr(item, "item_status", None))
+        )
+
+        if open_items > 0:
             status = "in_review"
-            open_items = 1
-            resolved_items = 0
         else:
             status = "completed"
-            open_items = 0
-            resolved_items = 1
 
         return ProductRunReviewSummary(
             status=status,
-            total_items=1,
+            total_items=total_items,
             open_items=open_items,
             resolved_items=resolved_items,
         )
