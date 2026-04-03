@@ -222,3 +222,144 @@ def test_get_export_artifact_metadata_preserves_lifecycle_visibility_for_non_dow
 
     assert failed_payload["state"] == "failed"
     assert failed_payload["download_available"] is False
+def test_download_export_artifact_success(tmp_path):
+    run_store = JsonRunStore(tmp_path / "runs.json")
+    run = _create_completed_run(tmp_path, run_store)
+
+    export_dir = tmp_path / "exports"
+    app = create_app(run_store=run_store, export_base_dir=export_dir)
+
+    repository = app.state.export_artifact_repository
+    storage = app.state.export_artifact_storage
+
+    artifact = _make_artifact(
+        artifact_id="artifact-ready-download",
+        run_id=run.run_id,
+        status=ExportArtifactStatus.READY,
+    )
+
+    # create actual file in storage
+    storage.save_bytes(
+        key=artifact.storage_key,
+        content=b"test-content",
+        content_type=artifact.content_type,
+    )
+
+    repository.create(artifact)
+
+    client = TestClient(app)
+
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+
+    assert response.status_code == 200
+    assert response.content == b"test-content"
+    assert response.headers["Content-Disposition"].startswith("attachment;")
+
+
+def test_download_export_artifact_not_found(tmp_path):
+    app = create_app(run_store=JsonRunStore(tmp_path / "runs.json"))
+
+    client = TestClient(app)
+
+    response = client.get("/api/reconciliation/exports/missing/download")
+
+    assert response.status_code == 404
+    assert response.json()["detail"]["code"] == "artifact_not_found"
+
+
+def test_download_export_artifact_expired(tmp_path):
+    run_store = JsonRunStore(tmp_path / "runs.json")
+    run = _create_completed_run(tmp_path, run_store)
+
+    app = create_app(run_store=run_store, export_base_dir=tmp_path / "exports")
+
+    repository = app.state.export_artifact_repository
+
+    artifact = _make_artifact(
+        artifact_id="artifact-expired",
+        run_id=run.run_id,
+        status=ExportArtifactStatus.EXPIRED,
+    )
+
+    repository.create(artifact)
+
+    client = TestClient(app)
+
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+
+    assert response.status_code == 410
+    assert response.json()["detail"]["code"] == "artifact_expired"
+
+
+def test_download_export_artifact_deleted(tmp_path):
+    run_store = JsonRunStore(tmp_path / "runs.json")
+    run = _create_completed_run(tmp_path, run_store)
+
+    app = create_app(run_store=run_store, export_base_dir=tmp_path / "exports")
+
+    repository = app.state.export_artifact_repository
+
+    artifact = _make_artifact(
+        artifact_id="artifact-deleted",
+        run_id=run.run_id,
+        status=ExportArtifactStatus.DELETED,
+    )
+
+    repository.create(artifact)
+
+    client = TestClient(app)
+
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+
+    assert response.status_code == 410
+    assert response.json()["detail"]["code"] == "artifact_deleted"
+
+
+def test_download_export_artifact_failed(tmp_path):
+    run_store = JsonRunStore(tmp_path / "runs.json")
+    run = _create_completed_run(tmp_path, run_store)
+
+    app = create_app(run_store=run_store, export_base_dir=tmp_path / "exports")
+
+    repository = app.state.export_artifact_repository
+
+    artifact = _make_artifact(
+        artifact_id="artifact-failed",
+        run_id=run.run_id,
+        status=ExportArtifactStatus.FAILED,
+    )
+
+    repository.create(artifact)
+
+    client = TestClient(app)
+
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "artifact_failed"
+
+
+def test_download_export_artifact_unavailable(tmp_path):
+    run_store = JsonRunStore(tmp_path / "runs.json")
+    run = _create_completed_run(tmp_path, run_store)
+
+    app = create_app(run_store=run_store, export_base_dir=tmp_path / "exports")
+
+    repository = app.state.export_artifact_repository
+
+    # READY but no file in storage
+    artifact = _make_artifact(
+        artifact_id="artifact-unavailable",
+        run_id=run.run_id,
+        status=ExportArtifactStatus.READY,
+    )
+
+    repository.create(artifact)
+
+    client = TestClient(app)
+
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+
+    assert response.status_code == 500
+    assert response.json()["detail"]["code"] == "artifact_unavailable"
+
