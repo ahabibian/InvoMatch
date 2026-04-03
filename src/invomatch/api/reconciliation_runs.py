@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from pathlib import Path
 from typing import Callable, Literal
@@ -13,18 +13,22 @@ from invomatch.api.product_models.run import (
     ProductRunDetail,
     ProductRunListResponse,
 )
+from invomatch.api.product_models.run_view import ProductRunView
 from invomatch.api.reconciliation_schemas import (
     ApiErrorResponse,
     CreateRunRequest,
     to_api_error_response,
 )
 from invomatch.domain.models import ReconciliationRun, RunStatus
+from invomatch.services.artifact_query_service import ArtifactQueryService
 from invomatch.services.reconciliation_errors import (
     ReconciliationExecutionError,
     ReconciliationInputValidationError,
     RunStorageError,
 )
+from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_registry import RunRegistry
+from invomatch.services.run_view_query_service import RunViewQueryService
 
 router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-runs"])
 
@@ -79,3 +83,26 @@ def get_reconciliation_run(run_id: str, request: Request) -> ProductRunDetail:
     if run is None:
         raise HTTPException(status_code=404, detail="Reconciliation run not found")
     return to_product_run_detail(run)
+
+
+@router.get("/{run_id}/view", response_model=ProductRunView)
+def get_reconciliation_run_view(run_id: str, request: Request) -> ProductRunView:
+    registry: RunRegistry = request.app.state.run_registry
+    review_store: InMemoryReviewStore | None = getattr(request.app.state, "review_store", None)
+    artifact_query_service: ArtifactQueryService | None = getattr(
+        request.app.state,
+        "artifact_query_service",
+        None,
+    )
+
+    query_service = RunViewQueryService(
+        run_store=registry,
+        review_store=review_store,
+        artifact_query_service=artifact_query_service,
+    )
+    run_view = query_service.get_run_view(run_id)
+
+    if run_view is None:
+        raise HTTPException(status_code=404, detail="Reconciliation run not found")
+
+    return run_view
