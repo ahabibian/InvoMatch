@@ -3,12 +3,16 @@ from pathlib import Path
 from invomatch.api.product_models.action import ProductActionRequest
 from invomatch.domain.models import ReconciliationReport, ReconciliationResult, MatchResult
 from invomatch.domain.review.models import DecisionType, FeedbackRecord
+from invomatch.repositories.export_artifact_repository_sqlite import (
+    SqliteExportArtifactRepository,
+)
 from invomatch.services.action_service import ActionService
 from invomatch.services.actions.command import ActionCommand
 from invomatch.services.actions.handlers.export_run import ExportRunActionHandler
 from invomatch.services.actions.result import ActionExecutionStatus
 from invomatch.services.export.export_service import ExportService
 from invomatch.services.export.run_finalized_result_reader import RunFinalizedResultReader
+from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.reconciliation_runs import (
     create_reconciliation_run,
     update_reconciliation_run,
@@ -16,6 +20,7 @@ from invomatch.services.reconciliation_runs import (
 from invomatch.services.review_service import ReviewService
 from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import JsonRunStore
+from invomatch.services.storage.local_storage import LocalArtifactStorage
 
 
 def _completed_run_store(tmp_path: Path) -> tuple[JsonRunStore, str]:
@@ -148,7 +153,27 @@ def test_export_run_handler_returns_metadata(tmp_path: Path):
             review_store=review_store,
         ),
     )
-    handler = ExportRunActionHandler(export_service=export_service)
+
+    artifact_root = tmp_path / "artifacts"
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    repository = SqliteExportArtifactRepository(str(artifact_root / "export_artifacts.sqlite3"))
+    storage = LocalArtifactStorage(artifact_root)
+
+    def export_generator(target_run_id: str, format: str) -> bytes:
+        from invomatch.domain.export import ExportFormat
+
+        return export_service.export(
+            run_id=target_run_id,
+            export_format=ExportFormat(format),
+        ).content
+
+    delivery_service = ExportDeliveryService(
+        repository=repository,
+        storage=storage,
+        export_generator=export_generator,
+    )
+
+    handler = ExportRunActionHandler(delivery_service=delivery_service)
 
     command = ActionCommand(
         action_type="export_run",
@@ -160,10 +185,12 @@ def test_export_run_handler_returns_metadata(tmp_path: Path):
 
     assert result.status == ActionExecutionStatus.SUCCESS
     assert result.response_payload["run_id"] == run_id
-    assert result.response_payload["export_status"] == "completed"
+    assert result.response_payload["artifact_id"]
+    assert result.response_payload["export_status"] == "READY"
     assert result.response_payload["export_format"] == "json"
     assert result.response_payload["content_type"] == "application/json"
-    assert result.response_payload["filename"] == f"run_{run_id}.json"
+    assert result.response_payload["file_name"] == f"run_{run_id}_export_json.json"
+    assert result.response_payload["byte_size"] > 0
 
 
 def test_action_service_rejects_export_without_format():
