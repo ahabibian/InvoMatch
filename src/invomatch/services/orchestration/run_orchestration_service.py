@@ -17,7 +17,7 @@ from invomatch.services.orchestration.run_finalization_evaluator import (
 from invomatch.services.reconciliation_runs import update_reconciliation_run
 from invomatch.services.review_service import ReviewService
 from invomatch.services.review_store import InMemoryReviewStore
-from invomatch.services.run_store import InMemoryRunStore, RunStore
+from invomatch.services.run_store import RunStore
 
 
 @dataclass
@@ -130,3 +130,34 @@ class RunOrchestrationService:
             run_status="failed",
             review_cases=[],
         )
+
+    def orchestrate_and_persist_post_review_resolution(
+        self,
+        *,
+        run_id: str,
+        matching_completed: bool,
+        run_store: RunStore,
+    ) -> tuple[RunOrchestrationResult, ReconciliationRun]:
+        current_run = run_store.get_run(run_id)
+        if current_run is None:
+            raise KeyError(f"Reconciliation run not found: {run_id}")
+
+        if current_run.status != "review_required":
+            raise ValueError(
+                f"Invalid state for review resolution: {current_run.status}"
+            )
+
+        orchestration_result = self.orchestrate_post_review_resolution(
+            matching_completed=matching_completed,
+        )
+
+        if orchestration_result.run_status == "review_required":
+            return orchestration_result, current_run
+
+        persisted_run = update_reconciliation_run(
+            run_id,
+            status=orchestration_result.run_status,
+            run_store=run_store,
+        )
+
+        return orchestration_result, persisted_run
