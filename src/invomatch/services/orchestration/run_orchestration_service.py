@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from invomatch.domain.models import ReconciliationRun
 from invomatch.services.orchestration.review_case_generation_service import (
     ReviewCaseGenerationService,
 )
@@ -13,8 +14,10 @@ from invomatch.services.orchestration.review_requirement_evaluator import (
 from invomatch.services.orchestration.run_finalization_evaluator import (
     RunFinalizationEvaluator,
 )
+from invomatch.services.reconciliation_runs import update_reconciliation_run
 from invomatch.services.review_service import ReviewService
 from invomatch.services.review_store import InMemoryReviewStore
+from invomatch.services.run_store import InMemoryRunStore, RunStore
 
 
 @dataclass
@@ -79,6 +82,26 @@ class RunOrchestrationService:
             review_cases=[],
         )
 
+    def orchestrate_and_persist_post_matching(
+        self,
+        *,
+        run_id: str,
+        reconciliation_outcomes: List[Dict[str, Any]],
+        run_store: RunStore,
+    ) -> tuple[RunOrchestrationResult, ReconciliationRun]:
+        orchestration_result = self.orchestrate_post_matching(
+            run_id=run_id,
+            reconciliation_outcomes=reconciliation_outcomes,
+        )
+
+        persisted_run = update_reconciliation_run(
+            run_id,
+            status=orchestration_result.run_status,
+            run_store=run_store,
+        )
+
+        return orchestration_result, persisted_run
+
     def orchestrate_post_review_resolution(
         self,
         *,
@@ -86,17 +109,8 @@ class RunOrchestrationService:
     ) -> RunOrchestrationResult:
         active_review_cases = self._review_integration_service.get_active_cases()
 
-        normalized_review_items = [
-            {
-                "invoice_id": case["invoice_id"],
-                "status": case["status"].lower(),
-                "blocking": case.get("blocking", True),
-            }
-            for case in active_review_cases
-        ]
-
         finalization = self._run_finalization_evaluator.evaluate(
-            review_items=normalized_review_items,
+            review_items=active_review_cases,
             matching_completed=matching_completed,
         )
 
