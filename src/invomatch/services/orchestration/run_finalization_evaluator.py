@@ -25,7 +25,10 @@ class RunFinalizationEvaluator:
             return RunFinalizationResult(is_finalizable=False)
 
         for item in review_items:
-            if item.get("status") in _BLOCKING_REVIEW_STATUSES:
+            raw_status = item.get("status")
+            normalized_status = str(raw_status).strip().lower()
+
+            if normalized_status in _BLOCKING_REVIEW_STATUSES:
                 return RunFinalizationResult(is_finalizable=False)
 
         return RunFinalizationResult(is_finalizable=True)

@@ -62,3 +62,42 @@ def test_run_is_not_finalizable_when_review_item_is_reopened():
     )
 
     assert outcome.is_finalizable is False
+
+
+def test_run_is_not_finalizable_when_review_item_status_is_pending_uppercase():
+    evaluator = RunFinalizationEvaluator()
+
+    outcome = evaluator.evaluate(
+        review_items=[
+            {"invoice_id": "1", "status": "PENDING"},
+        ],
+        matching_completed=True,
+    )
+
+    assert outcome.is_finalizable is False
+
+
+def test_run_is_not_finalizable_when_review_item_status_is_in_review_uppercase():
+    evaluator = RunFinalizationEvaluator()
+
+    outcome = evaluator.evaluate(
+        review_items=[
+            {"invoice_id": "1", "status": "IN_REVIEW"},
+        ],
+        matching_completed=True,
+    )
+
+    assert outcome.is_finalizable is False
+
+
+def test_run_is_not_finalizable_when_review_item_status_is_deferred_uppercase():
+    evaluator = RunFinalizationEvaluator()
+
+    outcome = evaluator.evaluate(
+        review_items=[
+            {"invoice_id": "1", "status": "DEFERRED"},
+        ],
+        matching_completed=True,
+    )
+
+    assert outcome.is_finalizable is False
