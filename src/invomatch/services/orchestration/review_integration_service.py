@@ -40,11 +40,19 @@ class ReviewIntegrationService:
         self._review_store.save_review_session(review_session)
 
         for case in review_cases:
+            invoice_id = case["invoice_id"]
+
+            if self._has_active_case_for_run_invoice(
+                run_id=run_id,
+                invoice_id=invoice_id,
+            ):
+                continue
+
             feedback = FeedbackRecord(
                 feedback_id=new_id("feedback"),
                 run_id=run_id,
                 source_type="run_orchestration",
-                source_reference=case["invoice_id"],
+                source_reference=invoice_id,
                 feedback_type="REVIEW_CASE",
                 raw_payload=case,
                 submitted_by=created_by,
@@ -84,3 +92,22 @@ class ReviewIntegrationService:
             )
 
         return active_cases
+
+    def _has_active_case_for_run_invoice(
+        self,
+        *,
+        run_id: str,
+        invoice_id: str,
+    ) -> bool:
+        for review_item in self._review_store.list_review_items():
+            if review_item.item_status not in _ACTIVE_REVIEW_ITEM_STATUSES:
+                continue
+
+            feedback = self._review_store.get_feedback(review_item.feedback_id)
+            if feedback is None:
+                continue
+
+            if feedback.run_id == run_id and feedback.source_reference == invoice_id:
+                return True
+
+        return False
