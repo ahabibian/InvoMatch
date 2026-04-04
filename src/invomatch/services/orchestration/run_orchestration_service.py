@@ -1,8 +1,11 @@
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from invomatch.services.orchestration.review_case_generation_service import (
     ReviewCaseGenerationService,
+)
+from invomatch.services.orchestration.review_integration_service import (
+    ReviewIntegrationService,
 )
 from invomatch.services.orchestration.review_requirement_evaluator import (
     ReviewRequirementEvaluator,
@@ -18,11 +21,25 @@ class RunOrchestrationResult:
     review_cases: List[Dict[str, Any]]
 
 
-class RunOrchestrationService:
+class _InMemoryReviewStore:
     def __init__(self) -> None:
+        self.created: List[Dict[str, Any]] = []
+
+    def create_review_case(self, case: Dict[str, Any]) -> None:
+        self.created.append(case)
+
+    def list_active(self) -> List[Dict[str, Any]]:
+        return list(self.created)
+
+
+class RunOrchestrationService:
+    def __init__(self, review_store: Optional[Any] = None) -> None:
         self._review_requirement_evaluator = ReviewRequirementEvaluator()
         self._review_case_generation_service = ReviewCaseGenerationService()
         self._run_finalization_evaluator = RunFinalizationEvaluator()
+        self._review_integration_service = ReviewIntegrationService(
+            review_store=review_store or _InMemoryReviewStore()
+        )
 
     def orchestrate_post_matching(
         self,
@@ -33,12 +50,15 @@ class RunOrchestrationService:
         )
 
         if review_requirement.requires_review:
-            review_cases = self._review_case_generation_service.generate(
+            generated_review_cases = self._review_case_generation_service.generate(
                 reconciliation_outcomes
             )
+            self._review_integration_service.create_cases(generated_review_cases)
+            active_review_cases = self._review_integration_service.get_active_cases()
+
             return RunOrchestrationResult(
                 run_status="review_required",
-                review_cases=review_cases,
+                review_cases=active_review_cases,
             )
 
         finalization = self._run_finalization_evaluator.evaluate(
@@ -59,11 +79,12 @@ class RunOrchestrationService:
 
     def orchestrate_post_review_resolution(
         self,
-        review_items: List[Dict[str, Any]],
         matching_completed: bool,
     ) -> RunOrchestrationResult:
+        active_review_cases = self._review_integration_service.get_active_cases()
+
         finalization = self._run_finalization_evaluator.evaluate(
-            review_items=review_items,
+            review_items=active_review_cases,
             matching_completed=matching_completed,
         )
 
@@ -76,7 +97,7 @@ class RunOrchestrationService:
         if matching_completed:
             return RunOrchestrationResult(
                 run_status="review_required",
-                review_cases=review_items,
+                review_cases=active_review_cases,
             )
 
         return RunOrchestrationResult(
