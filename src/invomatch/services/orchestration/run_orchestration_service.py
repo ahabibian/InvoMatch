@@ -56,3 +56,30 @@ class RunOrchestrationService:
             run_status="failed",
             review_cases=[],
         )
+
+    def orchestrate_post_review_resolution(
+        self,
+        review_items: List[Dict[str, Any]],
+        matching_completed: bool,
+    ) -> RunOrchestrationResult:
+        finalization = self._run_finalization_evaluator.evaluate(
+            review_items=review_items,
+            matching_completed=matching_completed,
+        )
+
+        if finalization.is_finalizable:
+            return RunOrchestrationResult(
+                run_status="completed",
+                review_cases=[],
+            )
+
+        if matching_completed:
+            return RunOrchestrationResult(
+                run_status="review_required",
+                review_cases=review_items,
+            )
+
+        return RunOrchestrationResult(
+            run_status="failed",
+            review_cases=[],
+        )
