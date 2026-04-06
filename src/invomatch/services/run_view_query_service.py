@@ -224,7 +224,10 @@ class RunViewQueryService:
                 artifact_count=len(artifacts),
             )
 
-        if failed_artifact_count > 0:
+        run_status = _normalize_run_status(getattr(run, "status", ""))
+        export_eligible = run_status == "completed" and review_summary.open_items == 0
+
+        if export_eligible and failed_artifact_count > 0:
             return ProductRunExportSummary(
                 status="failed",
                 artifact_count=len(artifacts),
