@@ -15,7 +15,11 @@ from invomatch.ingestion.normalizers import (
     normalize_payment_reference,
 )
 from invomatch.ingestion.services.decision_builder import build_ingestion_status
-from invomatch.ingestion.utils import build_idempotency_key, fingerprint_payload
+from invomatch.ingestion.utils import (
+    build_idempotency_key,
+    build_payment_semantic_key,
+    fingerprint_payload,
+)
 from invomatch.ingestion.validators import validate_payment_input
 
 
@@ -32,6 +36,8 @@ def ingest_payment_input(raw: RawPaymentInput) -> IngestionResult:
     idempotency_key = build_idempotency_key(_PAYLOAD_KIND, payload_fingerprint)
 
     normalized = None
+    semantic_key = None
+
     if validation.is_valid:
         normalized = NormalizedPayment(
             external_id=normalize_external_id(raw.external_id),
@@ -41,6 +47,7 @@ def ingest_payment_input(raw: RawPaymentInput) -> IngestionResult:
             currency=normalize_currency(raw.currency),
             counterparty=normalize_optional_string(raw.counterparty),
         )
+        semantic_key = build_payment_semantic_key(normalized)
 
     return IngestionResult(
         status=status,
@@ -54,5 +61,6 @@ def ingest_payment_input(raw: RawPaymentInput) -> IngestionResult:
         ),
         processed_at=datetime.now(UTC),
         idempotency_key=idempotency_key,
+        semantic_key=semantic_key,
         notes=None,
     )
