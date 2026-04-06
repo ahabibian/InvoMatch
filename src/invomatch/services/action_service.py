@@ -2,10 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from invomatch.api.product_models.action import ProductActionRequest
 from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
+)
+from invomatch.services.actions.action_guard import (
+    InvalidActionForStateError,
+    UnknownRunStateError,
+    validate_action_for_state,
 )
 from invomatch.services.actions.command import ActionCommand
 from invomatch.services.actions.dispatcher import ActionDispatcher
@@ -43,6 +49,8 @@ class ActionService:
         review_store: InMemoryReviewStore | None = None,
         export_base_dir: Path | None = None,
     ) -> None:
+        self._run_store = run_store
+
         dispatcher = ActionDispatcher()
         dispatcher.register("resolve_review", ResolveReviewActionHandler)
 
@@ -94,6 +102,44 @@ class ActionService:
                 status="unsupported_action",
                 message=f"Unsupported action type: {action_type}",
             )
+
+        if self._run_store is not None:
+            try:
+                run_state = self._get_run_state(run_id)
+                validate_action_for_state(run_state=run_state, action_type=action_type)
+            except InvalidActionForStateError as exc:
+                return ActionExecutionResult(
+                    run_id=run_id,
+                    action_type=action_type,
+                    accepted=False,
+                    status="conflict",
+                    message=str(exc),
+                )
+            except UnknownRunStateError as exc:
+                return ActionExecutionResult(
+                    run_id=run_id,
+                    action_type=action_type,
+                    accepted=False,
+                    status="failed",
+                    message=str(exc),
+                )
+            except RuntimeError as exc:
+                message = str(exc)
+                if "was not found" in message:
+                    return ActionExecutionResult(
+                        run_id=run_id,
+                        action_type=action_type,
+                        accepted=False,
+                        status="not_found",
+                        message=message,
+                    )
+                return ActionExecutionResult(
+                    run_id=run_id,
+                    action_type=action_type,
+                    accepted=False,
+                    status="failed",
+                    message=message,
+                )
 
         command = ActionCommand(
             action_type=action_type,
@@ -159,6 +205,35 @@ class ActionService:
             status="failed",
             message="Action could not be completed.",
         )
+
+    def _get_run_state(self, run_id: str) -> str:
+        run = self._load_run(run_id)
+
+        status = getattr(run, "status", None)
+        if not isinstance(status, str) or not status.strip():
+            raise RuntimeError(f"Run '{run_id}' does not expose a valid status.")
+
+        return status
+
+    def _load_run(self, run_id: str) -> Any:
+        if self._run_store is None:
+            raise RuntimeError("ActionService requires run_store for action guard enforcement.")
+
+        get_run = getattr(self._run_store, "get_run", None)
+        if callable(get_run):
+            run = get_run(run_id)
+            if run is None:
+                raise RuntimeError(f"Run '{run_id}' was not found.")
+            return run
+
+        get_method = getattr(self._run_store, "get", None)
+        if callable(get_method):
+            run = get_method(run_id)
+            if run is None:
+                raise RuntimeError(f"Run '{run_id}' was not found.")
+            return run
+
+        raise RuntimeError("Run store does not expose a supported run lookup method.")
 
 
 def format_enum(value: str):
