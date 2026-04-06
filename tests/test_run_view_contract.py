@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import UTC, datetime
 
@@ -44,6 +44,7 @@ class FakeArtifact:
         run_id: str,
         created_at: datetime,
         file_name: str,
+        status: str = "READY",
         content_type: str = "text/csv",
         byte_size: int = 128,
         artifact_type: str = "run_export",
@@ -52,6 +53,7 @@ class FakeArtifact:
         self.run_id = run_id
         self.created_at = created_at
         self.file_name = file_name
+        self.status = status
         self.content_type = content_type
         self.byte_size = byte_size
         self.artifact_type = artifact_type
@@ -96,6 +98,19 @@ class FakeReviewStore:
         return list(self._review_items)
 
 
+class FakeExportReadinessResult:
+    def __init__(self, is_export_ready: bool) -> None:
+        self.is_export_ready = is_export_ready
+
+
+class FakeExportReadinessEvaluator:
+    def __init__(self, is_export_ready: bool) -> None:
+        self._is_export_ready = is_export_ready
+
+    def evaluate(self, run_id: str):
+        return FakeExportReadinessResult(is_export_ready=self._is_export_ready)
+
+
 def _create_client() -> TestClient:
     run = FakeRun(
         run_id="run_contract",
@@ -126,6 +141,7 @@ def _create_client() -> TestClient:
                     run_id="run_contract",
                     created_at=datetime(2026, 4, 3, 11, 31, 0, tzinfo=UTC),
                     file_name="run_contract.csv",
+                    status="READY",
                 )
             ]
         }
@@ -136,6 +152,7 @@ def _create_client() -> TestClient:
     app.state.run_registry = FakeRunRegistry(runs={"run_contract": run})
     app.state.review_store = review_store
     app.state.artifact_query_service = artifact_query_service
+    app.state.export_readiness_evaluator = FakeExportReadinessEvaluator(is_export_ready=True)
     return TestClient(app)
 
 
@@ -192,3 +209,14 @@ def test_run_view_contract_artifact_shape_is_lightweight_and_product_safe():
         "created_at",
         "download_url",
     }
+
+
+def test_run_view_contract_exposes_only_allowed_export_summary_statuses():
+    client = _create_client()
+
+    response = client.get("/api/reconciliation/runs/run_contract/view")
+
+    assert response.status_code == 200
+    export_status = response.json()["export_summary"]["status"]
+
+    assert export_status in {"not_ready", "ready", "exported", "failed"}

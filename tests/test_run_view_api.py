@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from datetime import UTC, datetime
 
@@ -44,6 +44,7 @@ class FakeArtifact:
         run_id: str,
         created_at: datetime,
         file_name: str,
+        status: str = "READY",
         content_type: str = "text/csv",
         byte_size: int = 128,
         artifact_type: str = "run_export",
@@ -52,6 +53,7 @@ class FakeArtifact:
         self.run_id = run_id
         self.created_at = created_at
         self.file_name = file_name
+        self.status = status
         self.content_type = content_type
         self.byte_size = byte_size
         self.artifact_type = artifact_type
@@ -92,16 +94,31 @@ class FakeReviewStore:
         return list(self._review_items)
 
 
+class FakeExportReadinessResult:
+    def __init__(self, is_export_ready: bool) -> None:
+        self.is_export_ready = is_export_ready
+
+
+class FakeExportReadinessEvaluator:
+    def __init__(self, is_export_ready: bool) -> None:
+        self._is_export_ready = is_export_ready
+
+    def evaluate(self, run_id: str):
+        return FakeExportReadinessResult(is_export_ready=self._is_export_ready)
+
+
 def create_test_client(
     registry: FakeRunRegistry,
     review_store=None,
     artifact_query_service=None,
+    export_readiness_evaluator=None,
 ) -> TestClient:
     app = FastAPI()
     app.include_router(router)
     app.state.run_registry = registry
     app.state.review_store = review_store
     app.state.artifact_query_service = artifact_query_service
+    app.state.export_readiness_evaluator = export_readiness_evaluator
     return TestClient(app)
 
 
@@ -140,7 +157,7 @@ def test_get_run_view_returns_default_projection_shape():
     assert body["artifacts"] == []
 
 
-def test_get_run_view_returns_review_aggregate_and_sorted_artifacts():
+def test_get_run_view_returns_review_aggregate_and_newest_ready_artifact_first():
     run = FakeRun(run_id="run_456", status="completed")
     review_store = FakeReviewStore(
         feedbacks={
@@ -158,16 +175,18 @@ def test_get_run_view_returns_review_aggregate_and_sorted_artifacts():
         artifacts_by_run={
             "run_456": [
                 FakeArtifact(
-                    artifact_id="artifact_b",
-                    run_id="run_456",
-                    created_at=datetime(2026, 4, 3, 11, 32, 0, tzinfo=UTC),
-                    file_name="run_456_b.csv",
-                ),
-                FakeArtifact(
-                    artifact_id="artifact_a",
+                    artifact_id="artifact_old_failed",
                     run_id="run_456",
                     created_at=datetime(2026, 4, 3, 11, 31, 0, tzinfo=UTC),
-                    file_name="run_456_a.csv",
+                    file_name="run_456_old.csv",
+                    status="FAILED",
+                ),
+                FakeArtifact(
+                    artifact_id="artifact_new_ready",
+                    run_id="run_456",
+                    created_at=datetime(2026, 4, 3, 11, 32, 0, tzinfo=UTC),
+                    file_name="run_456_new.csv",
+                    status="READY",
                 ),
             ]
         }
@@ -176,6 +195,7 @@ def test_get_run_view_returns_review_aggregate_and_sorted_artifacts():
         FakeRunRegistry(runs={"run_456": run}),
         review_store=review_store,
         artifact_query_service=artifact_query_service,
+        export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=False),
     )
 
     response = client.get("/api/reconciliation/runs/run_456/view")
@@ -186,7 +206,26 @@ def test_get_run_view_returns_review_aggregate_and_sorted_artifacts():
     assert body["review_summary"]["total_items"] == 2
     assert body["review_summary"]["open_items"] == 1
     assert body["review_summary"]["resolved_items"] == 1
+    assert body["review_summary"]["open_items"] + body["review_summary"]["resolved_items"] == body["review_summary"]["total_items"]
     assert body["export_summary"]["status"] == "exported"
     assert body["export_summary"]["artifact_count"] == 2
-    assert [artifact["artifact_id"] for artifact in body["artifacts"]] == ["artifact_a", "artifact_b"]
-    assert body["artifacts"][0]["download_url"] == "/api/reconciliation/exports/artifact_a/download"
+    assert [artifact["artifact_id"] for artifact in body["artifacts"]] == ["artifact_new_ready", "artifact_old_failed"]
+    assert body["artifacts"][0]["download_url"] == "/api/reconciliation/exports/artifact_new_ready/download"
+    assert body["artifacts"][1]["download_url"] is None
+
+
+def test_get_run_view_returns_ready_when_export_evaluator_allows_but_no_ready_artifact_exists():
+    run = FakeRun(run_id="run_ready", status="completed")
+    client = create_test_client(
+        FakeRunRegistry(runs={"run_ready": run}),
+        review_store=FakeReviewStore(),
+        artifact_query_service=FakeArtifactQueryService(artifacts_by_run={"run_ready": []}),
+        export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
+    )
+
+    response = client.get("/api/reconciliation/runs/run_ready/view")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["export_summary"]["status"] == "ready"
+    assert body["export_summary"]["artifact_count"] == 0
