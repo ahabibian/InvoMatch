@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from typing import Optional, Union
 from datetime import datetime
 from pydantic import BaseModel
@@ -8,14 +9,14 @@ from .normalized_models import NormalizedInvoice, NormalizedPayment
 from .validation_models import ValidationResult
 
 
-class IngestionStatus:
+class IngestionStatus(str, Enum):
     REJECTED = "rejected"
     ACCEPTED_WITH_FLAGS = "accepted_with_flags"
     ACCEPTED_CLEAN = "accepted_clean"
 
 
 class IngestionResult(BaseModel):
-    status: str
+    status: IngestionStatus
 
     validation: ValidationResult
 
