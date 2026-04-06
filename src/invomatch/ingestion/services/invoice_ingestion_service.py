@@ -17,6 +17,7 @@ from invomatch.ingestion.normalizers import (
 from invomatch.ingestion.services.decision_builder import build_ingestion_status
 from invomatch.ingestion.utils import (
     build_idempotency_key,
+    build_invoice_identity_key,
     build_invoice_semantic_key,
     fingerprint_payload,
 )
@@ -37,6 +38,7 @@ def ingest_invoice_input(raw: RawInvoiceInput) -> IngestionResult:
 
     normalized = None
     semantic_key = None
+    identity_key = None
 
     if validation.is_valid:
         normalized = NormalizedInvoice(
@@ -51,6 +53,7 @@ def ingest_invoice_input(raw: RawInvoiceInput) -> IngestionResult:
             counterparty=normalize_optional_string(raw.counterparty),
         )
         semantic_key = build_invoice_semantic_key(normalized)
+        identity_key = build_invoice_identity_key(normalized)
 
     return IngestionResult(
         status=status,
@@ -65,5 +68,6 @@ def ingest_invoice_input(raw: RawInvoiceInput) -> IngestionResult:
         processed_at=datetime.now(UTC),
         idempotency_key=idempotency_key,
         semantic_key=semantic_key,
+        identity_key=identity_key,
         notes=None,
     )

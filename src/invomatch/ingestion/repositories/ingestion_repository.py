@@ -19,3 +19,7 @@ class IngestionRepository(ABC):
     @abstractmethod
     def find_latest_by_semantic_key(self, semantic_key: str) -> Optional[IngestionRecord]:
         raise NotImplementedError
+
+    @abstractmethod
+    def find_latest_by_identity_key(self, identity_key: str) -> Optional[IngestionRecord]:
+        raise NotImplementedError

@@ -13,6 +13,7 @@ class InMemoryIngestionRepository(IngestionRepository):
     def __init__(self) -> None:
         self._records_by_idempotency_key: dict[str, IngestionRecord] = {}
         self._records_by_semantic_key: dict[str, IngestionRecord] = {}
+        self._records_by_identity_key: dict[str, IngestionRecord] = {}
 
     def save_result(self, result: IngestionResult) -> IngestionRecord:
         record = IngestionRecord(
@@ -21,9 +22,13 @@ class InMemoryIngestionRepository(IngestionRepository):
             result=result,
         )
         self._records_by_idempotency_key[result.idempotency_key] = record
-        semantic_key = getattr(result, "semantic_key", None)
-        if semantic_key:
-            self._records_by_semantic_key[semantic_key] = record
+
+        if result.semantic_key:
+            self._records_by_semantic_key[result.semantic_key] = record
+
+        if result.identity_key:
+            self._records_by_identity_key[result.identity_key] = record
+
         return record
 
     def find_by_idempotency_key(self, idempotency_key: str) -> Optional[IngestionRecord]:
@@ -31,3 +36,6 @@ class InMemoryIngestionRepository(IngestionRepository):
 
     def find_latest_by_semantic_key(self, semantic_key: str) -> Optional[IngestionRecord]:
         return self._records_by_semantic_key.get(semantic_key)
+
+    def find_latest_by_identity_key(self, identity_key: str) -> Optional[IngestionRecord]:
+        return self._records_by_identity_key.get(identity_key)

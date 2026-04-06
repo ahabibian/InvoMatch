@@ -24,4 +24,5 @@ class IngestionResult(BaseModel):
     processed_at: datetime
     idempotency_key: str
     semantic_key: Optional[str] = None
+    identity_key: Optional[str] = None
     notes: Optional[str] = None
