@@ -19,6 +19,7 @@ from invomatch.services.action_service import ActionService
 from invomatch.services.artifact_query_service import ArtifactQueryService
 from invomatch.services.export import ExportService, RunFinalizedResultReader
 from invomatch.services.export_delivery_service import ExportDeliveryService
+from invomatch.services.orchestration.export_readiness_evaluator import ExportReadinessEvaluator
 from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH
 from invomatch.services.review_store import InMemoryReviewStore
@@ -91,12 +92,17 @@ def create_app(
         repository=export_artifact_repository,
         storage=export_artifact_storage,
     )
+    export_readiness_evaluator = ExportReadinessEvaluator(
+        run_store=resolved_run_store,
+        review_store=app.state.review_store,
+    )
 
     app.state.export_service = export_service
     app.state.export_artifact_repository = export_artifact_repository
     app.state.export_artifact_storage = export_artifact_storage
     app.state.export_delivery_service = export_delivery_service
     app.state.artifact_query_service = artifact_query_service
+    app.state.export_readiness_evaluator = export_readiness_evaluator
 
     app.state.action_service = ActionService(
         run_store=resolved_run_store,

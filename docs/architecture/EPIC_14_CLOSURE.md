@@ -1,4 +1,4 @@
-# EPIC 14 — Closure (Rewritten to Closure Standard)
+# EPIC 14 — Closure (Final)
 # Projection / Product Read Model Hardening
 
 ---
@@ -27,7 +27,7 @@ The goal was not feature expansion, but correctness of representation:
   - projection invariants
 
 - Alignment with Product Contract v1:
-  verified through contract tests and model constraints
+  verified through contract tests, product model hardening, and run-view boundary validation
 
 ---
 
@@ -37,13 +37,16 @@ Implemented components:
 
 - ProductRunView model hardening
 - RunViewQueryService projection logic hardening
-- export readiness evaluator integration in API layer
+- export readiness evaluator integration in API/app layer
+- artifact backend failure-safe projection behavior
 
 Enforced rules:
 
 - No internal domain leakage into product models
 - All projection outputs are explicitly constructed (no implicit state)
 - Deterministic behavior ensured under missing or partial inputs
+- Read path degrades safely if artifact listing backend fails
+- Export summary is based on readiness + artifact state, not naive run completion alone
 
 ---
 
@@ -59,7 +62,8 @@ Enforced rules:
 
 ### Integration Tests
 - API-level run view endpoint
-- full projection assembly via router
+- projection assembly via router
+- export route to run-view consistency after artifact creation
 
 ### Failure Scenario Tests
 - missing review store
@@ -68,6 +72,7 @@ Enforced rules:
 - review items from other runs
 - artifact failure states
 - export readiness edge conditions
+- degraded artifact backend behavior
 
 Failure scenarios are explicitly covered.
 
@@ -78,56 +83,67 @@ Failure scenarios are explicitly covered.
 Validated properties:
 
 - Projection is consistent with underlying run + review + artifact state
-- No stale or contradictory states observable
+- No stale or contradictory states observable in validated scenarios
 - Export status does not exceed lifecycle eligibility
 - Review summary does not falsely complete
 - Artifact exposure is status-aware
+- Exported state becomes visible in run view after real export execution
 
 Reconstructability:
-- Projection is fully reconstructable from run_store + review_store + artifact repository
+- Projection is reconstructable from run_store + review_store + artifact repository state
 
-No hidden or implicit state exists in projection layer.
+No hidden or implicit state exists in the projection layer.
 
 ---
 
 ## 6. Execution Evidence
 
-### Executed Command
+### Executed Validation Scope
 
-pytest executed with focused EPIC 14 scope:
+The following focused validation suite was executed successfully:
 
-- test_run_view_query_service.py
-- test_run_view_api.py
-- test_run_view_contract.py
-- test_run_view_projection_resilience.py
+- tests/test_run_view_query_service.py
+- tests/test_run_view_api.py
+- tests/test_run_view_contract.py
+- tests/test_run_view_projection_resilience.py
+- tests/test_run_view_dependency_degradation.py
+- tests/test_run_view_export_consistency_integration.py
+- tests/test_export_api.py
+- tests/test_export_delivery_integration.py
 
 ### Result
 
-- 23 passed
+- 34 passed
 - 0 failed
-- 0 skipped (critical scope)
+- 0 skipped in critical EPIC 14 scope
 
 ### Covered Areas
 
 - Query service logic
 - API layer
 - Product contract boundary
-- Failure and degraded scenarios
+- Resilience and degraded dependency behavior
+- Export execution to projection consistency
 
 ---
 
 ## 7. End-to-End Validation
 
-Validated flow:
+Validated lifecycle-relevant flow:
 
 run → review → resolve → export → run view
 
-Verified:
+Verified behaviors:
 
-- run view reflects final state correctly
-- export summary aligned with readiness + artifacts
-- review summary aligned with resolved/open items
-- API responses match Product Contract expectations
+- run view reflects review state correctly
+- export summary aligns with readiness and artifact lifecycle
+- export route execution produces artifact state later observable in run view
+- API responses remain product-safe and contract-aligned
+
+Validation is strong at service/API integration level.
+
+Explicitly not claimed:
+- full multi-thread concurrent interleaving proof
 
 ---
 
@@ -135,11 +151,12 @@ Verified:
 
 Not included in this EPIC:
 
-- full concurrency simulation (multi-thread interleaving)
-- persisted projection materialization
-- extended export API redesign
+- full concurrency simulation with thread interleaving
+- persisted projection materialization layer
+- broader redesign of export route semantics
+- replacement of in-memory review store with persistent review query infrastructure
 
-These are explicitly out of scope and do not block projection correctness.
+These are explicitly out of scope and do not block closure of projection hardening at the current architecture level.
 
 ---
 
@@ -154,8 +171,8 @@ All required conditions are met:
 - strict test coverage present (including failure scenarios)
 - projection correctness validated
 - execution evidence provided
-- end-to-end flow verified
+- integration-level lifecycle flow verified
 
 Final verdict:
 
-EPIC 14 is CLOSED and meets production-grade quality expectations for the projection layer.
+EPIC 14 is CLOSED and now reflects a stronger, evidence-backed projection hardening outcome than the initial closure version.

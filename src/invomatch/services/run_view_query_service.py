@@ -70,11 +70,13 @@ class RunViewQueryService:
             return None
 
         review_summary = self._build_review_summary(run_id)
-        artifacts = self._build_artifacts(run_id)
+        raw_artifacts = self._safe_list_raw_artifacts(run_id)
+        artifacts = self._build_artifacts_from_raw(raw_artifacts)
         export_summary = self._build_export_summary(
             run=run,
             review_summary=review_summary,
             artifacts=artifacts,
+            raw_artifacts=raw_artifacts,
         )
         match_summary = self._build_match_summary(run)
 
@@ -198,8 +200,8 @@ class RunViewQueryService:
         run,
         review_summary: ProductRunReviewSummary,
         artifacts: list[ProductRunArtifactReference],
+        raw_artifacts: list[Any],
     ) -> ProductRunExportSummary:
-        raw_artifacts = self._list_raw_artifacts(str(getattr(run, "run_id", "")))
         ready_artifact_count = sum(
             1 for artifact in raw_artifacts if _is_ready_artifact_status(getattr(artifact, "status", None))
         )
@@ -255,8 +257,10 @@ class RunViewQueryService:
         run_status = _normalize_run_status(getattr(run, "status", ""))
         return run_status == "completed" and review_summary.open_items == 0
 
-    def _build_artifacts(self, run_id: str) -> list[ProductRunArtifactReference]:
-        raw_artifacts = self._list_raw_artifacts(run_id)
+    def _build_artifacts_from_raw(
+        self,
+        raw_artifacts: list[Any],
+    ) -> list[ProductRunArtifactReference]:
         sorted_artifacts = sorted(
             raw_artifacts,
             key=lambda artifact: (
@@ -268,11 +272,14 @@ class RunViewQueryService:
 
         return [self._to_artifact_reference(artifact) for artifact in sorted_artifacts]
 
-    def _list_raw_artifacts(self, run_id: str) -> list[Any]:
+    def _safe_list_raw_artifacts(self, run_id: str) -> list[Any]:
         if self._artifact_query_service is None:
             return []
 
-        return list(self._artifact_query_service.list_artifacts_for_run(run_id))
+        try:
+            return list(self._artifact_query_service.list_artifacts_for_run(run_id))
+        except Exception:
+            return []
 
     def _to_artifact_reference(self, artifact) -> ProductRunArtifactReference:
         artifact_id = str(getattr(artifact, "id"))
