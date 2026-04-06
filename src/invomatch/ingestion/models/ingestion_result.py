@@ -6,6 +6,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from .normalized_models import NormalizedInvoice, NormalizedPayment
+from .traceability_models import RawTraceReference
 from .validation_models import ValidationResult
 
 
@@ -17,15 +18,9 @@ class IngestionStatus(str, Enum):
 
 class IngestionResult(BaseModel):
     status: IngestionStatus
-
     validation: ValidationResult
-
     normalized: Optional[Union[NormalizedInvoice, NormalizedPayment]]
-
-    raw_reference: Optional[str]
-
+    raw_reference: RawTraceReference
     processed_at: datetime
-
-    idempotency_key: Optional[str]
-
+    idempotency_key: str
     notes: Optional[str] = None

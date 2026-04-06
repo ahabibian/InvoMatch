@@ -5,6 +5,7 @@ from datetime import datetime, UTC
 from invomatch.ingestion.models.ingestion_result import IngestionResult
 from invomatch.ingestion.models.normalized_models import NormalizedInvoice
 from invomatch.ingestion.models.raw_models import RawInvoiceInput
+from invomatch.ingestion.models.traceability_models import RawTraceReference
 from invomatch.ingestion.normalizers import (
     normalize_amount,
     normalize_currency,
@@ -14,12 +15,21 @@ from invomatch.ingestion.normalizers import (
     normalize_optional_string,
 )
 from invomatch.ingestion.services.decision_builder import build_ingestion_status
+from invomatch.ingestion.utils import build_idempotency_key, fingerprint_payload
 from invomatch.ingestion.validators import validate_invoice_input
+
+
+_SCHEMA_VERSION = "invoice_input/v1"
+_RULE_VERSION = "ingestion_rules/v1"
+_PAYLOAD_KIND = "invoice"
 
 
 def ingest_invoice_input(raw: RawInvoiceInput) -> IngestionResult:
     validation = validate_invoice_input(raw)
     status = build_ingestion_status(validation)
+
+    payload_fingerprint = fingerprint_payload(raw)
+    idempotency_key = build_idempotency_key(_PAYLOAD_KIND, payload_fingerprint)
 
     normalized = None
     if validation.is_valid:
@@ -39,8 +49,13 @@ def ingest_invoice_input(raw: RawInvoiceInput) -> IngestionResult:
         status=status,
         validation=validation,
         normalized=normalized,
-        raw_reference=None,
+        raw_reference=RawTraceReference(
+            payload_fingerprint=payload_fingerprint,
+            payload_kind=_PAYLOAD_KIND,
+            schema_version=_SCHEMA_VERSION,
+            rule_version=_RULE_VERSION,
+        ),
         processed_at=datetime.now(UTC),
-        idempotency_key=None,
+        idempotency_key=idempotency_key,
         notes=None,
     )
