@@ -13,7 +13,14 @@ from invomatch.domain.models import (
     ReconciliationReport,
     ReconciliationResult,
     ReconciliationRun,
+    RunError,
     RunStatus,
+)
+from invomatch.runtime import (
+    RuntimeExecutionError,
+    RuntimeExecutionTerminalError,
+    RuntimeExecutor,
+    RuntimePersistenceError,
 )
 from invomatch.services.ingestion import load_invoices_from_csv, parse_payment_row
 from invomatch.services.match_record_store import MatchRecordStore
@@ -24,7 +31,9 @@ from invomatch.services.reconciliation_runs import (
     create_reconciliation_run,
     update_reconciliation_run,
 )
-from invomatch.services.reconciliation_validation import validate_reconciliation_execution_paths
+from invomatch.services.reconciliation_validation import (
+    validate_reconciliation_execution_paths,
+)
 from invomatch.services.run_store import RunStore
 from invomatch.services.sqlite_match_record_store import SqliteMatchRecordStore
 
@@ -135,11 +144,27 @@ def _build_match_records_from_report(
     return records
 
 
+def _normalize_runtime_failure_message(exc: RuntimeExecutionTerminalError) -> str:
+    failure = exc.failure
+    return f"[{failure.category.value}] {failure.code}: {failure.message}"
+
+
+def _to_run_error(exc: RuntimeExecutionTerminalError) -> RunError:
+    failure = exc.failure
+    return RunError(
+        code=failure.code,
+        message=failure.message,
+        retryable=failure.is_retryable,
+        terminal=failure.is_terminal,
+    )
+
+
 def reconcile_and_save(
     invoice_csv_path: Path,
     payment_csv_path: Path,
     run_store: RunStore = DEFAULT_RUN_STORE,
     match_record_store: MatchRecordStore = DEFAULT_MATCH_RECORD_STORE,
+    runtime_executor: RuntimeExecutor | None = None,
 ) -> ReconciliationRun:
     validate_reconciliation_execution_paths(invoice_csv_path, payment_csv_path)
 
@@ -150,13 +175,44 @@ def reconcile_and_save(
     )
     run = update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
 
-    try:
-        report = reconcile(invoice_csv_path, payment_csv_path)
+    executor = runtime_executor or RuntimeExecutor()
+
+    def _perform_reconciliation() -> tuple[ReconciliationReport, list[MatchRecord]]:
+        try:
+            report = reconcile(invoice_csv_path, payment_csv_path)
+        except Exception as exc:
+            raise RuntimeExecutionError(str(exc)) from exc
+
         match_records = _build_match_records_from_report(
             run_id=run.run_id,
             report=report,
         )
-        match_record_store.save_many(match_records)
+
+        try:
+            match_record_store.save_many(match_records)
+        except Exception as exc:
+            raise RuntimePersistenceError(str(exc)) from exc
+
+        return report, match_records
+
+    try:
+        execution_result = executor.execute(
+            _perform_reconciliation,
+            operation_name="reconcile_and_save",
+        )
+        report, _ = execution_result.value
+    except RuntimeExecutionTerminalError as exc:
+        update_reconciliation_run(
+            run.run_id,
+            status="failed",
+            error=_to_run_error(exc),
+            error_message=_normalize_runtime_failure_message(exc),
+            run_store=run_store,
+        )
+        raise ReconciliationExecutionError(
+            f"Reconciliation execution failed: {exc.failure.message}",
+            run_id=run.run_id,
+        ) from exc
     except Exception as exc:
         update_reconciliation_run(
             run.run_id,

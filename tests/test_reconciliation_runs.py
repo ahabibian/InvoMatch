@@ -3,7 +3,12 @@ from pathlib import Path
 
 import pytest
 
-from invomatch.domain.models import ReconciliationReport, can_transition, is_terminal_status
+from invomatch.domain.models import (
+    ReconciliationReport,
+    RunError,
+    can_transition,
+    is_terminal_status,
+)
 from invomatch.services.reconciliation import reconcile
 from invomatch.services.reconciliation_runs import (
     create_reconciliation_run,
@@ -46,7 +51,13 @@ def test_run_store_create_get_update_and_list_operations(tmp_path: Path, store_f
     assert fetched_run.run_id == created_run.run_id
     assert fetched_run.status == "queued"
 
-    updated_run = created_run.model_copy(update={"status": "failed", "version": created_run.version + 1, "error_message": "boom"})
+    updated_run = created_run.model_copy(
+        update={
+            "status": "failed",
+            "version": created_run.version + 1,
+            "error_message": "boom",
+        }
+    )
     persisted_run = run_store.update_run(updated_run, expected_version=created_run.version)
 
     runs, total = run_store.list_runs()
@@ -77,7 +88,13 @@ def test_run_store_list_operations_support_status_filter_pagination_and_sort(tmp
     )
 
     run_store.update_run(
-        failed.model_copy(update={"status": "failed", "version": failed.version + 1, "error_message": "import failed"}),
+        failed.model_copy(
+            update={
+                "status": "failed",
+                "version": failed.version + 1,
+                "error_message": "import failed",
+            }
+        ),
         expected_version=failed.version,
     )
     run_store.update_run(
@@ -127,6 +144,7 @@ def test_create_reconciliation_run_persists_pending_lifecycle(tmp_path: Path):
     assert run.created_at == run.updated_at
     assert run.started_at is None
     assert run.finished_at is None
+    assert run.error is None
     assert run.error_message is None
     assert run.report is None
     assert run_store.path.exists()
@@ -156,6 +174,7 @@ def test_update_reconciliation_run_persists_all_lifecycle_fields(tmp_path: Path)
     assert completed_run.status == "completed"
     assert completed_run.started_at is not None
     assert completed_run.finished_at is not None
+    assert completed_run.error is None
     assert completed_run.error_message is None
     assert isinstance(loaded_run.report, ReconciliationReport)
     assert loaded_run.report.total_invoices == report.total_invoices
@@ -164,6 +183,38 @@ def test_update_reconciliation_run_persists_all_lifecycle_fields(tmp_path: Path)
     assert loaded_run.report.partial_match == report.partial_match
     assert loaded_run.report.unmatched == report.unmatched
     assert len(loaded_run.report.results) == len(report.results)
+
+
+def test_update_reconciliation_run_persists_structured_error_payload(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+
+    run = create_reconciliation_run(
+        invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
+        payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
+        run_store=run_store,
+    )
+
+    update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
+
+    failed_run = update_reconciliation_run(
+        run.run_id,
+        status="failed",
+        error=RunError(
+            code="dependency_failure",
+            message="export service unavailable",
+            retryable=True,
+            terminal=False,
+        ),
+        run_store=run_store,
+    )
+
+    assert failed_run.status == "failed"
+    assert failed_run.error is not None
+    assert failed_run.error.code == "dependency_failure"
+    assert failed_run.error.message == "export service unavailable"
+    assert failed_run.error.retryable is True
+    assert failed_run.error.terminal is False
+    assert failed_run.error_message == "export service unavailable"
 
 
 def test_update_reconciliation_run_rejects_invalid_transition(tmp_path: Path):
@@ -200,6 +251,7 @@ def test_load_reconciliation_run_backfills_legacy_completed_payload(tmp_path: Pa
     assert loaded_run.updated_at == loaded_run.created_at
     assert loaded_run.started_at == loaded_run.created_at
     assert loaded_run.finished_at == loaded_run.created_at
+    assert loaded_run.error is None
     assert loaded_run.error_message is None
     assert loaded_run.report is not None
 

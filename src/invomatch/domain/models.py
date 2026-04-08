@@ -65,6 +65,13 @@ class ReconciliationReport(BaseModel):
     results: list[ReconciliationResult]
 
 
+class RunError(BaseModel):
+    code: str
+    message: str
+    retryable: bool
+    terminal: bool
+
+
 class ReconciliationRun(BaseModel):
     run_id: str
     status: RunStatus
@@ -79,6 +86,7 @@ class ReconciliationRun(BaseModel):
     attempt_count: int = 0
     invoice_csv_path: str
     payment_csv_path: str
+    error: RunError | None = None
     error_message: str | None = None
     report: ReconciliationReport | None = None
 

@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from invomatch.domain.models import ReconciliationReport, ReconciliationRun, RunStatus
+from invomatch.domain.models import ReconciliationReport, ReconciliationRun, RunError, RunStatus
 from invomatch.services.lifecycle import (
     InvalidRunStateError,
     InvalidRunTransitionError,
@@ -102,6 +102,7 @@ def update_reconciliation_run(
     *,
     status: RunStatus,
     report: ReconciliationReport | None = None,
+    error: RunError | None = None,
     error_message: str | None = None,
     run_store: RunStore = DEFAULT_RUN_STORE,
 ) -> ReconciliationRun:
@@ -135,7 +136,8 @@ def update_reconciliation_run(
             "updated_at": now,
             "started_at": started_at,
             "finished_at": finished_at,
-            "error_message": error_message,
+            "error": error,
+            "error_message": error_message or (error.message if error is not None else None),
             "report": report,
         }
     )
