@@ -16,11 +16,16 @@ from invomatch.api.product_models.run import (
 from invomatch.api.product_models.run_view import ProductRunView
 from invomatch.api.reconciliation_schemas import (
     ApiErrorResponse,
+    CreateRunFromIngestionRequest,
     CreateRunRequest,
+    IngestionRunResponse,
     to_api_error_response,
 )
 from invomatch.domain.models import ReconciliationRun, RunStatus
 from invomatch.services.artifact_query_service import ArtifactQueryService
+from invomatch.services.ingestion_run_integration.runtime_adapter import (
+    IngestionRunRuntimeAdapter,
+)
 from invomatch.services.reconciliation_errors import (
     ReconciliationExecutionError,
     ReconciliationInputValidationError,
@@ -51,6 +56,40 @@ def create_reconciliation_run(request_body: CreateRunRequest, request: Request) 
     except (ReconciliationExecutionError, RunStorageError) as exc:
         raise HTTPException(status_code=500, detail=to_api_error_response(exc).model_dump(exclude_none=True)) from exc
     return to_product_run_detail(run)
+
+
+@router.post(
+    "/ingest",
+    response_model=IngestionRunResponse,
+    status_code=status.HTTP_200_OK,
+)
+def create_reconciliation_run_from_ingestion(
+    request_body: CreateRunFromIngestionRequest,
+    request: Request,
+) -> IngestionRunResponse:
+    adapter: IngestionRunRuntimeAdapter = request.app.state.ingestion_run_runtime_adapter
+
+    result = adapter.create_run_from_ingestion(
+        ingestion_batch_id=request_body.ingestion_batch_id,
+        ingestion_succeeded=True,
+        accepted_invoices=[item.model_dump(exclude_none=True) for item in request_body.invoices],
+        accepted_payments=[item.model_dump(exclude_none=True) for item in request_body.payments],
+        rejected_count=0,
+        conflict_count=0,
+        blocking_conflict=False,
+    )
+
+    return IngestionRunResponse(
+        status=result.status.value,
+        run_id=result.run_id,
+        reason_code=result.reason_code,
+        ingestion_batch_id=result.ingestion_batch_id,
+        accepted_invoice_count=result.accepted_invoice_count,
+        accepted_payment_count=result.accepted_payment_count,
+        rejected_count=result.rejected_count,
+        conflict_count=result.conflict_count,
+        partial_ingestion=result.partial_ingestion,
+    )
 
 
 @router.get("", response_model=ProductRunListResponse)
