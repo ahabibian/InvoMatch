@@ -19,6 +19,12 @@ from .runtime_policy import (
     default_runtime_retry_policy,
     should_reenter_after_failure,
 )
+from .stuck_run import (
+    StuckRunAssessment,
+    assess_stuck_run,
+    has_valid_owner,
+    lease_is_expired,
+)
 
 __all__ = [
     "FailureCategory",
@@ -36,4 +42,8 @@ __all__ = [
     "RuntimeRetryPolicy",
     "default_runtime_retry_policy",
     "should_reenter_after_failure",
+    "StuckRunAssessment",
+    "assess_stuck_run",
+    "has_valid_owner",
+    "lease_is_expired",
 ]

@@ -154,3 +154,21 @@ EPIC 18 is complete only if:
 - product-facing runtime failure truth is structured and bounded
 - degraded dependency scenarios fail predictably
 - no hidden lifecycle corruption remains under tested runtime failure conditions
+---
+
+## 11. Stuck Run Detection Baseline
+
+A processing run is considered operationally stuck when one of the following is true:
+
+- it remains in `processing` without a valid owner
+- its lease has expired and no safe re-entry path exists
+- its lease has expired and runtime failure context is missing
+- its lease has expired and re-entry is explicitly denied by runtime policy
+
+Baseline recovery decisions are restricted to:
+
+- `none`
+- `reenter`
+- `fail`
+
+No ambiguous recovery state is allowed.
