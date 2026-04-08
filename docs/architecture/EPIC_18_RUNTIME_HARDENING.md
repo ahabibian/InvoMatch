@@ -172,3 +172,17 @@ Baseline recovery decisions are restricted to:
 - `fail`
 
 No ambiguous recovery state is allowed.
+---
+
+## 12. Recovery Scan Baseline
+
+The runtime recovery baseline must support deterministic scanning of persisted `processing` runs.
+
+For each processing run:
+
+- if it is not stuck -> leave unchanged
+- if it is stuck and policy allows re-entry -> surface as a re-entry candidate
+- if it is stuck and policy denies re-entry -> terminalize to `failed`
+
+At this stage, the recovery layer does not execute re-entry automatically.
+It only classifies and safely terminalizes unrecoverable stuck runs.
