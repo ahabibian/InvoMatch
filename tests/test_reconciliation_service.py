@@ -93,7 +93,9 @@ def test_reconcile_and_save_marks_run_failed_when_execution_raises(tmp_path: Pat
     assert failed_run["status"] == "failed"
     assert failed_run["started_at"] is not None
     assert failed_run["finished_at"] is not None
-    assert failed_run["error_message"] == "reconciliation exploded"
+    assert failed_run["error_message"] is not None
+    assert "execution_failure" in failed_run["error_message"]
+    assert "reconciliation exploded" in failed_run["error_message"]
     assert failed_run["report"] is None
 
 
@@ -127,3 +129,79 @@ def test_reconcile_and_save_rejects_wrong_extension(tmp_path: Path):
     runs, total = run_store.list_runs()
     assert runs == []
     assert total == 0
+
+from invomatch.services.reconciliation import reconcile_and_save
+from invomatch.services.reconciliation_errors import ReconciliationExecutionError
+from invomatch.services.run_store import InMemoryRunStore
+from invomatch.runtime import RuntimeExecutor
+from invomatch.runtime.runtime_policy import RuntimeRetryPolicy
+
+
+class _AlwaysFailingMatchRecordStore:
+    def save_many(self, records):
+        raise RuntimeError("match record persistence unavailable")
+
+
+def test_reconcile_and_save_completes_successfully_with_runtime_executor(tmp_path: Path):
+    run_store = InMemoryRunStore()
+
+    run = reconcile_and_save(
+        ROOT_DIR / "sample-data" / "invoices.csv",
+        ROOT_DIR / "sample-data" / "payments.csv",
+        run_store=run_store,
+    )
+
+    assert run.status in {"completed", "review_required"}
+    assert run.started_at is not None
+    if run.status == "completed":
+        assert run.finished_at is not None
+    else:
+        assert run.status == "review_required"
+        assert run.finished_at is None
+    assert run.error_message is None
+
+
+def test_reconcile_and_save_marks_run_failed_when_runtime_failure_terminalizes(tmp_path: Path):
+    run_store = InMemoryRunStore()
+    executor = RuntimeExecutor(retry_policy=RuntimeRetryPolicy(max_attempts=2))
+
+    with pytest.raises(ReconciliationExecutionError, match="Reconciliation execution failed"):
+        reconcile_and_save(
+            ROOT_DIR / "sample-data" / "invoices.csv",
+            ROOT_DIR / "sample-data" / "payments.csv",
+            run_store=run_store,
+            match_record_store=_AlwaysFailingMatchRecordStore(),
+            runtime_executor=executor,
+        )
+
+    runs, total = run_store.list_runs()
+    assert total == 1
+
+    failed_run = runs[0]
+    assert failed_run.status == "failed"
+    assert failed_run.finished_at is not None
+    assert failed_run.error_message is not None
+    assert "retry_exhausted" in failed_run.error_message
+    assert "completed" not in failed_run.status
+
+
+def test_reconcile_and_save_does_not_persist_false_completed_state_after_runtime_failure(tmp_path: Path):
+    run_store = InMemoryRunStore()
+    executor = RuntimeExecutor(retry_policy=RuntimeRetryPolicy(max_attempts=1))
+
+    with pytest.raises(ReconciliationExecutionError):
+        reconcile_and_save(
+            ROOT_DIR / "sample-data" / "invoices.csv",
+            ROOT_DIR / "sample-data" / "payments.csv",
+            run_store=run_store,
+            match_record_store=_AlwaysFailingMatchRecordStore(),
+            runtime_executor=executor,
+        )
+
+    runs, total = run_store.list_runs()
+    assert total == 1
+    persisted_run = runs[0]
+
+    assert persisted_run.status == "failed"
+    assert persisted_run.report is None
+    assert persisted_run.error_message is not None
