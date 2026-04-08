@@ -21,6 +21,8 @@ class FakeRun:
     created_at: datetime
     updated_at: datetime
     report: FakeRunReport | None = None
+    error: object | None = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -76,6 +78,20 @@ class FakeReviewStore:
         return list(self._review_items)
 
 
+class ExplodingFeedbackLookupReviewStore:
+    def list_review_items(self):
+        return [
+            FakeReviewItem(
+                review_item_id="review_1",
+                feedback_id="fb_1",
+                item_status="IN_REVIEW",
+            )
+        ]
+
+    def get_feedback(self, feedback_id: str):
+        raise RuntimeError("feedback lookup unavailable")
+
+
 class FakeArtifactQueryService:
     def __init__(self, artifacts_by_run=None) -> None:
         self._artifacts_by_run = artifacts_by_run or {}
@@ -111,6 +127,21 @@ def test_review_summary_degrades_to_not_started_when_review_store_interface_is_i
     service = RunViewQueryService(
         run_store=FakeRunStore(run=_run(status="processing")),
         review_store=FakeReviewStoreMissingMethods(),
+    )
+
+    result = service.get_run_view("run_123")
+
+    assert result is not None
+    assert result.review_summary.status == "not_started"
+    assert result.review_summary.total_items == 0
+    assert result.review_summary.open_items == 0
+    assert result.review_summary.resolved_items == 0
+
+
+def test_review_summary_degrades_to_not_started_when_feedback_lookup_raises():
+    service = RunViewQueryService(
+        run_store=FakeRunStore(run=_run(status="review_required")),
+        review_store=ExplodingFeedbackLookupReviewStore(),
     )
 
     result = service.get_run_view("run_123")

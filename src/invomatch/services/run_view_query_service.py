@@ -101,7 +101,13 @@ class RunViewQueryService:
                 code=str(getattr(error, "code", "runtime_error")),
                 message=str(getattr(error, "message", "Runtime failure")),
                 retryable=bool(getattr(error, "retryable", False)),
-                terminal=bool(getattr(error, "terminal", _normalize_run_status(getattr(run, "status", "")) == "failed")),
+                terminal=bool(
+                    getattr(
+                        error,
+                        "terminal",
+                        _normalize_run_status(getattr(run, "status", "")) == "failed",
+                    )
+                ),
             )
 
         error_message = getattr(run, "error_message", None)
@@ -164,13 +170,32 @@ class RunViewQueryService:
                 resolved_items=0,
             )
 
+        try:
+            review_items = list(list_review_items())
+        except Exception:
+            return ProductRunReviewSummary(
+                status="not_started",
+                total_items=0,
+                open_items=0,
+                resolved_items=0,
+            )
+
         relevant_items = []
-        for review_item in list_review_items():
+        for review_item in review_items:
             feedback_id = getattr(review_item, "feedback_id", None)
             if feedback_id is None:
                 continue
 
-            feedback = get_feedback(feedback_id)
+            try:
+                feedback = get_feedback(feedback_id)
+            except Exception:
+                return ProductRunReviewSummary(
+                    status="not_started",
+                    total_items=0,
+                    open_items=0,
+                    resolved_items=0,
+                )
+
             if feedback is None:
                 continue
 
@@ -224,10 +249,14 @@ class RunViewQueryService:
         raw_artifacts: list[Any],
     ) -> ProductRunExportSummary:
         ready_artifact_count = sum(
-            1 for artifact in raw_artifacts if _is_ready_artifact_status(getattr(artifact, "status", None))
+            1
+            for artifact in raw_artifacts
+            if _is_ready_artifact_status(getattr(artifact, "status", None))
         )
         failed_artifact_count = sum(
-            1 for artifact in raw_artifacts if _is_failed_artifact_status(getattr(artifact, "status", None))
+            1
+            for artifact in raw_artifacts
+            if _is_failed_artifact_status(getattr(artifact, "status", None))
         )
 
         if ready_artifact_count > 0:
@@ -272,8 +301,11 @@ class RunViewQueryService:
         if evaluator is not None:
             evaluate = getattr(evaluator, "evaluate", None)
             if callable(evaluate):
-                result = evaluate(run_id)
-                return bool(getattr(result, "is_export_ready", False))
+                try:
+                    result = evaluate(run_id)
+                    return bool(getattr(result, "is_export_ready", False))
+                except Exception:
+                    return False
 
         run_status = _normalize_run_status(getattr(run, "status", ""))
         return run_status == "completed" and review_summary.open_items == 0
@@ -315,7 +347,9 @@ class RunViewQueryService:
             kind=str(getattr(artifact, "artifact_type", "run_export")),
             file_name=str(getattr(artifact, "file_name", "artifact")),
             media_type=str(getattr(artifact, "content_type", "application/octet-stream")),
-            size_bytes=_safe_int(getattr(artifact, "byte_size", getattr(artifact, "size_bytes", 0))),
+            size_bytes=_safe_int(
+                getattr(artifact, "byte_size", getattr(artifact, "size_bytes", 0))
+            ),
             created_at=getattr(artifact, "created_at"),
             download_url=download_url,
         )
