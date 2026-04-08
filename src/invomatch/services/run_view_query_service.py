@@ -5,6 +5,7 @@ from typing import Any
 
 from invomatch.api.product_models.run_view import (
     ProductRunArtifactReference,
+    ProductRunError,
     ProductRunExportSummary,
     ProductRunMatchSummary,
     ProductRunReviewSummary,
@@ -79,17 +80,40 @@ class RunViewQueryService:
             raw_artifacts=raw_artifacts,
         )
         match_summary = self._build_match_summary(run)
+        run_error = self._build_run_error(run)
 
         return ProductRunView(
             run_id=str(run.run_id),
             status=str(run.status),
             created_at=run.created_at,
             updated_at=getattr(run, "updated_at", run.created_at),
+            error=run_error,
             match_summary=match_summary,
             review_summary=review_summary,
             export_summary=export_summary,
             artifacts=artifacts,
         )
+
+    def _build_run_error(self, run) -> ProductRunError | None:
+        error = getattr(run, "error", None)
+        if error is not None:
+            return ProductRunError(
+                code=str(getattr(error, "code", "runtime_error")),
+                message=str(getattr(error, "message", "Runtime failure")),
+                retryable=bool(getattr(error, "retryable", False)),
+                terminal=bool(getattr(error, "terminal", _normalize_run_status(getattr(run, "status", "")) == "failed")),
+            )
+
+        error_message = getattr(run, "error_message", None)
+        if error_message:
+            return ProductRunError(
+                code="runtime_error",
+                message=str(error_message),
+                retryable=False,
+                terminal=_normalize_run_status(getattr(run, "status", "")) == "failed",
+            )
+
+        return None
 
     def _build_match_summary(self, run) -> ProductRunMatchSummary:
         report = getattr(run, "report", None)
@@ -178,9 +202,6 @@ class RunViewQueryService:
                 open_items += 1
                 continue
 
-            # Conservative rule:
-            # unknown / unexpected states are treated as open so projection
-            # never claims completion while underlying reality is ambiguous.
             open_items += 1
 
         if open_items + resolved_items != total_items:

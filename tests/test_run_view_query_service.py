@@ -7,6 +7,14 @@ from invomatch.services.run_view_query_service import RunViewQueryService
 
 
 @dataclass
+class FakeRunError:
+    code: str
+    message: str
+    retryable: bool
+    terminal: bool
+
+
+@dataclass
 class FakeRunReport:
     matched: int = 0
     unmatched: int = 0
@@ -21,6 +29,8 @@ class FakeRun:
     created_at: datetime
     updated_at: datetime
     report: FakeRunReport | None = None
+    error: FakeRunError | None = None
+    error_message: str | None = None
 
 
 @dataclass
@@ -93,13 +103,20 @@ class FakeExportReadinessEvaluator:
         return FakeExportReadinessResult(is_export_ready=self._is_export_ready)
 
 
-def _run(status: str = "processing", report: FakeRunReport | None = None) -> FakeRun:
+def _run(
+    status: str = "processing",
+    report: FakeRunReport | None = None,
+    error: FakeRunError | None = None,
+    error_message: str | None = None,
+) -> FakeRun:
     return FakeRun(
         run_id="run_123",
         status=status,
         created_at=datetime(2026, 4, 3, 12, 0, 0, tzinfo=UTC),
         updated_at=datetime(2026, 4, 3, 12, 5, 0, tzinfo=UTC),
         report=report,
+        error=error,
+        error_message=error_message,
     )
 
 
@@ -119,10 +136,59 @@ def test_get_run_view_returns_projection_with_explicit_defaults():
     assert result is not None
     assert result.run_id == "run_123"
     assert result.status == "processing"
+    assert result.error is None
     assert result.review_summary.status == "not_started"
     assert result.review_summary.total_items == 0
     assert result.export_summary.status == "not_ready"
     assert result.artifacts == []
+
+
+def test_get_run_view_exposes_structured_run_error_when_present():
+    service = RunViewQueryService(
+        run_store=FakeRunStore(
+            run=_run(
+                status="failed",
+                error=FakeRunError(
+                    code="retry_exhausted",
+                    message="retry limit reached",
+                    retryable=False,
+                    terminal=True,
+                ),
+                error_message="[retry_exhausted] retry limit reached",
+            )
+        )
+    )
+
+    result = service.get_run_view("run_123")
+
+    assert result is not None
+    assert result.status == "failed"
+    assert result.error is not None
+    assert result.error.code == "retry_exhausted"
+    assert result.error.message == "retry limit reached"
+    assert result.error.retryable is False
+    assert result.error.terminal is True
+
+
+def test_get_run_view_falls_back_to_error_message_when_structured_error_missing():
+    service = RunViewQueryService(
+        run_store=FakeRunStore(
+            run=_run(
+                status="failed",
+                error=None,
+                error_message="legacy runtime failure",
+            )
+        )
+    )
+
+    result = service.get_run_view("run_123")
+
+    assert result is not None
+    assert result.error is not None
+    assert result.error.code == "runtime_error"
+    assert result.error.message == "legacy runtime failure"
+    assert result.error.retryable is False
+    assert result.error.terminal is True
 
 
 def test_review_summary_treats_unknown_status_as_open():

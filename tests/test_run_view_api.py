@@ -8,6 +8,14 @@ from fastapi.testclient import TestClient
 from invomatch.api.reconciliation_runs import router
 
 
+class FakeRunError:
+    def __init__(self, code: str, message: str, retryable: bool, terminal: bool) -> None:
+        self.code = code
+        self.message = message
+        self.retryable = retryable
+        self.terminal = terminal
+
+
 class FakeRunReport:
     def __init__(self, matched=0, unmatched=0, ambiguous=0, total=0) -> None:
         self.matched = matched
@@ -17,12 +25,14 @@ class FakeRunReport:
 
 
 class FakeRun:
-    def __init__(self, run_id: str, status: str, report=None) -> None:
+    def __init__(self, run_id: str, status: str, report=None, error=None, error_message=None) -> None:
         self.run_id = run_id
         self.status = status
         self.created_at = datetime(2026, 4, 3, 12, 0, 0, tzinfo=UTC)
         self.updated_at = datetime(2026, 4, 3, 12, 5, 0, tzinfo=UTC)
         self.report = report
+        self.error = error
+        self.error_message = error_message
 
 
 class FakeRunRegistry:
@@ -136,6 +146,8 @@ def test_get_run_view_returns_default_projection_shape():
         run_id="run_123",
         status="processing",
         report=FakeRunReport(matched=7, unmatched=2, ambiguous=1, total=10),
+        error=None,
+        error_message=None,
     )
     client = create_test_client(
         FakeRunRegistry(runs={"run_123": run}),
@@ -149,6 +161,7 @@ def test_get_run_view_returns_default_projection_shape():
     body = response.json()
     assert body["run_id"] == "run_123"
     assert body["status"] == "processing"
+    assert body["error"] is None
     assert body["match_summary"]["total_items"] == 10
     assert body["match_summary"]["matched_items"] == 7
     assert body["review_summary"]["status"] == "not_started"
@@ -158,7 +171,7 @@ def test_get_run_view_returns_default_projection_shape():
 
 
 def test_get_run_view_returns_review_aggregate_and_newest_ready_artifact_first():
-    run = FakeRun(run_id="run_456", status="completed")
+    run = FakeRun(run_id="run_456", status="completed", error=None, error_message=None)
     review_store = FakeReviewStore(
         feedbacks={
             "fb_1": FakeFeedback(feedback_id="fb_1", run_id="run_456", raw_payload={"reason_code": "amount_mismatch"}),
@@ -215,7 +228,7 @@ def test_get_run_view_returns_review_aggregate_and_newest_ready_artifact_first()
 
 
 def test_get_run_view_returns_ready_when_export_evaluator_allows_but_no_ready_artifact_exists():
-    run = FakeRun(run_id="run_ready", status="completed")
+    run = FakeRun(run_id="run_ready", status="completed", error=None, error_message=None)
     client = create_test_client(
         FakeRunRegistry(runs={"run_ready": run}),
         review_store=FakeReviewStore(),
@@ -229,3 +242,35 @@ def test_get_run_view_returns_ready_when_export_evaluator_allows_but_no_ready_ar
     body = response.json()
     assert body["export_summary"]["status"] == "ready"
     assert body["export_summary"]["artifact_count"] == 0
+
+
+def test_get_run_view_exposes_structured_error_for_failed_run():
+    run = FakeRun(
+        run_id="run_failed",
+        status="failed",
+        report=None,
+        error=FakeRunError(
+            code="retry_exhausted",
+            message="retry limit reached",
+            retryable=False,
+            terminal=True,
+        ),
+        error_message="[retry_exhausted] retry limit reached",
+    )
+    client = create_test_client(
+        FakeRunRegistry(runs={"run_failed": run}),
+        review_store=FakeReviewStore(),
+        artifact_query_service=FakeArtifactQueryService(artifacts_by_run={}),
+    )
+
+    response = client.get("/api/reconciliation/runs/run_failed/view")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "failed"
+    assert body["error"] == {
+        "code": "retry_exhausted",
+        "message": "retry limit reached",
+        "retryable": False,
+        "terminal": True,
+    }

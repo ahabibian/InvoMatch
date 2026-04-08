@@ -8,6 +8,14 @@ from fastapi.testclient import TestClient
 from invomatch.api.reconciliation_runs import router
 
 
+class FakeRunError:
+    def __init__(self, code: str, message: str, retryable: bool, terminal: bool) -> None:
+        self.code = code
+        self.message = message
+        self.retryable = retryable
+        self.terminal = terminal
+
+
 class FakeRunReport:
     def __init__(self, matched=0, unmatched=0, ambiguous=0, total=0) -> None:
         self.matched = matched
@@ -17,12 +25,14 @@ class FakeRunReport:
 
 
 class FakeRun:
-    def __init__(self, run_id: str, status: str, report=None) -> None:
+    def __init__(self, run_id: str, status: str, report=None, error=None, error_message=None) -> None:
         self.run_id = run_id
         self.status = status
         self.created_at = datetime(2026, 4, 3, 12, 0, 0, tzinfo=UTC)
         self.updated_at = datetime(2026, 4, 3, 12, 5, 0, tzinfo=UTC)
         self.report = report
+        self.error = error
+        self.error_message = error_message
 
 
 class FakeRunRegistry:
@@ -111,17 +121,12 @@ class FakeExportReadinessEvaluator:
         return FakeExportReadinessResult(is_export_ready=self._is_export_ready)
 
 
-def _create_client() -> TestClient:
-    run = FakeRun(
-        run_id="run_contract",
-        status="completed",
-        report=FakeRunReport(matched=8, unmatched=1, ambiguous=1, total=10),
-    )
+def _create_client(run: FakeRun) -> TestClient:
     review_store = FakeReviewStore(
         feedbacks={
             "fb_1": FakeFeedback(
                 feedback_id="fb_1",
-                run_id="run_contract",
+                run_id=run.run_id,
                 raw_payload={"reason_code": "amount_mismatch", "internal_flag": "secret"},
             )
         },
@@ -135,10 +140,10 @@ def _create_client() -> TestClient:
     )
     artifact_query_service = FakeArtifactQueryService(
         artifacts_by_run={
-            "run_contract": [
+            run.run_id: [
                 FakeArtifact(
                     artifact_id="artifact_1",
-                    run_id="run_contract",
+                    run_id=run.run_id,
                     created_at=datetime(2026, 4, 3, 11, 31, 0, tzinfo=UTC),
                     file_name="run_contract.csv",
                     status="READY",
@@ -149,7 +154,7 @@ def _create_client() -> TestClient:
 
     app = FastAPI()
     app.include_router(router)
-    app.state.run_registry = FakeRunRegistry(runs={"run_contract": run})
+    app.state.run_registry = FakeRunRegistry(runs={run.run_id: run})
     app.state.review_store = review_store
     app.state.artifact_query_service = artifact_query_service
     app.state.export_readiness_evaluator = FakeExportReadinessEvaluator(is_export_ready=True)
@@ -157,7 +162,14 @@ def _create_client() -> TestClient:
 
 
 def test_run_view_contract_has_expected_top_level_fields_only():
-    client = _create_client()
+    run = FakeRun(
+        run_id="run_contract",
+        status="completed",
+        report=FakeRunReport(matched=8, unmatched=1, ambiguous=1, total=10),
+        error=None,
+        error_message=None,
+    )
+    client = _create_client(run)
 
     response = client.get("/api/reconciliation/runs/run_contract/view")
 
@@ -169,6 +181,7 @@ def test_run_view_contract_has_expected_top_level_fields_only():
         "status",
         "created_at",
         "updated_at",
+        "error",
         "match_summary",
         "review_summary",
         "export_summary",
@@ -177,7 +190,14 @@ def test_run_view_contract_has_expected_top_level_fields_only():
 
 
 def test_run_view_contract_does_not_leak_internal_fields():
-    client = _create_client()
+    run = FakeRun(
+        run_id="run_contract",
+        status="completed",
+        report=FakeRunReport(matched=8, unmatched=1, ambiguous=1, total=10),
+        error=None,
+        error_message=None,
+    )
+    client = _create_client(run)
 
     response = client.get("/api/reconciliation/runs/run_contract/view")
 
@@ -193,7 +213,14 @@ def test_run_view_contract_does_not_leak_internal_fields():
 
 
 def test_run_view_contract_artifact_shape_is_lightweight_and_product_safe():
-    client = _create_client()
+    run = FakeRun(
+        run_id="run_contract",
+        status="completed",
+        report=FakeRunReport(matched=8, unmatched=1, ambiguous=1, total=10),
+        error=None,
+        error_message=None,
+    )
+    client = _create_client(run)
 
     response = client.get("/api/reconciliation/runs/run_contract/view")
 
@@ -212,7 +239,14 @@ def test_run_view_contract_artifact_shape_is_lightweight_and_product_safe():
 
 
 def test_run_view_contract_exposes_only_allowed_export_summary_statuses():
-    client = _create_client()
+    run = FakeRun(
+        run_id="run_contract",
+        status="completed",
+        report=FakeRunReport(matched=8, unmatched=1, ambiguous=1, total=10),
+        error=None,
+        error_message=None,
+    )
+    client = _create_client(run)
 
     response = client.get("/api/reconciliation/runs/run_contract/view")
 
@@ -220,3 +254,32 @@ def test_run_view_contract_exposes_only_allowed_export_summary_statuses():
     export_status = response.json()["export_summary"]["status"]
 
     assert export_status in {"not_ready", "ready", "exported", "failed"}
+
+
+def test_run_view_contract_exposes_bounded_structured_error_when_run_failed():
+    run = FakeRun(
+        run_id="run_contract",
+        status="failed",
+        report=None,
+        error=FakeRunError(
+            code="retry_exhausted",
+            message="retry limit reached",
+            retryable=False,
+            terminal=True,
+        ),
+        error_message="[retry_exhausted] retry limit reached",
+    )
+    client = _create_client(run)
+
+    response = client.get("/api/reconciliation/runs/run_contract/view")
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["status"] == "failed"
+    assert body["error"] == {
+        "code": "retry_exhausted",
+        "message": "retry limit reached",
+        "retryable": False,
+        "terminal": True,
+    }
