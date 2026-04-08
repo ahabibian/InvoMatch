@@ -59,18 +59,19 @@ def claim_reconciliation_run(
     worker_id: str,
     lease_seconds: int = DEFAULT_LEASE_SECONDS,
     run_store: RunStore = DEFAULT_RUN_STORE,
+    now: datetime | None = None,
 ) -> ReconciliationRun:
     run = run_store.get_run(run_id)
     if run is None:
         raise KeyError(f"Reconciliation run not found: {run_id}")
 
-    now = _utcnow()
-    lease_expires_at = now + timedelta(seconds=lease_seconds)
+    effective_now = now or _utcnow()
+    lease_expires_at = effective_now + timedelta(seconds=lease_seconds)
 
     return run_store.claim_run(
         run_id=run_id,
         worker_id=worker_id,
-        claimed_at=now,
+        claimed_at=effective_now,
         lease_expires_at=lease_expires_at,
         expected_version=run.version,
     )
