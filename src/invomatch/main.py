@@ -19,6 +19,7 @@ from invomatch.services.action_service import ActionService
 from invomatch.services.artifact_query_service import ArtifactQueryService
 from invomatch.services.export import ExportService, RunFinalizedResultReader
 from invomatch.services.export_delivery_service import ExportDeliveryService
+from invomatch.services.ingestion_run_integration.runtime_adapter import IngestionRunRuntimeAdapter
 from invomatch.services.orchestration.export_readiness_evaluator import ExportReadinessEvaluator
 from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH
@@ -56,6 +57,9 @@ def create_app(
     app.state.run_store = resolved_run_store
     app.state.run_registry = RunRegistry(run_store=resolved_run_store)
     app.state.reconcile_and_save = partial(reconcile_and_save, run_store=resolved_run_store)
+    app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
+        reconcile_and_save=app.state.reconcile_and_save,
+    )
 
     # Current review API support is intentionally backed by in-memory review storage.
     # This gives EPIC 6 a real product-facing boundary now; sqlite-backed review query
