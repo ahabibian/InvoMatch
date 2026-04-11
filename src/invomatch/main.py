@@ -17,6 +17,7 @@ from invomatch.services.input_boundary.input_processing_service import InputProc
 from invomatch.services.input_boundary.json_input_service import JsonInputService
 from invomatch.services.input_boundary.file_input_service import FileInputService
 from invomatch.services.input_boundary.repository import InMemoryInputSessionRepository
+from invomatch.services.input_boundary.sqlite_repository import SqliteInputSessionRepository
 from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
 )
@@ -119,7 +120,7 @@ def create_app(
     )
 
     # --- EPIC 20: Input Boundary Wiring ---
-    input_session_repo = InMemoryInputSessionRepository()
+    input_session_repo = SqliteInputSessionRepository(Path("output") / "input_sessions.sqlite3")
     json_input_service = JsonInputService()
     file_input_service = FileInputService()
     file_input_service = FileInputService()
