@@ -13,6 +13,8 @@ class InputSessionRepository(Protocol):
 
     def get(self, input_id: str) -> InputSession | None: ...
 
+    def get_by_input_id(self, input_id: str) -> InputSession | None: ...
+
 
 class InMemoryInputSessionRepository:
     def __init__(self) -> None:
@@ -33,3 +35,6 @@ class InMemoryInputSessionRepository:
         if session is None:
             return None
         return replace(session)
+
+    def get_by_input_id(self, input_id: str) -> InputSession | None:
+        return self.get(input_id)

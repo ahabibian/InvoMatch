@@ -1,33 +1,42 @@
 from __future__ import annotations
 
-from datetime import datetime
+from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import ValidationError
 
-
-class ProductInputError(BaseModel):
-    type: str
-    code: str
-    message: str
-    field: str | None = None
+from invomatch.api.reconciliation_schemas import CreateRunFromIngestionRequest
+from invomatch.domain.input_boundary.models import InputError, InputErrorType
 
 
-class ProductInputSubmissionResponse(BaseModel):
-    input_id: str
-    status: str
-    ingestion_batch_id: str | None = None
-    run_id: str | None = None
-    errors: list[ProductInputError] = Field(default_factory=list)
+class JsonInputService:
+    def validate(self, payload: dict[str, Any]) -> list[InputError]:
+        try:
+            CreateRunFromIngestionRequest(
+                ingestion_batch_id="epic20-validation",
+                invoices=payload.get("invoices", []),
+                payments=payload.get("payments", []),
+            )
+            return []
+        except ValidationError as exc:
+            errors: list[InputError] = []
+            for item in exc.errors():
+                location = item.get("loc", ())
+                field_name = ".".join(str(part) for part in location if part != "ingestion_batch_id") or None
+                errors.append(InputError(
+                    type=InputErrorType.VALIDATION,
+                    code=item.get("type", "validation_error"),
+                    message=item.get("msg", "Invalid input"),
+                    field=field_name,
+                ))
+            return errors
 
-
-class ProductInputSessionView(BaseModel):
-    input_id: str
-    input_type: str
-    status: str
-    source_filename: str | None = None
-    source_size_bytes: int | None = None
-    ingestion_batch_id: str | None = None
-    run_id: str | None = None
-    errors: list[ProductInputError] = Field(default_factory=list)
-    created_at: datetime
-    updated_at: datetime
+    def build_ingestion_request(self, payload: dict[str, Any]) -> dict[str, Any]:
+        request_model = CreateRunFromIngestionRequest(
+            ingestion_batch_id="epic20-build",
+            invoices=payload.get("invoices", []),
+            payments=payload.get("payments", []),
+        )
+        return {
+            "invoices": [item.model_dump(exclude_none=True) for item in request_model.invoices],
+            "payments": [item.model_dump(exclude_none=True) for item in request_model.payments],
+        }

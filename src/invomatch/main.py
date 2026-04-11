@@ -12,6 +12,10 @@ from invomatch.api.export_artifacts import router as export_artifacts_router
 from invomatch.api.health import router as health_router
 from invomatch.api.reconciliation_runs import router as reconciliation_runs_router
 from invomatch.api.review_cases import router as review_cases_router
+from invomatch.api.routes.input_boundary import router as input_boundary_router
+from invomatch.services.input_boundary.input_processing_service import InputProcessingService
+from invomatch.services.input_boundary.json_input_service import JsonInputService
+from invomatch.services.input_boundary.repository import InMemoryInputSessionRepository
 from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
 )
@@ -113,6 +117,32 @@ def create_app(
         export_base_dir=export_root,
     )
 
+    # --- EPIC 20: Input Boundary Wiring ---
+    input_session_repo = InMemoryInputSessionRepository()
+    json_input_service = JsonInputService()
+
+    def _run_from_ingestion_adapter(ingestion_batch_id, payload):
+        adapter = app.state.ingestion_run_runtime_adapter
+        return adapter.create_run_from_ingestion(
+            ingestion_batch_id=ingestion_batch_id,
+            ingestion_succeeded=True,
+            accepted_invoices=payload["invoices"],
+            accepted_payments=payload["payments"],
+            rejected_count=0,
+            conflict_count=0,
+            blocking_conflict=False,
+        )
+
+    input_processing_service = InputProcessingService(
+        repository=input_session_repo,
+        json_service=json_input_service,
+        run_from_ingestion_service=_run_from_ingestion_adapter,
+    )
+
+    app.state.input_session_repository = input_session_repo
+    app.state.input_processing_service = input_processing_service
+    app.include_router(input_boundary_router)
+    # --- END EPIC 20 ---
     app.include_router(health_router)
     app.include_router(reconciliation_runs_router)
     app.include_router(review_cases_router)
@@ -124,33 +154,5 @@ def create_app(
 
 app = create_app()
 
-# --- EPIC 20: Input Boundary Wiring ---
-from invomatch.services.input_boundary.repository import InMemoryInputSessionRepository
-from invomatch.services.input_boundary.json_input_service import JsonInputService
-from invomatch.services.input_boundary.input_processing_service import InputProcessingService
-from invomatch.api.routes.input_boundary import router as input_boundary_router
 
-# create input boundary services
-input_session_repo = InMemoryInputSessionRepository()
-json_input_service = JsonInputService()
-
-# adapters to existing system
-def _ingestion_adapter(payload):
-    return app.state.ingestion_service(payload)
-
-def _run_creation_adapter(ingestion_batch_id):
-    return app.state.run_integration_service(ingestion_batch_id)
-
-input_processing_service = InputProcessingService(
-    repository=input_session_repo,
-    json_service=json_input_service,
-    ingestion_service=_ingestion_adapter,
-    run_creation_service=_run_creation_adapter,
-)
-
-app.state.input_processing_service = input_processing_service
-
-# register route
-app.include_router(input_boundary_router)
-# --- END EPIC 20 ---
 

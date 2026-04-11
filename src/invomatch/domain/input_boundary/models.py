@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field as dc_field
 from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Any
@@ -40,22 +40,22 @@ class InputError:
     code: str
     message: str
     field: str | None = None
-    details: dict[str, Any] = field(default_factory=dict)
+    details: dict[str, Any] = dc_field(default_factory=dict)
 
 
 @dataclass(slots=True)
 class InputSession:
     input_type: InputType
     status: InputSessionStatus = InputSessionStatus.RECEIVED
-    input_id: str = field(default_factory=lambda: str(uuid4()))
+    input_id: str = dc_field(default_factory=lambda: str(uuid4()))
     source_filename: str | None = None
     source_content_type: str | None = None
     source_size_bytes: int | None = None
-    validation_errors: list[InputError] = field(default_factory=list)
+    validation_errors: list[InputError] = dc_field(default_factory=list)
     ingestion_batch_id: str | None = None
     run_id: str | None = None
-    created_at: datetime = field(default_factory=utc_now)
-    updated_at: datetime = field(default_factory=utc_now)
+    created_at: datetime = dc_field(default_factory=utc_now)
+    updated_at: datetime = dc_field(default_factory=utc_now)
 
     def touch(self) -> None:
         self.updated_at = utc_now()
