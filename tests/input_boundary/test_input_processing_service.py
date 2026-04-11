@@ -14,6 +14,14 @@ class DummyRunResult:
     status: str
 
 
+class DummyFileService:
+    def validate_file(self, *, filename, content_type, content_bytes):
+        return []
+
+    def build_ingestion_request(self, *, filename, content_type, content_bytes):
+        return {"invoices": [], "payments": []}
+
+
 def _valid_payload() -> dict:
     return {
         "invoices": [
@@ -42,6 +50,7 @@ def test_process_json_marks_rejected_for_invalid_payload() -> None:
     service = InputProcessingService(
         repository=repo,
         json_service=JsonInputService(),
+        file_service=DummyFileService(),
         run_from_ingestion_service=lambda ingestion_batch_id, payload: None,
     )
 
@@ -72,6 +81,7 @@ def test_process_json_marks_run_created_for_success() -> None:
     service = InputProcessingService(
         repository=repo,
         json_service=JsonInputService(),
+        file_service=DummyFileService(),
         run_from_ingestion_service=_run_from_ingestion,
     )
 
@@ -88,6 +98,7 @@ def test_process_json_marks_failed_when_run_not_created() -> None:
     service = InputProcessingService(
         repository=repo,
         json_service=JsonInputService(),
+        file_service=DummyFileService(),
         run_from_ingestion_service=lambda ingestion_batch_id, payload: DummyRunResult(
             run_id=None,
             reason_code="no_accepted_invoices",
@@ -112,6 +123,7 @@ def test_process_json_marks_failed_when_runtime_raises() -> None:
     service = InputProcessingService(
         repository=repo,
         json_service=JsonInputService(),
+        file_service=DummyFileService(),
         run_from_ingestion_service=_explode,
     )
 

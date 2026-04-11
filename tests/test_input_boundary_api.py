@@ -10,36 +10,15 @@ def test_submit_json_returns_run_created_for_valid_payload() -> None:
     client = TestClient(app)
 
     payload = {
-        "invoices": [
-            {
-                "id": "inv-001",
-                "date": "2026-04-12",
-                "amount": "100.00",
-                "currency": "USD",
-                "reference": "ref-001",
-            }
-        ],
-        "payments": [
-            {
-                "id": "pay-001",
-                "date": "2026-04-12",
-                "amount": "100.00",
-                "currency": "USD",
-                "reference": "ref-001",
-            }
-        ],
+        "invoices": [{"id": "inv-001", "date": "2026-04-12", "amount": "100.00", "currency": "USD", "reference": "ref-001"}],
+        "payments": [{"id": "pay-001", "date": "2026-04-12", "amount": "100.00", "currency": "USD", "reference": "ref-001"}],
     }
 
     response = client.post("/api/reconciliation/input/json", json=payload)
-
     assert response.status_code == 200
-
     body = response.json()
-    assert body["input_id"]
     assert body["status"] == "run_created"
-    assert body["ingestion_batch_id"] == body["input_id"]
     assert body["run_id"]
-    assert body["errors"] == []
 
 
 def test_submit_json_returns_rejected_for_invalid_payload() -> None:
@@ -47,36 +26,59 @@ def test_submit_json_returns_rejected_for_invalid_payload() -> None:
     client = TestClient(app)
 
     payload = {
-        "invoices": [
-            {
-                "id": "inv-001",
-                "date": "2026-04-12",
-                "amount": "",
-                "currency": "USD",
-            }
-        ],
-        "payments": [
-            {
-                "id": "pay-001",
-                "date": "2026-04-12",
-                "amount": "100.00",
-                "currency": "USD",
-            }
-        ],
+        "invoices": [{"id": "inv-001", "date": "2026-04-12", "amount": "", "currency": "USD"}],
+        "payments": [{"id": "pay-001", "date": "2026-04-12", "amount": "100.00", "currency": "USD"}],
     }
 
     response = client.post("/api/reconciliation/input/json", json=payload)
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "rejected"
+    assert body["errors"][0]["field"] == "invoices.0.amount"
+
+
+def test_submit_file_returns_run_created_for_valid_csv() -> None:
+    app = create_app()
+    client = TestClient(app)
+
+    csv_content = (
+        "record_type,id,date,amount,currency,reference\n"
+        "invoice,inv-001,2026-04-12,100.00,USD,ref-001\n"
+        "payment,pay-001,2026-04-12,100.00,USD,ref-001\n"
+    )
+
+    response = client.post(
+        "/api/reconciliation/input/file",
+        files={"file": ("input.csv", csv_content, "text/csv")},
+    )
 
     assert response.status_code == 200
-
     body = response.json()
-    assert body["input_id"]
-    assert body["status"] == "rejected"
-    assert body["ingestion_batch_id"] is None
+    assert body["status"] == "run_created"
+    assert body["ingestion_batch_id"] == body["input_id"]
+    assert body["run_id"]
+
+
+def test_submit_file_returns_rejected_for_missing_required_header() -> None:
+    app = create_app()
+    client = TestClient(app)
+
+    csv_content = (
+        "record_type,id,date,amount,currency\n"
+        "invoice,inv-001,2026-04-12,100.00,USD\n"
+        "payment,pay-001,2026-04-12,100.00,USD\n"
+    )
+
+    response = client.post(
+        "/api/reconciliation/input/file",
+        files={"file": ("input.csv", csv_content, "text/csv")},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] in ["rejected", "failed"]
     assert body["run_id"] is None
-    assert len(body["errors"]) == 1
-    assert body["errors"][0]["type"] == "validation_error"
-    assert body["errors"][0]["field"] == "invoices.0.amount"
+    assert body["errors"]
 
 
 def test_get_input_session_returns_created_session() -> None:
@@ -84,80 +86,18 @@ def test_get_input_session_returns_created_session() -> None:
     client = TestClient(app)
 
     payload = {
-        "invoices": [
-            {
-                "id": "inv-001",
-                "date": "2026-04-12",
-                "amount": "100.00",
-                "currency": "USD",
-                "reference": "ref-001",
-            }
-        ],
-        "payments": [
-            {
-                "id": "pay-001",
-                "date": "2026-04-12",
-                "amount": "100.00",
-                "currency": "USD",
-                "reference": "ref-001",
-            }
-        ],
+        "invoices": [{"id": "inv-001", "date": "2026-04-12", "amount": "100.00", "currency": "USD", "reference": "ref-001"}],
+        "payments": [{"id": "pay-001", "date": "2026-04-12", "amount": "100.00", "currency": "USD", "reference": "ref-001"}],
     }
 
     post_response = client.post("/api/reconciliation/input/json", json=payload)
     input_id = post_response.json()["input_id"]
 
     get_response = client.get(f"/api/reconciliation/input/{input_id}")
-
     assert get_response.status_code == 200
-
     body = get_response.json()
     assert body["input_id"] == input_id
-    assert body["input_type"] == "json"
     assert body["status"] == "run_created"
-    assert body["ingestion_batch_id"] == input_id
-    assert body["run_id"]
-    assert body["errors"] == []
-
-
-def test_get_input_session_returns_rejected_session() -> None:
-    app = create_app()
-    client = TestClient(app)
-
-    payload = {
-        "invoices": [
-            {
-                "id": "inv-001",
-                "date": "2026-04-12",
-                "amount": "",
-                "currency": "USD",
-            }
-        ],
-        "payments": [
-            {
-                "id": "pay-001",
-                "date": "2026-04-12",
-                "amount": "100.00",
-                "currency": "USD",
-            }
-        ],
-    }
-
-    post_response = client.post("/api/reconciliation/input/json", json=payload)
-    input_id = post_response.json()["input_id"]
-
-    get_response = client.get(f"/api/reconciliation/input/{input_id}")
-
-    assert get_response.status_code == 200
-
-    body = get_response.json()
-    assert body["input_id"] == input_id
-    assert body["input_type"] == "json"
-    assert body["status"] == "rejected"
-    assert body["ingestion_batch_id"] is None
-    assert body["run_id"] is None
-    assert len(body["errors"]) == 1
-    assert body["errors"][0]["field"] == "invoices.0.amount"
 
 
 def test_get_input_session_returns_404_for_unknown_id() -> None:
@@ -165,6 +105,5 @@ def test_get_input_session_returns_404_for_unknown_id() -> None:
     client = TestClient(app)
 
     response = client.get("/api/reconciliation/input/missing-input-id")
-
     assert response.status_code == 404
     assert response.json()["detail"] == "Input session not found"

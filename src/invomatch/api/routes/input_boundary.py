@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 
 from invomatch.api.product_models.input_boundary import (
     ProductInputError,
@@ -27,9 +27,28 @@ def _map_errors(errors):
 @router.post("/json", response_model=ProductInputSubmissionResponse)
 async def submit_json(request: Request):
     payload = await request.json()
-
     service = request.app.state.input_processing_service
     session = service.process_json(payload)
+
+    return ProductInputSubmissionResponse(
+        input_id=session.input_id,
+        status=session.status,
+        ingestion_batch_id=session.ingestion_batch_id,
+        run_id=session.run_id,
+        errors=_map_errors(session.validation_errors),
+    )
+
+
+@router.post("/file", response_model=ProductInputSubmissionResponse)
+async def submit_file(request: Request, file: UploadFile = File(...)):
+    service = request.app.state.input_processing_service
+    content = await file.read()
+
+    session = service.process_file(
+        filename=file.filename,
+        content_type=file.content_type,
+        content_bytes=content,
+    )
 
     return ProductInputSubmissionResponse(
         input_id=session.input_id,
