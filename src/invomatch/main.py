@@ -123,3 +123,34 @@ def create_app(
 
 
 app = create_app()
+
+# --- EPIC 20: Input Boundary Wiring ---
+from invomatch.services.input_boundary.repository import InMemoryInputSessionRepository
+from invomatch.services.input_boundary.json_input_service import JsonInputService
+from invomatch.services.input_boundary.input_processing_service import InputProcessingService
+from invomatch.api.routes.input_boundary import router as input_boundary_router
+
+# create input boundary services
+input_session_repo = InMemoryInputSessionRepository()
+json_input_service = JsonInputService()
+
+# adapters to existing system
+def _ingestion_adapter(payload):
+    return app.state.ingestion_service(payload)
+
+def _run_creation_adapter(ingestion_batch_id):
+    return app.state.run_integration_service(ingestion_batch_id)
+
+input_processing_service = InputProcessingService(
+    repository=input_session_repo,
+    json_service=json_input_service,
+    ingestion_service=_ingestion_adapter,
+    run_creation_service=_run_creation_adapter,
+)
+
+app.state.input_processing_service = input_processing_service
+
+# register route
+app.include_router(input_boundary_router)
+# --- END EPIC 20 ---
+
