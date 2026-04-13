@@ -22,6 +22,7 @@ from invomatch.services.actions.result import ActionExecutionStatus
 from invomatch.services.export.export_service import ExportService
 from invomatch.services.export.run_finalized_result_reader import RunFinalizedResultReader
 from invomatch.services.export_delivery_service import ExportDeliveryService
+from invomatch.services.export.errors import ExportDataIncompleteError, RunNotExportableError
 from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import RunStore
 from invomatch.services.storage.local_storage import LocalArtifactStorage
@@ -157,6 +158,14 @@ class ActionService:
                 action_type=action_type,
                 accepted=False,
                 status="invalid_request",
+                message=str(exc),
+            )
+        except (ExportDataIncompleteError, RunNotExportableError) as exc:
+            return ActionExecutionResult(
+                run_id=run_id,
+                action_type=action_type,
+                accepted=False,
+                status="conflict",
                 message=str(exc),
             )
 

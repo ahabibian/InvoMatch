@@ -133,11 +133,17 @@ def get_reconciliation_run_view(run_id: str, request: Request) -> ProductRunView
         "artifact_query_service",
         None,
     )
+    export_readiness_evaluator = getattr(
+        request.app.state,
+        "export_readiness_evaluator",
+        None,
+    )
 
     query_service = RunViewQueryService(
         run_store=registry,
         review_store=review_store,
         artifact_query_service=artifact_query_service,
+        export_readiness_evaluator=export_readiness_evaluator,
     )
     run_view = query_service.get_run_view(run_id)
 

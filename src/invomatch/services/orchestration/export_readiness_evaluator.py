@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
+from invomatch.services.export.errors import ExportDataIncompleteError, RunNotExportableError
+from invomatch.services.export.run_finalized_result_reader import RunFinalizedResultReader
 from invomatch.services.orchestration.review_integration_service import (
     ReviewIntegrationService,
 )
@@ -26,9 +28,14 @@ class ExportReadinessEvaluator:
         review_service: Optional[ReviewService] = None,
     ) -> None:
         self._run_store = run_store
+        self._review_store = review_store or InMemoryReviewStore()
         self._review_integration_service = ReviewIntegrationService(
             review_service=review_service or ReviewService(),
-            review_store=review_store or InMemoryReviewStore(),
+            review_store=self._review_store,
+        )
+        self._finalized_result_reader = RunFinalizedResultReader(
+            run_store=run_store,
+            review_store=self._review_store,
         )
 
     def evaluate(self, run_id: str) -> ExportReadinessResult:
@@ -55,6 +62,14 @@ class ExportReadinessEvaluator:
             return ExportReadinessResult(
                 is_export_ready=False,
                 reason="active_blocking_review_cases_present",
+            )
+
+        try:
+            self._finalized_result_reader.read(run_id=run_id)
+        except (ExportDataIncompleteError, RunNotExportableError) as exc:
+            return ExportReadinessResult(
+                is_export_ready=False,
+                reason=f"finalized_export_data_unavailable:{exc}",
             )
 
         return ExportReadinessResult(

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from typing import Any
+
+from fastapi import APIRouter, Body, File, HTTPException, Request, UploadFile
 
 from invomatch.api.product_models.input_boundary import (
     ProductInputError,
     ProductInputSessionView,
     ProductInputSubmissionResponse,
 )
-
 
 router = APIRouter(prefix="/api/reconciliation/input", tags=["input-boundary"])
 
@@ -25,8 +26,10 @@ def _map_errors(errors):
 
 
 @router.post("/json", response_model=ProductInputSubmissionResponse)
-async def submit_json(request: Request):
-    payload = await request.json()
+async def submit_json(
+    request: Request,
+    payload: dict[str, Any] = Body(...),
+):
     service = request.app.state.input_processing_service
     session = service.process_json(payload)
 
