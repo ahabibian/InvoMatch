@@ -29,7 +29,10 @@ def _normalize_run_status(value: Any) -> str:
 
 
 def _normalize_review_item_status(value: Any) -> str:
-    return str(value or "").strip().upper()
+    if value is None:
+        return ""
+    raw = getattr(value, "value", value)
+    return str(raw).strip().upper()
 
 
 def _is_open_review_item_status(value: Any) -> bool:

@@ -278,3 +278,33 @@ def test_save_reconciliation_run_preserves_summary_and_result_structure(tmp_path
         "partial_match",
         "unmatched",
     }
+def test_update_reconciliation_run_preserves_existing_report_when_report_not_provided(tmp_path: Path):
+    report = _report()
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+
+    run = create_reconciliation_run(
+        invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
+        payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
+        run_store=run_store,
+    )
+
+    run = update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
+    run = update_reconciliation_run(
+        run.run_id,
+        status="review_required",
+        report=report,
+        run_store=run_store,
+    )
+
+    completed_run = update_reconciliation_run(
+        run.run_id,
+        status="completed",
+        run_store=run_store,
+    )
+
+    assert completed_run.report is not None
+    assert completed_run.report.total_invoices == report.total_invoices
+    assert completed_run.report.matched == report.matched
+    assert completed_run.report.duplicate_detected == report.duplicate_detected
+    assert completed_run.report.partial_match == report.partial_match
+    assert completed_run.report.unmatched == report.unmatched

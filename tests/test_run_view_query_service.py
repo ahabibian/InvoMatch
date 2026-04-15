@@ -354,3 +354,30 @@ def test_artifacts_are_sorted_newest_first():
         "artifact_new",
         "artifact_old",
     ]
+def test_review_summary_treats_enum_approved_status_as_resolved():
+    from datetime import UTC, datetime
+    from invomatch.domain.review.models import ReviewItemStatus
+
+    run = _run(status="completed")
+    review_store = FakeReviewStore(
+        feedbacks={"fb_1": FakeFeedback(feedback_id="fb_1", run_id="run_123")},
+        review_items=[
+            FakeReviewItem(
+                review_item_id="review_1",
+                feedback_id="fb_1",
+                item_status=ReviewItemStatus.APPROVED,
+            )
+        ],
+    )
+    service = RunViewQueryService(
+        run_store=FakeRunStore(run=run),
+        review_store=review_store,
+    )
+
+    result = service.get_run_view("run_123")
+
+    assert result is not None
+    assert result.review_summary.status == "completed"
+    assert result.review_summary.total_items == 1
+    assert result.review_summary.open_items == 0
+    assert result.review_summary.resolved_items == 1

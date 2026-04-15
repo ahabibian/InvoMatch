@@ -138,7 +138,7 @@ def update_reconciliation_run(
             "finished_at": finished_at,
             "error": error,
             "error_message": error_message or (error.message if error is not None else None),
-            "report": report,
+            "report": report if report is not None else run.report,
         }
     )
     return run_store.update_run(updated_run, expected_version=run.version)
