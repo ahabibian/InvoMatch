@@ -75,18 +75,22 @@ class FinalizedResultProjection:
                 )
 
             resolved_review = review_index.get(invoice_id)
-            if resolved_review is None:
-                raise ExportDataIncompleteError(
-                    f"no finalized review item found for invoice: {invoice_id}"
-                )
 
-            finalized_result = self._build_result(
-                invoice=invoice,
-                match_result=report_result.match_result,
-                resolved_review=resolved_review,
-                source_snapshot=source_snapshot,
-                run_id=str(run.run_id),
-            )
+            if resolved_review is None:
+                finalized_result = self._build_result_without_review(
+                    invoice=invoice,
+                    match_result=report_result.match_result,
+                    source_snapshot=source_snapshot,
+                    run_id=str(run.run_id),
+                )
+            else:
+                finalized_result = self._build_result(
+                    invoice=invoice,
+                    match_result=report_result.match_result,
+                    resolved_review=resolved_review,
+                    source_snapshot=source_snapshot,
+                    run_id=str(run.run_id),
+                )
             results.append(finalized_result)
 
         return results
@@ -144,11 +148,58 @@ class FinalizedResultProjection:
                 reviewed_payload=review_item.reviewed_payload,
             )
 
-        if not index:
-            raise ExportDataIncompleteError("no finalized review data found for run")
-
         return index
 
+    def _build_result_without_review(
+        self,
+        *,
+        invoice: Invoice,
+        match_result: MatchResult,
+        source_snapshot: ExportSourceSnapshot,
+        run_id: str,
+    ) -> FinalizedResult:
+        invoice_ref = FinalizedInvoiceRef(
+            invoice_id=invoice.id,
+            invoice_number=invoice.reference or invoice.id,
+            invoice_date=invoice.date,
+            amount=invoice.amount,
+            currency=invoice.currency,
+            vendor_name=None,
+        )
+
+        review_meta = self._build_no_review_meta()
+
+        if match_result.status == "matched":
+            return self._build_approved_result(
+                invoice_ref=invoice_ref,
+                match_result=match_result,
+                review_meta=review_meta,
+                source_snapshot=source_snapshot,
+                run_id=run_id,
+            )
+
+        if match_result.status == "unmatched":
+            return self._build_rejected_result(
+                invoice_ref=invoice_ref,
+                review_meta=review_meta,
+                run_id=run_id,
+            )
+
+        if match_result.status in {"partial_match", "duplicate_detected"}:
+            raise RunNotExportableError(
+                f"match status requires finalized review before export: {match_result.status}"
+            )
+
+        raise RunNotExportableError(
+            f"unsupported no-review export path for match status: {match_result.status}"
+        )
+
+    def _build_no_review_meta(self) -> FinalizedReviewMeta:
+        return FinalizedReviewMeta(
+            status=FinalizedReviewStatus.NOT_REQUIRED,
+            reviewed_by=None,
+            reviewed_at=None,
+        )
     def _build_result(
         self,
         *,

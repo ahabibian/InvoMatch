@@ -21,6 +21,7 @@ class FinalizedReviewStatus(str, Enum):
     APPROVED = "APPROVED"
     MODIFIED = "MODIFIED"
     REJECTED = "REJECTED"
+    NOT_REQUIRED = "NOT_REQUIRED"
 
 
 @dataclass(frozen=True, slots=True)
