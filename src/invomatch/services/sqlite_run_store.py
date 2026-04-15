@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal
 
-from invomatch.domain.models import ReconciliationRun, RunStatus
+from invomatch.domain.models import ReconciliationRun, RunError, RunStatus
 from invomatch.services.reconciliation_errors import (
     ConcurrencyConflictError,
     RunLeaseConflictError,
@@ -20,6 +20,8 @@ _SQLITE_TIMEOUT_SECONDS = 30.0
 _SQLITE_BUSY_TIMEOUT_MS = int(_SQLITE_TIMEOUT_SECONDS * 1000)
 _SQLITE_JOURNAL_MODE = "WAL"
 _SQLITE_SYNCHRONOUS = "NORMAL"
+
+
 def _normalize_legacy_run_status(status: str | None) -> str | None:
     if status == "pending":
         return "queued"
@@ -64,8 +66,9 @@ class SqliteRunStore:
                         invoice_csv_path,
                         payment_csv_path,
                         error_message,
+                        error_json,
                         report_json
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         payload["run_id"],
@@ -82,6 +85,7 @@ class SqliteRunStore:
                         payload["invoice_csv_path"],
                         payload["payment_csv_path"],
                         payload["error_message"],
+                        payload["error_json"],
                         payload["report_json"],
                     ),
                 )
@@ -114,6 +118,7 @@ class SqliteRunStore:
                         invoice_csv_path = ?,
                         payment_csv_path = ?,
                         error_message = ?,
+                        error_json = ?,
                         report_json = ?
                     WHERE run_id = ?
                       AND version = ?
@@ -131,6 +136,7 @@ class SqliteRunStore:
                         payload["invoice_csv_path"],
                         payload["payment_csv_path"],
                         payload["error_message"],
+                        payload["error_json"],
                         payload["report_json"],
                         payload["run_id"],
                         expected_version,
@@ -251,6 +257,7 @@ class SqliteRunStore:
                         invoice_csv_path,
                         payment_csv_path,
                         error_message,
+                        error_json,
                         report_json
                     FROM reconciliation_runs
                     WHERE run_id = ?
@@ -346,6 +353,7 @@ class SqliteRunStore:
                         invoice_csv_path,
                         payment_csv_path,
                         error_message,
+                        error_json,
                         report_json
                     FROM reconciliation_runs
                     WHERE run_id = ?
@@ -379,6 +387,7 @@ class SqliteRunStore:
                         invoice_csv_path,
                         payment_csv_path,
                         error_message,
+                        error_json,
                         report_json
                     FROM reconciliation_runs
                     WHERE run_id = ?
@@ -434,6 +443,7 @@ class SqliteRunStore:
                         invoice_csv_path,
                         payment_csv_path,
                         error_message,
+                        error_json,
                         report_json
                     FROM reconciliation_runs
                     {where_clause}
@@ -467,6 +477,7 @@ class SqliteRunStore:
                     invoice_csv_path TEXT NOT NULL,
                     payment_csv_path TEXT NOT NULL,
                     error_message TEXT NULL,
+                    error_json TEXT NULL,
                     report_json TEXT NULL
                 )
                 """
@@ -506,6 +517,8 @@ class SqliteRunStore:
             connection.execute(
                 "ALTER TABLE reconciliation_runs ADD COLUMN attempt_count INTEGER NOT NULL DEFAULT 0"
             )
+        if "error_json" not in columns:
+            connection.execute("ALTER TABLE reconciliation_runs ADD COLUMN error_json TEXT NULL")
 
     def _ensure_schema_version(self, connection: sqlite3.Connection) -> None:
         row = connection.execute("SELECT schema_version FROM schema_meta LIMIT 1").fetchone()
@@ -539,6 +552,10 @@ class SqliteRunStore:
                 }
             )
 
+        error_payload = None
+        if run.error is not None:
+            error_payload = json.dumps(run.error.model_dump(mode="json"))
+
         return {
             "run_id": run.run_id,
             "status": run.status,
@@ -554,11 +571,13 @@ class SqliteRunStore:
             "invoice_csv_path": run.invoice_csv_path,
             "payment_csv_path": run.payment_csv_path,
             "error_message": run.error_message,
+            "error_json": error_payload,
             "report_json": report_payload,
         }
 
     def _deserialize_row(self, row: sqlite3.Row) -> ReconciliationRun:
         report_json = row["report_json"]
+        error_json = row["error_json"]
         payload = {
             "run_id": row["run_id"],
             "status": _normalize_legacy_run_status(row["status"]),
@@ -573,10 +592,20 @@ class SqliteRunStore:
             "attempt_count": row["attempt_count"],
             "invoice_csv_path": row["invoice_csv_path"],
             "payment_csv_path": row["payment_csv_path"],
+            "error": self._deserialize_error_payload(error_json),
             "error_message": row["error_message"],
             "report": self._deserialize_report_payload(report_json),
         }
         return ReconciliationRun.model_validate(payload)
+
+    def _deserialize_error_payload(self, error_json: str | None) -> dict[str, Any] | None:
+        if error_json is None:
+            return None
+
+        payload = json.loads(error_json)
+        if not isinstance(payload, dict):
+            raise ValueError("Error payload must be a JSON object")
+        return payload
 
     def _deserialize_report_payload(self, report_json: str | None) -> dict[str, Any] | None:
         if report_json is None:

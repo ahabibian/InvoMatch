@@ -179,3 +179,42 @@ def test_create_app_can_compose_sqlite_run_store(tmp_path: Path):
     assert isinstance(app.state.run_store, SqliteRunStore)
     assert app.state.run_store.path == database_path
     assert database_path.exists()
+
+def test_sqlite_run_store_round_trips_structured_error(tmp_path: Path):
+    from invomatch.domain.models import RunError
+
+    run_store = SqliteRunStore(tmp_path / "reconciliation_runs.sqlite3")
+
+    run = create_reconciliation_run(
+        invoice_csv_path=ROOT_DIR / "sample-data" / "invoices.csv",
+        payment_csv_path=ROOT_DIR / "sample-data" / "payments.csv",
+        run_store=run_store,
+    )
+
+    run = update_reconciliation_run(
+        run.run_id,
+        status="processing",
+        run_store=run_store,
+    )
+
+    failed_run = update_reconciliation_run(
+        run.run_id,
+        status="failed",
+        error=RunError(
+            code="retry_exhausted",
+            message="retry limit reached for operation: reconcile_and_save",
+            retryable=False,
+            terminal=True,
+        ),
+        run_store=run_store,
+    )
+
+    loaded_run = run_store.get_run(failed_run.run_id)
+
+    assert loaded_run is not None
+    assert loaded_run.status == "failed"
+    assert loaded_run.error is not None
+    assert loaded_run.error.code == "retry_exhausted"
+    assert loaded_run.error.message == "retry limit reached for operation: reconcile_and_save"
+    assert loaded_run.error.retryable is False
+    assert loaded_run.error.terminal is True
