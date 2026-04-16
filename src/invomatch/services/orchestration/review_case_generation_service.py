@@ -1,15 +1,9 @@
 from typing import Any, Dict, List
 
 from invomatch.services.orchestration.review_case_factory import ReviewCaseFactory
-
-
-_REVIEW_REQUIRED_STATUSES = {
-    "unmatched",
-    "ambiguous",
-    "low_confidence",
-    "conflict",
-    "forced_review",
-}
+from invomatch.services.orchestration.review_requirement_evaluator import (
+    RUNTIME_REVIEW_REQUIRED_STATUSES,
+)
 
 
 class ReviewCaseGenerationService:
@@ -22,9 +16,9 @@ class ReviewCaseGenerationService:
 
         for outcome in outcomes:
             invoice_id = outcome.get("invoice_id")
-            status = outcome.get("status")
+            status = str(outcome.get("status", "")).strip().lower()
 
-            if status not in _REVIEW_REQUIRED_STATUSES:
+            if status not in RUNTIME_REVIEW_REQUIRED_STATUSES:
                 continue
 
             if invoice_id in seen_invoice_ids:

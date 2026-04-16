@@ -87,6 +87,7 @@ class ReviewIntegrationService:
                     "reason": raw_payload.get("reason", "manual_review_required"),
                     "confidence": raw_payload.get("confidence"),
                     "candidates": raw_payload.get("candidates", []),
+                    "source_status": raw_payload.get("source_status"),
                     "run_id": feedback.run_id,
                 }
             )

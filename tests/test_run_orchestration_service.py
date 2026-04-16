@@ -9,8 +9,8 @@ def test_orchestrate_post_matching_completes_run_when_no_review_is_required():
     service = RunOrchestrationService(review_store=store)
 
     outcomes = [
-        {"invoice_id": "INV-001", "status": "finalizable"},
-        {"invoice_id": "INV-002", "status": "finalizable"},
+        {"invoice_id": "INV-001", "status": "matched"},
+        {"invoice_id": "INV-002", "status": "matched"},
     ]
 
     result = service.orchestrate_post_matching(
@@ -28,7 +28,7 @@ def test_orchestrate_post_matching_moves_run_to_review_required_and_persists_cas
     service = RunOrchestrationService(review_store=store)
 
     outcomes = [
-        {"invoice_id": "INV-001", "status": "finalizable"},
+        {"invoice_id": "INV-001", "status": "matched"},
         {"invoice_id": "INV-002", "status": "unmatched", "reason": "no_match"},
     ]
 
@@ -41,6 +41,7 @@ def test_orchestrate_post_matching_moves_run_to_review_required_and_persists_cas
     assert len(result.review_cases) == 1
     assert result.review_cases[0]["invoice_id"] == "INV-002"
     assert result.review_cases[0]["status"] == "PENDING"
+    assert result.review_cases[0]["source_status"] == "unmatched"
     assert store.snapshot_counts()["review_items"] == 1
 
 
@@ -49,8 +50,8 @@ def test_orchestrate_post_matching_keeps_all_generated_review_cases():
     service = RunOrchestrationService(review_store=store)
 
     outcomes = [
-        {"invoice_id": "INV-001", "status": "ambiguous", "reason": "multiple_candidates"},
-        {"invoice_id": "INV-002", "status": "low_confidence", "reason": "below_threshold"},
+        {"invoice_id": "INV-001", "status": "partial_match", "reason": "partial_match_requires_review"},
+        {"invoice_id": "INV-002", "status": "duplicate_detected", "reason": "duplicate_candidates_require_review"},
     ]
 
     result = service.orchestrate_post_matching(
@@ -60,6 +61,10 @@ def test_orchestrate_post_matching_keeps_all_generated_review_cases():
 
     assert result.run_status == "review_required"
     assert len(result.review_cases) == 2
+    assert result.review_cases[0]["invoice_id"] == "INV-001"
+    assert result.review_cases[0]["source_status"] == "partial_match"
+    assert result.review_cases[1]["invoice_id"] == "INV-002"
+    assert result.review_cases[1]["source_status"] == "duplicate_detected"
     assert store.snapshot_counts()["review_items"] == 2
 
 

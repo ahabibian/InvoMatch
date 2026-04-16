@@ -2,6 +2,13 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 
+RUNTIME_REVIEW_REQUIRED_STATUSES = {
+    "unmatched",
+    "partial_match",
+    "duplicate_detected",
+}
+
+
 @dataclass
 class ReviewRequirementResult:
     requires_review: bool
@@ -13,15 +20,9 @@ class ReviewRequirementEvaluator:
         review_items = []
 
         for item in reconciliation_results:
-            status = item.get("status")
+            status = str(item.get("status", "")).strip().lower()
 
-            if status in {
-                "unmatched",
-                "ambiguous",
-                "low_confidence",
-                "conflict",
-                "forced_review",
-            }:
+            if status in RUNTIME_REVIEW_REQUIRED_STATUSES:
                 review_items.append(item)
 
         return ReviewRequirementResult(
