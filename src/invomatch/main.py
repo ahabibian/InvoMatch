@@ -32,15 +32,23 @@ from invomatch.services.input_boundary.json_input_service import JsonInputServic
 from invomatch.services.input_boundary.sqlite_repository import (
     SqliteInputSessionRepository,
 )
+from invomatch.services.operational.operational_metrics import (
+    InMemoryOperationalMetricsStore,
+    OperationalMetricsService,
+)
 from invomatch.services.orchestration.export_readiness_evaluator import (
     ExportReadinessEvaluator,
 )
 from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH
+from invomatch.services.restart_consistency_repair_service import (
+    RestartConsistencyRepairService,
+)
 from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_registry import RunRegistry
 from invomatch.services.run_store import JsonRunStore, RunStore, SqliteRunStore
 from invomatch.services.sqlite_review_store import SqliteReviewStore
+from invomatch.services.startup_repair_coordinator import StartupRepairCoordinator
 from invomatch.services.storage.local_storage import LocalArtifactStorage
 
 RunStoreBackend = Literal["json", "sqlite"]
@@ -109,6 +117,28 @@ def create_app(
         backend=review_store_backend,
         path=review_store_path,
     )
+
+    operational_metrics_store = InMemoryOperationalMetricsStore()
+    operational_metrics_service = OperationalMetricsService(
+        operational_metrics_store
+    )
+    restart_consistency_repair_service = RestartConsistencyRepairService(
+        run_store=resolved_run_store,
+        review_store=app.state.review_store,
+    )
+    startup_repair_coordinator = StartupRepairCoordinator(
+        run_store=resolved_run_store,
+        review_store=app.state.review_store,
+        repair_service=restart_consistency_repair_service,
+        metrics_service=operational_metrics_service,
+    )
+    startup_repair_result = startup_repair_coordinator.run_startup_scan()
+
+    app.state.operational_metrics_store = operational_metrics_store
+    app.state.operational_metrics_service = operational_metrics_service
+    app.state.restart_consistency_repair_service = restart_consistency_repair_service
+    app.state.startup_repair_coordinator = startup_repair_coordinator
+    app.state.startup_repair_result = startup_repair_result
 
     export_service = ExportService(
         reader=RunFinalizedResultReader(

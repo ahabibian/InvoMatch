@@ -68,5 +68,26 @@ class OperationalMetricsService:
         elif decision == OperationalDecision.ALREADY_RECOVERED_NOOP:
             self._store.increment_counter("recovery_noop_total")
 
+    def record_startup_repair_item(self, *, item) -> None:
+        self._store.increment_counter("startup_repair_items_total")
+
+        if getattr(item, "repair_applied", False):
+            self._store.increment_counter("startup_repairs_applied_total")
+
+        if getattr(item, "skipped_due_to_active_lease", False):
+            self._store.increment_counter("startup_repair_skipped_active_lease_total")
+
+        if getattr(item, "skipped_due_to_terminal_state", False):
+            self._store.increment_counter("startup_repair_skipped_terminal_total")
+
+        if getattr(item, "unresolved_mismatch", False):
+            self._store.increment_counter("startup_repair_unresolved_total")
+
+        if getattr(item, "failed", False):
+            self._store.increment_counter("startup_repair_failed_total")
+
+        if str(getattr(item, "reason", "") or "").strip() == "no_repair_needed":
+            self._store.increment_counter("startup_repair_noop_total")
+
     def snapshot(self) -> OperationalMetricsSnapshot:
         return self._store.snapshot()
