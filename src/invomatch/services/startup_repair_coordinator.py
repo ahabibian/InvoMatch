@@ -4,6 +4,13 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
+from invomatch.domain.operational.models import (
+    OperationalCondition,
+    OperationalDecision,
+    OperationalReasonCode,
+)
+from invomatch.services.operational.operational_audit import OperationalAuditWrite
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -233,7 +240,24 @@ class StartupRepairCoordinator:
             record = getattr(self._audit_service, "record", None)
             if callable(record):
                 try:
-                    record(item)
+                    record(
+                        OperationalAuditWrite(
+                            run_id=item.run_id,
+                            event_type=self._audit_event_type(item),
+                            decision=self._audit_decision(item),
+                            reason_code=self._audit_reason_code(item),
+                            new_operational_state=self._audit_target_condition(item),
+                            reason_detail=item.reason,
+                            correlation_id=f"startup-repair:{item.run_id}",
+                            metadata={
+                                "source": "startup_consistency_scan",
+                                "original_status": item.original_status,
+                                "final_status": item.final_status,
+                                "repair_attempted": str(item.repair_attempted).lower(),
+                                "repair_applied": str(item.repair_applied).lower(),
+                            },
+                        )
+                    )
                 except Exception:
                     pass
 
@@ -244,3 +268,45 @@ class StartupRepairCoordinator:
                     record_startup_repair_item(item=item)
                 except Exception:
                     pass
+
+    def _audit_event_type(self, item: StartupRepairScanItem) -> str:
+        if item.repair_applied:
+            return "startup_repair_applied"
+        if item.skipped_due_to_active_lease:
+            return "startup_repair_skipped_active_lease"
+        if item.skipped_due_to_terminal_state:
+            return "startup_repair_skipped_terminal"
+        if item.failed or item.unresolved_mismatch:
+            return "startup_repair_unresolved"
+        if item.reason == "no_repair_needed":
+            return "startup_repair_noop"
+        return "startup_repair_observed"
+
+    def _audit_decision(self, item: StartupRepairScanItem) -> OperationalDecision:
+        if item.repair_applied:
+            return OperationalDecision.REENTRY_TRIGGERED
+        if item.skipped_due_to_active_lease:
+            return OperationalDecision.RECOVERY_SKIPPED
+        if item.skipped_due_to_terminal_state:
+            return OperationalDecision.CANDIDATE_REJECTED
+        if item.failed or item.unresolved_mismatch:
+            return OperationalDecision.CANDIDATE_REJECTED
+        return OperationalDecision.ALREADY_RECOVERED_NOOP
+
+    def _audit_reason_code(self, item: StartupRepairScanItem) -> OperationalReasonCode:
+        if item.skipped_due_to_active_lease:
+            return OperationalReasonCode.VALID_LEASE_PRESENT
+        if item.skipped_due_to_terminal_state:
+            return OperationalReasonCode.TERMINAL_BUSINESS_STATE
+        if item.failed or item.unresolved_mismatch:
+            return OperationalReasonCode.CANDIDATE_STATE_CHANGED
+        if item.repair_applied:
+            return OperationalReasonCode.STUCK_PROCESSING
+        return OperationalReasonCode.ALREADY_RECOVERED_SAME_INCIDENT
+
+    def _audit_target_condition(self, item: StartupRepairScanItem) -> OperationalCondition:
+        if item.repair_applied:
+            return OperationalCondition.REENTRY_PENDING
+        if item.skipped_due_to_terminal_state:
+            return OperationalCondition.TERMINAL_CONFIRMED
+        return OperationalCondition.RECOVERY_SKIPPED
