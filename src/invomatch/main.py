@@ -82,6 +82,7 @@ def create_app(
     review_store_backend: ReviewStoreBackend = "sqlite",
     review_store_path: Path | None = None,
     export_base_dir: Path | None = None,
+    startup_now_provider = None,
 ) -> FastAPI:
     app = FastAPI(title="InvoMatch")
     app.add_middleware(
@@ -131,6 +132,7 @@ def create_app(
         review_store=app.state.review_store,
         repair_service=restart_consistency_repair_service,
         metrics_service=operational_metrics_service,
+        now_provider=startup_now_provider,
     )
     startup_repair_result = startup_repair_coordinator.run_startup_scan()
 
