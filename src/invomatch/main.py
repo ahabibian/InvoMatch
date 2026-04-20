@@ -14,6 +14,8 @@ from invomatch.api.health import router as health_router
 from invomatch.api.reconciliation_runs import router as reconciliation_runs_router
 from invomatch.api.review_cases import router as review_cases_router
 from invomatch.api.routes.input_boundary import router as input_boundary_router
+from invomatch.bootstrap.persistence_factory import build_persistence_dependencies
+from invomatch.config.settings import load_application_settings
 from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
 )
@@ -40,49 +42,27 @@ from invomatch.services.orchestration.export_readiness_evaluator import (
     ExportReadinessEvaluator,
 )
 from invomatch.services.reconciliation import reconcile_and_save
-from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH
 from invomatch.services.restart_consistency_repair_service import (
     RestartConsistencyRepairService,
 )
-from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_registry import RunRegistry
-from invomatch.services.run_store import JsonRunStore, RunStore, SqliteRunStore
-from invomatch.services.sqlite_review_store import SqliteReviewStore
+from invomatch.services.run_store import RunStore
 from invomatch.services.startup_repair_coordinator import StartupRepairCoordinator
 from invomatch.services.storage.local_storage import LocalArtifactStorage
 
 RunStoreBackend = Literal["json", "sqlite"]
 ReviewStoreBackend = Literal["memory", "sqlite"]
 
-DEFAULT_SQLITE_RUN_STORE_PATH = Path("output") / "reconciliation_runs.sqlite3"
-DEFAULT_SQLITE_REVIEW_STORE_PATH = Path("output") / "review_store.sqlite3"
-
-
-def _build_run_store(*, backend: RunStoreBackend, path: Path | None = None) -> RunStore:
-    if backend == "sqlite":
-        return SqliteRunStore(path or DEFAULT_SQLITE_RUN_STORE_PATH)
-    return JsonRunStore(path or DEFAULT_RUN_STORE_PATH)
-
-
-def _build_review_store(
-    *,
-    backend: ReviewStoreBackend,
-    path: Path | None = None,
-):
-    if backend == "sqlite":
-        return SqliteReviewStore(path or DEFAULT_SQLITE_REVIEW_STORE_PATH)
-    return InMemoryReviewStore()
-
 
 def create_app(
     *,
     run_store: RunStore | None = None,
-    run_store_backend: RunStoreBackend = "json",
+    run_store_backend: RunStoreBackend | None = None,
     run_store_path: Path | None = None,
-    review_store_backend: ReviewStoreBackend = "sqlite",
+    review_store_backend: ReviewStoreBackend | None = None,
     review_store_path: Path | None = None,
     export_base_dir: Path | None = None,
-    startup_now_provider = None,
+    startup_now_provider=None,
 ) -> FastAPI:
     app = FastAPI(title="InvoMatch")
     app.add_middleware(
@@ -96,14 +76,56 @@ def create_app(
         allow_headers=["*"],
     )
 
-    resolved_run_store = run_store or _build_run_store(
-        backend=run_store_backend,
-        path=run_store_path,
+    settings = load_application_settings()
+
+    effective_run_store_backend = run_store_backend or settings.persistence.run_store_backend
+    effective_review_store_backend = (
+        review_store_backend or settings.persistence.review_store_backend
+    )
+    effective_run_store_path = run_store_path or settings.persistence.run_store_path
+    effective_review_store_path = (
+        review_store_path or settings.persistence.review_store_path
     )
 
-    export_root = Path(export_base_dir or (Path("output") / "exports"))
+    if (
+        effective_run_store_backend != settings.persistence.run_store_backend
+        or effective_review_store_backend != settings.persistence.review_store_backend
+        or effective_run_store_path != settings.persistence.run_store_path
+        or effective_review_store_path != settings.persistence.review_store_path
+    ):
+        settings = load_application_settings()
+        settings = settings.__class__(
+            environment=settings.environment,
+            persistence=settings.persistence.__class__(
+                run_store_backend=effective_run_store_backend,
+                run_store_path=effective_run_store_path,
+                review_store_backend=effective_review_store_backend,
+                review_store_path=effective_review_store_path,
+                feedback_store_backend=settings.persistence.feedback_store_backend,
+                feedback_store_path=settings.persistence.feedback_store_path,
+                match_record_store_backend=settings.persistence.match_record_store_backend,
+                match_record_store_path=settings.persistence.match_record_store_path,
+                export_artifact_db_path=settings.persistence.export_artifact_db_path,
+                input_session_db_path=settings.persistence.input_session_db_path,
+                ingestion_batch_root=settings.persistence.ingestion_batch_root,
+            ),
+            storage=settings.storage,
+            runtime=settings.runtime,
+            observability=settings.observability,
+            upload=settings.upload,
+            scheduler=settings.scheduler,
+            feature_flags=settings.feature_flags,
+        )
+
+    persistence_dependencies = build_persistence_dependencies(settings)
+    resolved_run_store = run_store or persistence_dependencies.run_store
+    resolved_review_store = persistence_dependencies.review_store
+
+    export_root = Path(export_base_dir or settings.storage.export_directory)
     export_root.mkdir(parents=True, exist_ok=True)
 
+    app.state.application_settings = settings
+    app.state.persistence_dependencies = persistence_dependencies
     app.state.run_store = resolved_run_store
     app.state.run_registry = RunRegistry(run_store=resolved_run_store)
     app.state.reconcile_and_save = partial(
@@ -114,10 +136,7 @@ def create_app(
         reconcile_and_save=app.state.reconcile_and_save,
     )
 
-    app.state.review_store = _build_review_store(
-        backend=review_store_backend,
-        path=review_store_path,
-    )
+    app.state.review_store = resolved_review_store
 
     operational_metrics_store = InMemoryOperationalMetricsStore()
     operational_metrics_service = OperationalMetricsService(
@@ -190,7 +209,7 @@ def create_app(
     )
 
     input_session_repo = SqliteInputSessionRepository(
-        Path("output") / "input_sessions.sqlite3"
+        settings.persistence.input_session_db_path
     )
     json_input_service = JsonInputService()
     file_input_service = FileInputService()
