@@ -17,6 +17,7 @@ from invomatch.api.routes.input_boundary import router as input_boundary_router
 from invomatch.bootstrap.persistence_factory import build_persistence_dependencies
 from invomatch.bootstrap.runtime_factory import build_runtime_dependencies
 from invomatch.bootstrap.storage_factory import build_storage_dependencies
+from invomatch.bootstrap.validation_factory import validate_startup_configuration
 from invomatch.config.settings import load_application_settings
 from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
@@ -118,12 +119,20 @@ def create_app(
             feature_flags=settings.feature_flags,
         )
 
+    runtime_dependencies = build_runtime_dependencies(settings)
+    startup_validation_result = validate_startup_configuration(settings)
+
+    if runtime_dependencies.startup_validation_enabled and not startup_validation_result.is_valid:
+        raise ValueError(
+            "Invalid startup configuration: "
+            + "; ".join(startup_validation_result.errors)
+        )
+
     persistence_dependencies = build_persistence_dependencies(settings)
     storage_dependencies = build_storage_dependencies(
         settings,
         export_base_dir=export_base_dir,
     )
-    runtime_dependencies = build_runtime_dependencies(settings)
 
     resolved_run_store = run_store or persistence_dependencies.run_store
     resolved_review_store = persistence_dependencies.review_store
@@ -131,6 +140,7 @@ def create_app(
     export_root.mkdir(parents=True, exist_ok=True)
 
     app.state.application_settings = settings
+    app.state.startup_validation_result = startup_validation_result
     app.state.persistence_dependencies = persistence_dependencies
     app.state.storage_dependencies = storage_dependencies
     app.state.runtime_dependencies = runtime_dependencies
