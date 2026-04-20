@@ -7,9 +7,11 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=src
 ENV INVOMATCH_ENV=production
 
-COPY pyproject.toml /app/pyproject.toml
-
 RUN python -m pip install --upgrade pip
+
+COPY pyproject.toml /app/pyproject.toml
+COPY src /app/src
+
 RUN pip install .
 
 COPY . /app
