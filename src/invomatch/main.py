@@ -15,6 +15,7 @@ from invomatch.api.reconciliation_runs import router as reconciliation_runs_rout
 from invomatch.api.review_cases import router as review_cases_router
 from invomatch.api.routes.input_boundary import router as input_boundary_router
 from invomatch.bootstrap.persistence_factory import build_persistence_dependencies
+from invomatch.bootstrap.runtime_factory import build_runtime_dependencies
 from invomatch.bootstrap.storage_factory import build_storage_dependencies
 from invomatch.config.settings import load_application_settings
 from invomatch.repositories.export_artifact_repository_sqlite import (
@@ -122,6 +123,7 @@ def create_app(
         settings,
         export_base_dir=export_base_dir,
     )
+    runtime_dependencies = build_runtime_dependencies(settings)
 
     resolved_run_store = run_store or persistence_dependencies.run_store
     resolved_review_store = persistence_dependencies.review_store
@@ -131,6 +133,7 @@ def create_app(
     app.state.application_settings = settings
     app.state.persistence_dependencies = persistence_dependencies
     app.state.storage_dependencies = storage_dependencies
+    app.state.runtime_dependencies = runtime_dependencies
     app.state.run_store = resolved_run_store
     app.state.run_registry = RunRegistry(run_store=resolved_run_store)
     app.state.reconcile_and_save = partial(
@@ -158,7 +161,11 @@ def create_app(
         metrics_service=operational_metrics_service,
         now_provider=startup_now_provider,
     )
-    startup_repair_result = startup_repair_coordinator.run_startup_scan()
+
+    if runtime_dependencies.startup_repair_enabled:
+        startup_repair_result = startup_repair_coordinator.run_startup_scan()
+    else:
+        startup_repair_result = None
 
     app.state.operational_metrics_store = operational_metrics_store
     app.state.operational_metrics_service = operational_metrics_service
