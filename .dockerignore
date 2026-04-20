@@ -1,0 +1,16 @@
+.git
+.gitignore
+.github
+.pytest_cache
+.pytest_tmp
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.bak
+output
+codex_tasks
+sample-data
+ui/invomatch-ui/node_modules
+ui/invomatch-ui/dist
