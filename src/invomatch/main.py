@@ -15,6 +15,7 @@ from invomatch.api.reconciliation_runs import router as reconciliation_runs_rout
 from invomatch.api.review_cases import router as review_cases_router
 from invomatch.api.routes.input_boundary import router as input_boundary_router
 from invomatch.bootstrap.persistence_factory import build_persistence_dependencies
+from invomatch.bootstrap.storage_factory import build_storage_dependencies
 from invomatch.config.settings import load_application_settings
 from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
@@ -48,7 +49,6 @@ from invomatch.services.restart_consistency_repair_service import (
 from invomatch.services.run_registry import RunRegistry
 from invomatch.services.run_store import RunStore
 from invomatch.services.startup_repair_coordinator import StartupRepairCoordinator
-from invomatch.services.storage.local_storage import LocalArtifactStorage
 
 RunStoreBackend = Literal["json", "sqlite"]
 ReviewStoreBackend = Literal["memory", "sqlite"]
@@ -118,14 +118,19 @@ def create_app(
         )
 
     persistence_dependencies = build_persistence_dependencies(settings)
+    storage_dependencies = build_storage_dependencies(
+        settings,
+        export_base_dir=export_base_dir,
+    )
+
     resolved_run_store = run_store or persistence_dependencies.run_store
     resolved_review_store = persistence_dependencies.review_store
-
-    export_root = Path(export_base_dir or settings.storage.export_directory)
+    export_root = storage_dependencies.export_root
     export_root.mkdir(parents=True, exist_ok=True)
 
     app.state.application_settings = settings
     app.state.persistence_dependencies = persistence_dependencies
+    app.state.storage_dependencies = storage_dependencies
     app.state.run_store = resolved_run_store
     app.state.run_registry = RunRegistry(run_store=resolved_run_store)
     app.state.reconcile_and_save = partial(
@@ -172,7 +177,7 @@ def create_app(
     export_artifact_repository = SqliteExportArtifactRepository(
         str(export_root / "export_artifacts.sqlite3")
     )
-    export_artifact_storage = LocalArtifactStorage(export_root)
+    export_artifact_storage = storage_dependencies.artifact_storage
 
     def export_generator(run_id: str, format: str) -> bytes:
         from invomatch.domain.export import ExportFormat
