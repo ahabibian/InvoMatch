@@ -9,6 +9,7 @@ from invomatch.domain.review.models import DecisionType, FeedbackRecord
 from invomatch.main import create_app
 from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.review_service import ReviewService
+from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import JsonRunStore
 
 
@@ -35,8 +36,22 @@ def _write_files(tmp_path: Path):
     return invoice, payment
 
 
-def _seed_approved_review(app, run) -> None:
-    review_store = app.state.review_store
+def _make_isolated_app(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "runs.json")
+    review_store = InMemoryReviewStore()
+    app = create_app(
+        run_store=run_store,
+        review_store=review_store,
+        export_base_dir=tmp_path / "exports",
+    )
+    return SimpleNamespace(
+        app=app,
+        run_store=run_store,
+        review_store=review_store,
+    )
+
+
+def _seed_approved_review(review_store, run) -> None:
     review_service = ReviewService()
 
     session = review_service.create_review_session(created_by="system")
@@ -89,7 +104,11 @@ def _seed_approved_review(app, run) -> None:
             review_store.save_eligibility_record(decision_result.eligibility_record)
 
 
-def _create_exportable_run(app, tmp_path: Path, run_store: JsonRunStore):
+def _create_exportable_run(
+    tmp_path: Path,
+    run_store: JsonRunStore,
+    review_store,
+):
     invoice, payment = _write_files(tmp_path)
 
     run = reconcile_and_save(
@@ -97,14 +116,16 @@ def _create_exportable_run(app, tmp_path: Path, run_store: JsonRunStore):
         payment_csv_path=payment,
         run_store=run_store,
     )
-    _seed_approved_review(app, run)
+    _seed_approved_review(review_store, run)
     return run
 
 
 def test_export_creates_and_reuses_artifact(tmp_path: Path):
-    run_store = JsonRunStore(tmp_path / "runs.json")
-    app = create_app(run_store=run_store, export_base_dir=tmp_path / "exports")
-    run = _create_exportable_run(app, tmp_path, run_store)
+    deps = _make_isolated_app(tmp_path)
+    app = deps.app
+    run_store = deps.run_store
+    review_store = deps.review_store
+    run = _create_exportable_run(tmp_path, run_store, review_store)
 
     response1 = export_reconciliation_run(
         run.run_id,
@@ -123,10 +144,12 @@ def test_export_creates_and_reuses_artifact(tmp_path: Path):
 
 
 def test_export_creates_file_on_disk(tmp_path: Path):
-    run_store = JsonRunStore(tmp_path / "runs.json")
+    deps = _make_isolated_app(tmp_path)
+    app = deps.app
+    run_store = deps.run_store
+    review_store = deps.review_store
     export_root = tmp_path / "exports"
-    app = create_app(run_store=run_store, export_base_dir=export_root)
-    run = _create_exportable_run(app, tmp_path, run_store)
+    run = _create_exportable_run(tmp_path, run_store, review_store)
 
     export_reconciliation_run(
         run.run_id,
@@ -139,9 +162,11 @@ def test_export_creates_file_on_disk(tmp_path: Path):
 
 
 def test_export_supports_multiple_formats(tmp_path: Path):
-    run_store = JsonRunStore(tmp_path / "runs.json")
-    app = create_app(run_store=run_store, export_base_dir=tmp_path / "exports")
-    run = _create_exportable_run(app, tmp_path, run_store)
+    deps = _make_isolated_app(tmp_path)
+    app = deps.app
+    run_store = deps.run_store
+    review_store = deps.review_store
+    run = _create_exportable_run(tmp_path, run_store, review_store)
 
     json_response = export_reconciliation_run(
         run.run_id,
@@ -160,9 +185,11 @@ def test_export_supports_multiple_formats(tmp_path: Path):
 
 
 def test_export_payload_is_valid_json(tmp_path: Path):
-    run_store = JsonRunStore(tmp_path / "runs.json")
-    app = create_app(run_store=run_store, export_base_dir=tmp_path / "exports")
-    run = _create_exportable_run(app, tmp_path, run_store)
+    deps = _make_isolated_app(tmp_path)
+    app = deps.app
+    run_store = deps.run_store
+    review_store = deps.review_store
+    run = _create_exportable_run(tmp_path, run_store, review_store)
 
     response = export_reconciliation_run(
         run.run_id,

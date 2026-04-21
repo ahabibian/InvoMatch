@@ -13,6 +13,7 @@ from invomatch.main import create_app
 from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.reconciliation_runs import create_reconciliation_run
 from invomatch.services.review_service import ReviewService
+from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import JsonRunStore
 
 
@@ -58,8 +59,22 @@ def _create_completed_run(tmp_path: Path, run_store: JsonRunStore):
     )
 
 
-def _seed_approved_review(app, run) -> None:
-    review_store = app.state.review_store
+@pytest.fixture
+def isolated_export_app(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "runs.json")
+    review_store = InMemoryReviewStore()
+    app = create_app(
+        run_store=run_store,
+        review_store=review_store,
+    )
+    return SimpleNamespace(
+        app=app,
+        run_store=run_store,
+        review_store=review_store,
+    )
+
+
+def _seed_approved_review(review_store, run) -> None:
     review_service = ReviewService()
 
     session = review_service.create_review_session(created_by="system")
@@ -146,26 +161,41 @@ def test_export_route_returns_409_for_pending_run(tmp_path: Path):
     assert exc_info.value.status_code == 409
 
 
-def test_export_route_returns_422_when_review_data_is_missing(tmp_path: Path):
-    run_store = JsonRunStore(tmp_path / "runs.json")
+def test_export_route_allows_export_for_completed_matched_run_without_review(
+    tmp_path: Path,
+    isolated_export_app,
+):
+    app = isolated_export_app.app
+    run_store = isolated_export_app.run_store
+
     run = _create_completed_run(tmp_path, run_store)
-    app = create_app(run_store=run_store)
 
-    with pytest.raises(HTTPException) as exc_info:
-        export_reconciliation_run(
-            run.run_id,
-            format="json",
-            request=_request_for_app(app),
-        )
+    response = export_reconciliation_run(
+        run.run_id,
+        format="json",
+        request=_request_for_app(app),
+    )
 
-    assert exc_info.value.status_code == 422
+    assert response.status_code == 200
+    assert response.media_type == "application/json"
+
+    payload = json.loads(response.body.decode("utf-8"))
+    assert payload["run_id"] == run.run_id
+    assert len(payload["results"]) == 1
+    assert payload["results"][0]["invoice"]["invoice_id"] == "inv-1"
+    assert payload["results"][0]["review"]["status"] == "NOT_REQUIRED"
 
 
-def test_export_route_returns_json_export_for_completed_reviewed_run(tmp_path: Path):
-    run_store = JsonRunStore(tmp_path / "runs.json")
+def test_export_route_returns_json_export_for_completed_reviewed_run(
+    tmp_path: Path,
+    isolated_export_app,
+):
+    app = isolated_export_app.app
+    run_store = isolated_export_app.run_store
+    review_store = isolated_export_app.review_store
+
     run = _create_completed_run(tmp_path, run_store)
-    app = create_app(run_store=run_store)
-    _seed_approved_review(app, run)
+    _seed_approved_review(review_store, run)
 
     response = export_reconciliation_run(
         run.run_id,
@@ -185,11 +215,16 @@ def test_export_route_returns_json_export_for_completed_reviewed_run(tmp_path: P
     assert payload["results"][0]["invoice"]["invoice_id"] == "inv-1"
 
 
-def test_export_route_returns_csv_export_for_completed_reviewed_run(tmp_path: Path):
-    run_store = JsonRunStore(tmp_path / "runs.json")
+def test_export_route_returns_csv_export_for_completed_reviewed_run(
+    tmp_path: Path,
+    isolated_export_app,
+):
+    app = isolated_export_app.app
+    run_store = isolated_export_app.run_store
+    review_store = isolated_export_app.review_store
+
     run = _create_completed_run(tmp_path, run_store)
-    app = create_app(run_store=run_store)
-    _seed_approved_review(app, run)
+    _seed_approved_review(review_store, run)
 
     response = export_reconciliation_run(
         run.run_id,

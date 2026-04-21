@@ -8,6 +8,7 @@ from invomatch.domain.review.models import DecisionType, FeedbackRecord
 from invomatch.main import create_app
 from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.review_service import ReviewService
+from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import JsonRunStore
 
 
@@ -30,8 +31,7 @@ def _write_files(tmp_path: Path):
     return invoice, payment
 
 
-def _seed_approved_review(app, run) -> None:
-    review_store = app.state.review_store
+def _seed_approved_review(review_store, run) -> None:
     review_service = ReviewService()
 
     session = review_service.create_review_session(created_by="system")
@@ -86,7 +86,12 @@ def _seed_approved_review(app, run) -> None:
 
 def test_run_view_reflects_exported_state_after_export_route_execution(tmp_path: Path):
     run_store = JsonRunStore(tmp_path / "runs.json")
-    app = create_app(run_store=run_store, export_base_dir=tmp_path / "exports")
+    review_store = InMemoryReviewStore()
+    app = create_app(
+        run_store=run_store,
+        review_store=review_store,
+        export_base_dir=tmp_path / "exports",
+    )
     client = TestClient(app)
 
     invoice, payment = _write_files(tmp_path)
@@ -95,7 +100,7 @@ def test_run_view_reflects_exported_state_after_export_route_execution(tmp_path:
         payment_csv_path=payment,
         run_store=run_store,
     )
-    _seed_approved_review(app, run)
+    _seed_approved_review(review_store, run)
 
     pre_export_view = client.get(f"/api/reconciliation/runs/{run.run_id}/view")
     assert pre_export_view.status_code == 200

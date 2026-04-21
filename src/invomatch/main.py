@@ -59,6 +59,9 @@ ReviewStoreBackend = Literal["memory", "sqlite"]
 def create_app(
     *,
     run_store: RunStore | None = None,
+    review_store=None,
+    export_artifact_repository=None,
+    artifact_storage=None,
     run_store_backend: RunStoreBackend | None = None,
     run_store_path: Path | None = None,
     review_store_backend: ReviewStoreBackend | None = None,
@@ -135,7 +138,7 @@ def create_app(
     )
 
     resolved_run_store = run_store or persistence_dependencies.run_store
-    resolved_review_store = persistence_dependencies.review_store
+    resolved_review_store = review_store or persistence_dependencies.review_store
     export_root = storage_dependencies.export_root
     export_root.mkdir(parents=True, exist_ok=True)
 
@@ -191,10 +194,15 @@ def create_app(
         run_store=resolved_run_store,
     )
 
-    export_artifact_repository = SqliteExportArtifactRepository(
-        str(export_root / "export_artifacts.sqlite3")
+    resolved_export_artifact_repository = (
+        export_artifact_repository
+        or SqliteExportArtifactRepository(
+            str(export_root / "export_artifacts.sqlite3")
+        )
     )
-    export_artifact_storage = storage_dependencies.artifact_storage
+    resolved_artifact_storage = (
+        artifact_storage or storage_dependencies.artifact_storage
+    )
 
     def export_generator(run_id: str, format: str) -> bytes:
         from invomatch.domain.export import ExportFormat
@@ -205,13 +213,13 @@ def create_app(
         ).content
 
     export_delivery_service = ExportDeliveryService(
-        repository=export_artifact_repository,
-        storage=export_artifact_storage,
+        repository=resolved_export_artifact_repository,
+        storage=resolved_artifact_storage,
         export_generator=export_generator,
     )
     artifact_query_service = ArtifactQueryService(
-        repository=export_artifact_repository,
-        storage=export_artifact_storage,
+        repository=resolved_export_artifact_repository,
+        storage=resolved_artifact_storage,
     )
     export_readiness_evaluator = ExportReadinessEvaluator(
         run_store=resolved_run_store,
@@ -219,8 +227,8 @@ def create_app(
     )
 
     app.state.export_service = export_service
-    app.state.export_artifact_repository = export_artifact_repository
-    app.state.export_artifact_storage = export_artifact_storage
+    app.state.export_artifact_repository = resolved_export_artifact_repository
+    app.state.export_artifact_storage = resolved_artifact_storage
     app.state.export_delivery_service = export_delivery_service
     app.state.artifact_query_service = artifact_query_service
     app.state.export_readiness_evaluator = export_readiness_evaluator
