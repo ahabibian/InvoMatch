@@ -1,10 +1,23 @@
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+
 .venv/
 .env
+
 .pytest_cache/
+.pytest_tmp/
+
 dist/
 build/
 
 output/
-.pytest_tmp/
+*.log
+*.tmp
+*.out
+
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
