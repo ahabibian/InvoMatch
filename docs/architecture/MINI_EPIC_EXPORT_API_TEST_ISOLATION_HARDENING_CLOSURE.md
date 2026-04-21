@@ -1,4 +1,4 @@
-# MINI_EPIC â€” Export API Test Isolation Hardening â€” Closure
+# MINI_EPIC - Export API Test Isolation Hardening - Closure
 
 ## Status
 
