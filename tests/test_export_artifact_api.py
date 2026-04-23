@@ -15,6 +15,10 @@ from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.run_store import JsonRunStore
 
 
+def _auth_headers(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}
+
+
 def _write_source_files(tmp_path: Path) -> tuple[Path, Path]:
     invoice_path = tmp_path / "invoices.csv"
     payment_path = tmp_path / "payments.csv"
@@ -93,7 +97,7 @@ def test_list_run_export_artifacts_returns_empty_list_for_existing_run_without_a
     )
     client = TestClient(app)
 
-    response = client.get(f"/api/reconciliation/runs/{run.run_id}/exports")
+    response = client.get(f"/api/reconciliation/runs/{run.run_id}/exports", headers=_auth_headers("viewer-token"))
 
     assert response.status_code == 200
     payload = response.json()
@@ -109,7 +113,7 @@ def test_list_run_export_artifacts_returns_404_for_missing_run(tmp_path: Path):
     )
     client = TestClient(app)
 
-    response = client.get("/api/reconciliation/runs/missing-run/exports")
+    response = client.get("/api/reconciliation/runs/missing-run/exports", headers=_auth_headers("viewer-token"))
 
     assert response.status_code == 404
     payload = response.json()["detail"]
@@ -134,7 +138,7 @@ def test_get_export_artifact_metadata_returns_artifact_details(tmp_path: Path):
     repository.create(artifact)
 
     client = TestClient(app)
-    response = client.get(f"/api/reconciliation/exports/{artifact.id}")
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}", headers=_auth_headers("viewer-token"))
 
     assert response.status_code == 200
     payload = response.json()["artifact"]
@@ -157,7 +161,7 @@ def test_get_export_artifact_metadata_returns_404_for_missing_artifact(tmp_path:
     )
     client = TestClient(app)
 
-    response = client.get("/api/reconciliation/exports/missing-artifact")
+    response = client.get("/api/reconciliation/exports/missing-artifact", headers=_auth_headers("viewer-token"))
 
     assert response.status_code == 404
     payload = response.json()["detail"]
@@ -202,9 +206,9 @@ def test_get_export_artifact_metadata_preserves_lifecycle_visibility_for_non_dow
 
     client = TestClient(app)
 
-    expired_response = client.get(f"/api/reconciliation/exports/{expired_artifact.id}")
-    deleted_response = client.get(f"/api/reconciliation/exports/{deleted_artifact.id}")
-    failed_response = client.get(f"/api/reconciliation/exports/{failed_artifact.id}")
+    expired_response = client.get(f"/api/reconciliation/exports/{expired_artifact.id}", headers=_auth_headers("viewer-token"))
+    deleted_response = client.get(f"/api/reconciliation/exports/{deleted_artifact.id}", headers=_auth_headers("viewer-token"))
+    failed_response = client.get(f"/api/reconciliation/exports/{failed_artifact.id}", headers=_auth_headers("viewer-token"))
 
     assert expired_response.status_code == 200
     assert deleted_response.status_code == 200
@@ -249,7 +253,7 @@ def test_download_export_artifact_success(tmp_path):
 
     client = TestClient(app)
 
-    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download", headers=_auth_headers("operator-token"))
 
     assert response.status_code == 200
     assert response.content == b"test-content"
@@ -261,7 +265,7 @@ def test_download_export_artifact_not_found(tmp_path):
 
     client = TestClient(app)
 
-    response = client.get("/api/reconciliation/exports/missing/download")
+    response = client.get("/api/reconciliation/exports/missing/download", headers=_auth_headers("operator-token"))
 
     assert response.status_code == 404
     assert response.json()["detail"]["code"] == "artifact_not_found"
@@ -285,7 +289,7 @@ def test_download_export_artifact_expired(tmp_path):
 
     client = TestClient(app)
 
-    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download", headers=_auth_headers("operator-token"))
 
     assert response.status_code == 410
     assert response.json()["detail"]["code"] == "artifact_expired"
@@ -309,7 +313,7 @@ def test_download_export_artifact_deleted(tmp_path):
 
     client = TestClient(app)
 
-    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download", headers=_auth_headers("operator-token"))
 
     assert response.status_code == 410
     assert response.json()["detail"]["code"] == "artifact_deleted"
@@ -333,7 +337,7 @@ def test_download_export_artifact_failed(tmp_path):
 
     client = TestClient(app)
 
-    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download", headers=_auth_headers("operator-token"))
 
     assert response.status_code == 409
     assert response.json()["detail"]["code"] == "artifact_failed"
@@ -358,7 +362,7 @@ def test_download_export_artifact_unavailable(tmp_path):
 
     client = TestClient(app)
 
-    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download")
+    response = client.get(f"/api/reconciliation/exports/{artifact.id}/download", headers=_auth_headers("operator-token"))
 
     assert response.status_code == 500
     assert response.json()["detail"]["code"] == "artifact_unavailable"

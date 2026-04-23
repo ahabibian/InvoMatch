@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from invomatch.api.product_models.action import ProductActionRequest
+from invomatch.domain.security import AuthenticatedPrincipal, Permission
 from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
 )
@@ -21,10 +22,11 @@ from invomatch.services.actions.handlers.resolve_review import ResolveReviewActi
 from invomatch.services.actions.result import ActionExecutionStatus
 from invomatch.services.export.export_service import ExportService
 from invomatch.services.export.run_finalized_result_reader import RunFinalizedResultReader
-from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.export.errors import ExportDataIncompleteError, RunNotExportableError
+from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import RunStore
+from invomatch.services.security import AuthorizationService
 from invomatch.services.storage.local_storage import LocalArtifactStorage
 
 
@@ -49,8 +51,10 @@ class ActionService:
         run_store: RunStore | None = None,
         review_store: InMemoryReviewStore | None = None,
         export_base_dir: Path | None = None,
+        authorization_service: AuthorizationService | None = None,
     ) -> None:
         self._run_store = run_store
+        self._authorization_service = authorization_service or AuthorizationService()
 
         dispatcher = ActionDispatcher()
         dispatcher.register("resolve_review", ResolveReviewActionHandler)
@@ -92,7 +96,13 @@ class ActionService:
 
         self._execution_service = ActionExecutionService(dispatcher)
 
-    def execute(self, *, run_id: str, request: ProductActionRequest) -> ActionExecutionResult:
+    def execute(
+        self,
+        *,
+        run_id: str,
+        request: ProductActionRequest,
+        principal: AuthenticatedPrincipal | None = None,
+    ) -> ActionExecutionResult:
         action_type = str(request.action_type)
 
         if action_type not in self.SUPPORTED_ACTIONS:
@@ -103,6 +113,21 @@ class ActionService:
                 status="unsupported_action",
                 message=f"Unsupported action type: {action_type}",
             )
+
+        if principal is not None:
+            permission = self._permission_for_action_type(action_type)
+            authz = self._authorization_service.authorize(
+                principal=principal,
+                permission=permission,
+            )
+            if not authz.allowed:
+                return ActionExecutionResult(
+                    run_id=run_id,
+                    action_type=action_type,
+                    accepted=False,
+                    status="forbidden",
+                    message="Permission denied",
+                )
 
         if self._run_store is not None:
             try:
@@ -214,6 +239,17 @@ class ActionService:
             status="failed",
             message="Action could not be completed.",
         )
+
+    def _permission_for_action_type(self, action_type: str) -> Permission:
+        normalized = str(action_type).strip().lower()
+
+        if normalized == "resolve_review":
+            return Permission.ACTIONS_RESOLVE_REVIEW
+
+        if normalized == "export_run":
+            return Permission.ACTIONS_EXPORT_RUN
+
+        raise ValueError(f"Unsupported action type: {action_type}")
 
     def _get_run_state(self, run_id: str) -> str:
         run = self._load_run(run_id)

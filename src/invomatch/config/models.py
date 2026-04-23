@@ -72,6 +72,15 @@ class FeatureFlagSettings:
 
 
 @dataclass(frozen=True)
+class SecuritySettings:
+    auth_enabled: bool
+    public_health_enabled: bool
+    public_readiness_enabled: bool
+    seed_tokens_json: str
+    security_audit_enabled: bool
+
+
+@dataclass(frozen=True)
 class ApplicationSettings:
     environment: EnvironmentName
     persistence: PersistenceSettings
@@ -81,3 +90,4 @@ class ApplicationSettings:
     upload: UploadSettings
     scheduler: SchedulerSettings
     feature_flags: FeatureFlagSettings
+    security: SecuritySettings

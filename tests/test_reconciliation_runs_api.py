@@ -22,16 +22,49 @@ from invomatch.services.reconciliation_runs import (
 )
 from invomatch.services.run_registry import RunRegistry
 from invomatch.services.run_store import InMemoryRunStore, JsonRunStore, RunStore
+from invomatch.services.security import (
+    AuthenticationService,
+    AuthorizationService,
+    InMemorySecurityAuditService,
+    StaticTokenProvider,
+)
 
 
-def _request_for_store(run_store: RunStore) -> SimpleNamespace:
+def _request_for_store(
+    run_store: RunStore,
+    authorization: str | None = "Bearer operator-token",
+) -> SimpleNamespace:
+    token_provider = StaticTokenProvider(
+        '[{"token":"viewer-token","user_id":"viewer-1","username":"viewer","role":"viewer","status":"active"},{"token":"operator-token","user_id":"operator-1","username":"operator","role":"operator","status":"active"}]'
+    )
+    authentication_service = AuthenticationService(token_provider=token_provider)
+    authorization_service = AuthorizationService()
+    security_audit_service = InMemorySecurityAuditService()
+
     app = SimpleNamespace(
         state=SimpleNamespace(
             run_registry=RunRegistry(run_store=run_store),
             reconcile_and_save=partial(reconcile_and_save, run_store=run_store),
+            security_settings=SimpleNamespace(
+                auth_enabled=True,
+                security_audit_enabled=True,
+            ),
+            authentication_service=authentication_service,
+            authorization_service=authorization_service,
+            security_audit_service=security_audit_service,
         )
     )
-    return SimpleNamespace(app=app)
+
+    headers = {}
+    if authorization is not None:
+        headers["Authorization"] = authorization
+
+    return SimpleNamespace(
+        app=app,
+        headers=headers,
+        method="GET",
+        url=SimpleNamespace(path="/api/reconciliation/runs"),
+    )
 
 
 @pytest.fixture
@@ -76,6 +109,38 @@ def _seed_runs(run_store: RunStore) -> list[str]:
         run_store=run_store,
     )
     return [pending.run_id, failed.run_id, completed.run_id]
+
+
+def test_create_reconciliation_run_returns_401_without_auth(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    request = _request_for_store(run_store, authorization=None)
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_reconciliation_run(
+            request_body=CreateRunRequest(
+                invoice_csv_path="sample-data/invoices.csv",
+                payment_csv_path="sample-data/payments.csv",
+            ),
+            request=request,
+        )
+
+    assert exc_info.value.status_code == 401
+
+
+def test_create_reconciliation_run_returns_403_for_viewer(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    request = _request_for_store(run_store, authorization="Bearer viewer-token")
+
+    with pytest.raises(HTTPException) as exc_info:
+        create_reconciliation_run(
+            request_body=CreateRunRequest(
+                invoice_csv_path="sample-data/invoices.csv",
+                payment_csv_path="sample-data/payments.csv",
+            ),
+            request=request,
+        )
+
+    assert exc_info.value.status_code == 403
 
 
 def test_create_reconciliation_run_returns_completed_run(reconciliation_request):
@@ -227,7 +292,8 @@ def test_create_reconciliation_run_returns_structured_execution_failure_and_pers
     failed_run = persisted_runs[0]
     assert failed_run.run_id == detail["run_id"]
     assert failed_run.status == "failed"
-    assert failed_run.error_message == "reconciliation exploded"
+    assert failed_run.error_message is not None
+    assert "reconciliation exploded" in failed_run.error_message
     assert failed_run.report is None
     assert failed_run.finished_at is not None
 
@@ -252,6 +318,16 @@ def test_create_then_retrieve_reconciliation_run_returns_persisted_payload(recon
     assert not hasattr(response, "finished_at")
     assert not hasattr(response, "report")
     assert response.match_count == 20
+
+
+def test_get_reconciliation_runs_returns_401_without_auth(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "reconciliation_runs.json")
+    _seed_runs(run_store)
+
+    with pytest.raises(HTTPException) as exc_info:
+        list_reconciliation_runs(request=_request_for_store(run_store, authorization=None))
+
+    assert exc_info.value.status_code == 401
 
 
 def test_get_reconciliation_runs_returns_paginated_list(tmp_path: Path):

@@ -50,6 +50,12 @@ from invomatch.services.restart_consistency_repair_service import (
 )
 from invomatch.services.run_registry import RunRegistry
 from invomatch.services.run_store import RunStore
+from invomatch.services.security import (
+    AuthenticationService,
+    AuthorizationService,
+    InMemorySecurityAuditService,
+    StaticTokenProvider,
+)
 from invomatch.services.startup_repair_coordinator import StartupRepairCoordinator
 
 RunStoreBackend = Literal["json", "sqlite"]
@@ -120,6 +126,7 @@ def create_app(
             upload=settings.upload,
             scheduler=settings.scheduler,
             feature_flags=settings.feature_flags,
+            security=settings.security,
         )
 
     runtime_dependencies = build_runtime_dependencies(settings)
@@ -142,7 +149,17 @@ def create_app(
     export_root = storage_dependencies.export_root
     export_root.mkdir(parents=True, exist_ok=True)
 
+    token_provider = StaticTokenProvider(settings.security.seed_tokens_json)
+    authentication_service = AuthenticationService(token_provider=token_provider)
+    authorization_service = AuthorizationService()
+    security_audit_service = InMemorySecurityAuditService()
+
     app.state.application_settings = settings
+    app.state.security_settings = settings.security
+    app.state.token_provider = token_provider
+    app.state.authentication_service = authentication_service
+    app.state.authorization_service = authorization_service
+    app.state.security_audit_service = security_audit_service
     app.state.startup_validation_result = startup_validation_result
     app.state.persistence_dependencies = persistence_dependencies
     app.state.storage_dependencies = storage_dependencies

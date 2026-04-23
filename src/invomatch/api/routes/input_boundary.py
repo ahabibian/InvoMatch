@@ -9,6 +9,8 @@ from invomatch.api.product_models.input_boundary import (
     ProductInputSessionView,
     ProductInputSubmissionResponse,
 )
+from invomatch.api.security import record_privileged_success, require_permission
+from invomatch.domain.security import Permission
 
 router = APIRouter(prefix="/api/reconciliation/input", tags=["input-boundary"])
 
@@ -30,8 +32,21 @@ async def submit_json(
     request: Request,
     payload: dict[str, Any] = Body(...),
 ):
+    principal = require_permission(request, permission=Permission.INPUT_SUBMIT)
+
     service = request.app.state.input_processing_service
     session = service.process_json(payload)
+
+    record_privileged_success(
+        request,
+        principal=principal,
+        permission=Permission.INPUT_SUBMIT,
+        metadata={
+            "input_type": "json",
+            "input_id": session.input_id,
+            "run_id": session.run_id,
+        },
+    )
 
     return ProductInputSubmissionResponse(
         input_id=session.input_id,
@@ -44,6 +59,8 @@ async def submit_json(
 
 @router.post("/file", response_model=ProductInputSubmissionResponse)
 async def submit_file(request: Request, file: UploadFile = File(...)):
+    principal = require_permission(request, permission=Permission.INPUT_SUBMIT)
+
     service = request.app.state.input_processing_service
     content = await file.read()
 
@@ -51,6 +68,18 @@ async def submit_file(request: Request, file: UploadFile = File(...)):
         filename=file.filename,
         content_type=file.content_type,
         content_bytes=content,
+    )
+
+    record_privileged_success(
+        request,
+        principal=principal,
+        permission=Permission.INPUT_SUBMIT,
+        metadata={
+            "input_type": "file",
+            "input_id": session.input_id,
+            "run_id": session.run_id,
+            "source_filename": file.filename,
+        },
     )
 
     return ProductInputSubmissionResponse(
@@ -64,6 +93,8 @@ async def submit_file(request: Request, file: UploadFile = File(...)):
 
 @router.get("/{input_id}", response_model=ProductInputSessionView)
 async def get_input_session(input_id: str, request: Request):
+    require_permission(request, permission=Permission.INPUT_VIEW)
+
     repository = request.app.state.input_session_repository
     session = repository.get_by_input_id(input_id)
 

@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request, Response
 
+from invomatch.api.security import record_privileged_success, require_permission
 from invomatch.domain.export import ExportFormat
+from invomatch.domain.security import Permission
 from invomatch.services.export import (
     ExportDataIncompleteError,
     ExportError,
@@ -20,6 +22,8 @@ def export_reconciliation_run(
     format: str = "json",
     request: Request = None,
 ):
+    principal = require_permission(request, permission=Permission.EXPORTS_DOWNLOAD_DIRECT)
+
     delivery_service = getattr(request.app.state, "export_delivery_service", None)
     artifact_storage = getattr(request.app.state, "export_artifact_storage", None)
 
@@ -40,14 +44,6 @@ def export_reconciliation_run(
         with artifact_storage.open_read(artifact.storage_key) as handle:
             content = handle.read()
 
-        return Response(
-            content=content,
-            media_type=artifact.content_type,
-            headers={
-                "Content-Disposition": f'attachment; filename="{artifact.file_name}"'
-            },
-        )
-
     except UnsupportedExportFormatError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
 
@@ -65,6 +61,21 @@ def export_reconciliation_run(
 
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+
+    record_privileged_success(
+        request,
+        principal=principal,
+        permission=Permission.EXPORTS_DOWNLOAD_DIRECT,
+        metadata={"run_id": run_id, "format": export_format.value},
+    )
+
+    return Response(
+        content=content,
+        media_type=artifact.content_type,
+        headers={
+            "Content-Disposition": f'attachment; filename="{artifact.file_name}"'
+        },
+    )
 
 
 def _parse_format(value: str) -> ExportFormat:

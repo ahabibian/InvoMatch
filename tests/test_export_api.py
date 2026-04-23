@@ -17,8 +17,17 @@ from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import JsonRunStore
 
 
-def _request_for_app(app) -> SimpleNamespace:
-    return SimpleNamespace(app=app)
+def _request_for_app(app, authorization: str | None = "Bearer operator-token") -> SimpleNamespace:
+    headers = {}
+    if authorization is not None:
+        headers["Authorization"] = authorization
+
+    return SimpleNamespace(
+        app=app,
+        headers=headers,
+        method="GET",
+        url=SimpleNamespace(path="/api/reconciliation/runs/test-run/export"),
+    )
 
 
 def _write_source_files(tmp_path: Path) -> tuple[Path, Path]:
@@ -125,6 +134,20 @@ def _seed_approved_review(review_store, run) -> None:
         review_store.save_audit_event(decision_result.audit_event)
         if decision_result.eligibility_record is not None:
             review_store.save_eligibility_record(decision_result.eligibility_record)
+
+
+def test_export_route_returns_401_without_auth(tmp_path: Path):
+    run_store = JsonRunStore(tmp_path / "runs.json")
+    app = create_app(run_store=run_store)
+
+    with pytest.raises(HTTPException) as exc_info:
+        export_reconciliation_run(
+            "missing-run",
+            format="json",
+            request=_request_for_app(app, authorization=None),
+        )
+
+    assert exc_info.value.status_code == 401
 
 
 def test_export_route_returns_404_for_missing_run(tmp_path: Path):

@@ -21,7 +21,9 @@ from invomatch.api.reconciliation_schemas import (
     IngestionRunResponse,
     to_api_error_response,
 )
+from invomatch.api.security import record_privileged_success, require_permission
 from invomatch.domain.models import ReconciliationRun, RunStatus
+from invomatch.domain.security import Permission
 from invomatch.services.artifact_query_service import ArtifactQueryService
 from invomatch.services.ingestion_run_integration.runtime_adapter import (
     IngestionRunRuntimeAdapter,
@@ -45,6 +47,8 @@ router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-runs
     responses={400: {"model": ApiErrorResponse}, 500: {"model": ApiErrorResponse}},
 )
 def create_reconciliation_run(request_body: CreateRunRequest, request: Request) -> ProductRunDetail:
+    principal = require_permission(request, permission=Permission.RUNS_CREATE)
+
     reconcile_and_save: Callable[[Path, Path], ReconciliationRun] = request.app.state.reconcile_and_save
     try:
         run = reconcile_and_save(
@@ -55,6 +59,13 @@ def create_reconciliation_run(request_body: CreateRunRequest, request: Request) 
         raise HTTPException(status_code=400, detail=to_api_error_response(exc).model_dump(exclude_none=True)) from exc
     except (ReconciliationExecutionError, RunStorageError) as exc:
         raise HTTPException(status_code=500, detail=to_api_error_response(exc).model_dump(exclude_none=True)) from exc
+
+    record_privileged_success(
+        request,
+        principal=principal,
+        permission=Permission.RUNS_CREATE,
+        metadata={"run_id": run.run_id},
+    )
     return to_product_run_detail(run)
 
 
@@ -67,6 +78,8 @@ def create_reconciliation_run_from_ingestion(
     request_body: CreateRunFromIngestionRequest,
     request: Request,
 ) -> IngestionRunResponse:
+    principal = require_permission(request, permission=Permission.RUNS_CREATE_FROM_INGESTION)
+
     adapter: IngestionRunRuntimeAdapter = request.app.state.ingestion_run_runtime_adapter
 
     result = adapter.create_run_from_ingestion(
@@ -77,6 +90,16 @@ def create_reconciliation_run_from_ingestion(
         rejected_count=0,
         conflict_count=0,
         blocking_conflict=False,
+    )
+
+    record_privileged_success(
+        request,
+        principal=principal,
+        permission=Permission.RUNS_CREATE_FROM_INGESTION,
+        metadata={
+            "run_id": result.run_id,
+            "ingestion_batch_id": result.ingestion_batch_id,
+        },
     )
 
     return IngestionRunResponse(
@@ -100,6 +123,8 @@ def list_reconciliation_runs(
     offset: int = 0,
     sort_order: Literal["asc", "desc"] = "desc",
 ) -> ProductRunListResponse:
+    require_permission(request, permission=Permission.RUNS_LIST)
+
     registry: RunRegistry = request.app.state.run_registry
     runs, total = registry.list_runs(
         status=status,
@@ -117,6 +142,8 @@ def list_reconciliation_runs(
 
 @router.get("/{run_id}", response_model=ProductRunDetail)
 def get_reconciliation_run(run_id: str, request: Request) -> ProductRunDetail:
+    require_permission(request, permission=Permission.RUNS_READ)
+
     registry: RunRegistry = request.app.state.run_registry
     run = registry.get_run(run_id)
     if run is None:
@@ -126,6 +153,8 @@ def get_reconciliation_run(run_id: str, request: Request) -> ProductRunDetail:
 
 @router.get("/{run_id}/view", response_model=ProductRunView)
 def get_reconciliation_run_view(run_id: str, request: Request) -> ProductRunView:
+    require_permission(request, permission=Permission.RUNS_READ_VIEW)
+
     registry: RunRegistry = request.app.state.run_registry
     review_store: InMemoryReviewStore | None = getattr(request.app.state, "review_store", None)
     artifact_query_service: ArtifactQueryService | None = getattr(

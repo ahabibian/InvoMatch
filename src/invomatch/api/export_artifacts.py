@@ -12,6 +12,8 @@ from invomatch.api.product_models.export_artifact import (
     ExportArtifactListResponse,
     ExportArtifactMetadataResponse,
 )
+from invomatch.api.security import record_privileged_success, require_permission
+from invomatch.domain.security import Permission
 from invomatch.services.artifact_query_service import (
     ArtifactDeletedError,
     ArtifactExpiredError,
@@ -34,6 +36,8 @@ router = APIRouter(prefix="/api/reconciliation", tags=["export-artifacts"])
     },
 )
 def list_run_export_artifacts(run_id: str, request: Request) -> ExportArtifactListResponse:
+    require_permission(request, permission=Permission.ARTIFACTS_LIST)
+
     run_registry: RunRegistry = request.app.state.run_registry
     run = run_registry.get_run(run_id)
     if run is None:
@@ -78,6 +82,8 @@ def get_export_artifact_metadata(
     artifact_id: str,
     request: Request,
 ) -> ExportArtifactMetadataResponse:
+    require_permission(request, permission=Permission.ARTIFACTS_READ_METADATA)
+
     query_service: ArtifactQueryService = request.app.state.artifact_query_service
 
     try:
@@ -117,6 +123,8 @@ def download_export_artifact(
     artifact_id: str,
     request: Request,
 ) -> Response:
+    principal = require_permission(request, permission=Permission.ARTIFACTS_DOWNLOAD)
+
     query_service: ArtifactQueryService = request.app.state.artifact_query_service
     artifact_storage = request.app.state.export_artifact_storage
 
@@ -184,6 +192,13 @@ def download_export_artifact(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=error.model_dump(exclude_none=True),
         ) from exc
+
+    record_privileged_success(
+        request,
+        principal=principal,
+        permission=Permission.ARTIFACTS_DOWNLOAD,
+        metadata={"artifact_id": artifact_id},
+    )
 
     return Response(
         content=content,

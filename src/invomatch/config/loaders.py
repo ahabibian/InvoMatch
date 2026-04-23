@@ -15,6 +15,7 @@ from .models import (
     PersistenceSettings,
     RuntimeSettings,
     SchedulerSettings,
+    SecuritySettings,
     StorageSettings,
     UploadSettings,
 )
@@ -112,6 +113,17 @@ def load_settings_from_environment() -> ApplicationSettings:
         enable_startup_repair=_get_bool("INVOMATCH_ENABLE_STARTUP_REPAIR", True),
     )
 
+    security = SecuritySettings(
+        auth_enabled=_get_bool("INVOMATCH_AUTH_ENABLED", True),
+        public_health_enabled=_get_bool("INVOMATCH_PUBLIC_HEALTH_ENABLED", True),
+        public_readiness_enabled=_get_bool("INVOMATCH_PUBLIC_READINESS_ENABLED", True),
+        seed_tokens_json=os.getenv(
+            "INVOMATCH_SECURITY_SEED_TOKENS_JSON",
+            '[{"token":"viewer-token","user_id":"viewer-1","username":"viewer","role":"viewer","status":"active"},{"token":"operator-token","user_id":"operator-1","username":"operator","role":"operator","status":"active"},{"token":"admin-token","user_id":"admin-1","username":"admin","role":"admin","status":"active"},{"token":"inactive-token","user_id":"inactive-1","username":"inactive-user","role":"viewer","status":"inactive"}]',
+        ),
+        security_audit_enabled=_get_bool("INVOMATCH_SECURITY_AUDIT_ENABLED", True),
+    )
+
     return ApplicationSettings(
         environment=environment,
         persistence=persistence,
@@ -121,4 +133,5 @@ def load_settings_from_environment() -> ApplicationSettings:
         upload=upload,
         scheduler=scheduler,
         feature_flags=feature_flags,
+        security=security,
     )

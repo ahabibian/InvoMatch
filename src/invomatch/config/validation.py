@@ -54,6 +54,9 @@ def validate_application_settings(settings: ApplicationSettings) -> StartupValid
     if settings.upload.upload_temp_retention_hours < 0:
         errors.append("upload.upload_temp_retention_hours must be zero or greater")
 
+    if settings.security.auth_enabled and not settings.security.seed_tokens_json.strip():
+        errors.append("security.seed_tokens_json must not be empty when auth is enabled")
+
     if settings.environment == EnvironmentName.TEST and settings.scheduler.scheduler_enabled:
         errors.append("scheduler must be disabled in test environment by default")
 
@@ -66,6 +69,9 @@ def validate_application_settings(settings: ApplicationSettings) -> StartupValid
         if settings.observability.log_level.strip().upper() == "DEBUG":
             errors.append("production log level must not default to DEBUG")
 
+        if not settings.security.auth_enabled:
+            errors.append("production environment must not run with auth disabled")
+
     enabled_features = []
     if settings.feature_flags.enable_review_persistence:
         enabled_features.append("review_persistence")
@@ -77,6 +83,10 @@ def validate_application_settings(settings: ApplicationSettings) -> StartupValid
         enabled_features.append("runtime_recovery")
     if settings.feature_flags.enable_startup_repair:
         enabled_features.append("startup_repair")
+    if settings.security.auth_enabled:
+        enabled_features.append("auth_boundary")
+    if settings.security.security_audit_enabled:
+        enabled_features.append("security_audit")
 
     return StartupValidationResult(
         is_valid=len(errors) == 0,

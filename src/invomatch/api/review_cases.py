@@ -4,6 +4,8 @@ from fastapi import APIRouter, HTTPException, Request
 
 from invomatch.api.mappers.product_contract import to_product_review_case
 from invomatch.api.product_models.review_case import ProductReviewCase
+from invomatch.api.security import require_permission
+from invomatch.domain.security import Permission
 from invomatch.services.review_queries import ReviewQueryService
 
 router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-review"])
@@ -11,6 +13,8 @@ router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-revi
 
 @router.get("/{run_id}/review", response_model=ProductReviewCase)
 def get_reconciliation_run_review(run_id: str, request: Request) -> ProductReviewCase:
+    require_permission(request, permission=Permission.RUNS_READ_REVIEW)
+
     review_store = getattr(request.app.state, "review_store", None)
     if review_store is None:
         raise HTTPException(status_code=404, detail="Review case not found")
