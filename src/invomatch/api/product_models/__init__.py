@@ -2,6 +2,11 @@ from .action import (
     ProductActionRequest,
     ProductActionResponse,
 )
+from .audit_event import (
+    ProductAuditCategory,
+    ProductAuditEvent,
+    ProductAuditEventListResponse,
+)
 from .export import ProductExportModel
 from .export_artifact import (
     ArtifactErrorResponse,
@@ -26,6 +31,9 @@ from .run import (
 __all__ = [
     "ProductActionRequest",
     "ProductActionResponse",
+    "ProductAuditCategory",
+    "ProductAuditEvent",
+    "ProductAuditEventListResponse",
     "ProductExportModel",
     "ArtifactErrorResponse",
     "ArtifactLifecycleState",

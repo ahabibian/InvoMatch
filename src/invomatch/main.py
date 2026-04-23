@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from invomatch.api.actions import router as actions_router
+from invomatch.api.audit_events import router as audit_events_router
 from invomatch.api.export import router as export_router
 from invomatch.api.export_artifacts import router as export_artifacts_router
 from invomatch.api.health import router as health_router
@@ -24,6 +25,7 @@ from invomatch.repositories.export_artifact_repository_sqlite import (
 )
 from invomatch.services.action_service import ActionService
 from invomatch.services.artifact_query_service import ArtifactQueryService
+from invomatch.services.audit import AuditQueryService
 from invomatch.services.export import ExportService, RunFinalizedResultReader
 from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.ingestion_run_integration.runtime_adapter import (
@@ -36,6 +38,10 @@ from invomatch.services.input_boundary.input_processing_service import (
 from invomatch.services.input_boundary.json_input_service import JsonInputService
 from invomatch.services.input_boundary.sqlite_repository import (
     SqliteInputSessionRepository,
+)
+from invomatch.services.operational import (
+    OperationalAuditService,
+    PersistentOperationalAuditRepository,
 )
 from invomatch.services.operational.operational_metrics import (
     InMemoryOperationalMetricsStore,
@@ -53,7 +59,7 @@ from invomatch.services.run_store import RunStore
 from invomatch.services.security import (
     AuthenticationService,
     AuthorizationService,
-    InMemorySecurityAuditService,
+    PersistentSecurityAuditService,
     StaticTokenProvider,
 )
 from invomatch.services.startup_repair_coordinator import StartupRepairCoordinator
@@ -117,6 +123,7 @@ def create_app(
                 match_record_store_backend=settings.persistence.match_record_store_backend,
                 match_record_store_path=settings.persistence.match_record_store_path,
                 export_artifact_db_path=settings.persistence.export_artifact_db_path,
+                audit_event_db_path=settings.persistence.audit_event_db_path,
                 input_session_db_path=settings.persistence.input_session_db_path,
                 ingestion_batch_root=settings.persistence.ingestion_batch_root,
             ),
@@ -146,13 +153,18 @@ def create_app(
 
     resolved_run_store = run_store or persistence_dependencies.run_store
     resolved_review_store = review_store or persistence_dependencies.review_store
+    audit_event_repository = persistence_dependencies.audit_event_repository
+    audit_query_service = AuditQueryService(audit_event_repository)
     export_root = storage_dependencies.export_root
     export_root.mkdir(parents=True, exist_ok=True)
 
     token_provider = StaticTokenProvider(settings.security.seed_tokens_json)
     authentication_service = AuthenticationService(token_provider=token_provider)
     authorization_service = AuthorizationService()
-    security_audit_service = InMemorySecurityAuditService()
+    security_audit_service = PersistentSecurityAuditService(audit_event_repository)
+    operational_audit_service = OperationalAuditService(
+        PersistentOperationalAuditRepository(audit_event_repository)
+    )
 
     app.state.application_settings = settings
     app.state.security_settings = settings.security
@@ -160,10 +172,13 @@ def create_app(
     app.state.authentication_service = authentication_service
     app.state.authorization_service = authorization_service
     app.state.security_audit_service = security_audit_service
+    app.state.operational_audit_service = operational_audit_service
     app.state.startup_validation_result = startup_validation_result
     app.state.persistence_dependencies = persistence_dependencies
     app.state.storage_dependencies = storage_dependencies
     app.state.runtime_dependencies = runtime_dependencies
+    app.state.audit_event_repository = audit_event_repository
+    app.state.audit_query_service = audit_query_service
     app.state.run_store = resolved_run_store
     app.state.run_registry = RunRegistry(run_store=resolved_run_store)
     app.state.reconcile_and_save = partial(
@@ -189,6 +204,7 @@ def create_app(
         review_store=app.state.review_store,
         repair_service=restart_consistency_repair_service,
         metrics_service=operational_metrics_service,
+        audit_service=operational_audit_service,
         now_provider=startup_now_provider,
     )
 
@@ -286,6 +302,7 @@ def create_app(
 
     app.include_router(input_boundary_router)
     app.include_router(health_router)
+    app.include_router(audit_events_router)
     app.include_router(reconciliation_runs_router)
     app.include_router(review_cases_router)
     app.include_router(actions_router)

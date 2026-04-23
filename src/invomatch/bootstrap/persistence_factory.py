@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from invomatch.config.models import ApplicationSettings
+from invomatch.repositories.audit_event_repository_sqlite import SqliteAuditEventRepository
 from invomatch.services.reconciliation_runs import DEFAULT_RUN_STORE_PATH
 from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import JsonRunStore, SqliteRunStore
@@ -11,6 +12,7 @@ from invomatch.services.sqlite_review_store import SqliteReviewStore
 class PersistenceDependencies:
     run_store: object
     review_store: object
+    audit_event_repository: object
     run_store_backend: str
     review_store_backend: str
     feedback_store_backend: str
@@ -41,6 +43,9 @@ def build_persistence_dependencies(settings: ApplicationSettings) -> Persistence
     return PersistenceDependencies(
         run_store=_build_run_store(settings),
         review_store=_build_review_store(settings),
+        audit_event_repository=SqliteAuditEventRepository(
+            str(settings.persistence.audit_event_db_path)
+        ),
         run_store_backend=settings.persistence.run_store_backend,
         review_store_backend=settings.persistence.review_store_backend,
         feedback_store_backend=settings.persistence.feedback_store_backend,

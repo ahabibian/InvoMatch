@@ -63,6 +63,7 @@ def load_settings_from_environment() -> ApplicationSettings:
         match_record_store_backend=os.getenv("INVOMATCH_MATCH_RECORD_STORE_BACKEND", "sqlite"),
         match_record_store_path=_get_path("INVOMATCH_MATCH_RECORD_STORE_PATH", root / "match_records.sqlite3"),
         export_artifact_db_path=_get_path("INVOMATCH_EXPORT_ARTIFACT_DB_PATH", root / "export_artifacts.sqlite3"),
+        audit_event_db_path=_get_path("INVOMATCH_AUDIT_EVENT_DB_PATH", root / "audit_events.sqlite3"),
         input_session_db_path=_get_path("INVOMATCH_INPUT_SESSION_DB_PATH", root / "input_sessions.sqlite3"),
         ingestion_batch_root=_get_path("INVOMATCH_INGESTION_BATCH_ROOT", root / "ingestion_batches"),
     )

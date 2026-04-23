@@ -3,6 +3,7 @@ from .operational_audit import (
     OperationalAuditRepository,
     OperationalAuditService,
     OperationalAuditWrite,
+    PersistentOperationalAuditRepository,
 )
 from .operational_metrics import (
     InMemoryOperationalMetricsStore,
@@ -38,6 +39,7 @@ __all__ = [
     "OperationalAuditRepository",
     "OperationalAuditService",
     "OperationalAuditWrite",
+    "PersistentOperationalAuditRepository",
     "InMemoryOperationalMetricsStore",
     "OperationalMetricsService",
     "OperationalMetricsSnapshot",

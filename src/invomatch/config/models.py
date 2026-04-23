@@ -15,6 +15,7 @@ class PersistenceSettings:
     match_record_store_backend: str
     match_record_store_path: Path
     export_artifact_db_path: Path
+    audit_event_db_path: Path
     input_session_db_path: Path
     ingestion_batch_root: Path
 

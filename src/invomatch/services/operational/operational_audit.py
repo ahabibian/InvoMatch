@@ -5,6 +5,8 @@ from datetime import datetime, timezone
 from typing import Protocol
 from uuid import uuid4
 
+from invomatch.domain.audit.models import AuditCategory, AuditEvent, AuditEventQuery
+from invomatch.domain.audit.repository import AuditEventRepository
 from invomatch.domain.operational.models import (
     OperationalActorType,
     OperationalAuditEvent,
@@ -31,6 +33,61 @@ class InMemoryOperationalAuditRepository:
 
     def list_events(self) -> list[OperationalAuditEvent]:
         return list(self._events)
+
+
+class PersistentOperationalAuditRepository:
+    def __init__(self, repository: AuditEventRepository) -> None:
+        self._repository = repository
+
+    def add(self, event: OperationalAuditEvent) -> None:
+        payload_metadata = dict(event.metadata or {})
+        if event.reason_detail is not None:
+            payload_metadata.setdefault("reason_detail", event.reason_detail)
+
+        self._repository.create(
+            AuditEvent(
+                event_id=event.event_id,
+                sequence_id=None,
+                occurred_at=event.event_time,
+                recorded_at=event.event_time,
+                event_type=event.event_type,
+                category=AuditCategory.OPERATIONAL,
+                run_id=event.run_id,
+                correlation_id=event.correlation_id,
+                outcome=event.decision.value,
+                decision=event.decision.value,
+                reason_code=event.reason_code.value,
+                previous_state=event.previous_operational_state.value if event.previous_operational_state is not None else None,
+                new_state=event.new_operational_state.value if event.new_operational_state is not None else None,
+                related_failure_code=event.related_failure_code,
+                attempt_number=event.attempt_number,
+                metadata=payload_metadata,
+            )
+        )
+
+    def list_events(self) -> list[OperationalAuditEvent]:
+        events = self._repository.list_events(
+            AuditEventQuery(category=AuditCategory.OPERATIONAL, limit=10000, offset=0)
+        )
+        return [
+            OperationalAuditEvent(
+                event_id=event.event_id,
+                run_id=event.run_id or "",
+                event_type=event.event_type,
+                event_time=event.occurred_at,
+                actor_type=OperationalActorType.SYSTEM,
+                decision=OperationalDecision(event.decision or event.outcome or OperationalDecision.ALREADY_RECOVERED_NOOP.value),
+                reason_code=OperationalReasonCode(event.reason_code or OperationalReasonCode.NONE.value),
+                reason_detail=(event.metadata or {}).get("reason_detail"),
+                previous_operational_state=OperationalCondition(event.previous_state) if event.previous_state is not None else None,
+                new_operational_state=OperationalCondition(event.new_state) if event.new_state is not None else None,
+                related_failure_code=event.related_failure_code,
+                attempt_number=event.attempt_number,
+                correlation_id=event.correlation_id,
+                metadata={str(k): str(v) for k, v in (event.metadata or {}).items()},
+            )
+            for event in events
+        ]
 
 
 @dataclass(frozen=True, slots=True)
