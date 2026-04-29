@@ -26,6 +26,7 @@ def _run(
 
     return ReconciliationRun(
         run_id=run_id,
+        tenant_id="tenant-test",
         status=status,
         version=0,
         created_at=now,

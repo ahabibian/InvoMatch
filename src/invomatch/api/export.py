@@ -8,6 +8,7 @@ from invomatch.domain.security import Permission
 from invomatch.services.export import (
     ExportDataIncompleteError,
     ExportError,
+    InconsistentProjectionStateError,
     RunNotExportableError,
     RunNotFoundError,
     UnsupportedExportFormatError,
@@ -39,6 +40,7 @@ def export_reconciliation_run(
         artifact = delivery_service.create_export_artifact(
             run_id=run_id,
             format=export_format.value,
+            tenant_id=principal.tenant_id,
         )
 
         with artifact_storage.open_read(artifact.storage_key) as handle:
@@ -55,6 +57,9 @@ def export_reconciliation_run(
 
     except ExportDataIncompleteError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
+
+    except InconsistentProjectionStateError as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
     except ExportError as exc:
         raise HTTPException(status_code=500, detail=str(exc))

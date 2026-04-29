@@ -53,6 +53,7 @@ class SqliteRunStore:
                     """
                     INSERT INTO reconciliation_runs (
                         run_id,
+                        tenant_id,
                         status,
                         version,
                         created_at,
@@ -68,10 +69,11 @@ class SqliteRunStore:
                         error_message,
                         error_json,
                         report_json
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         payload["run_id"],
+                        payload["tenant_id"],
                         payload["status"],
                         payload["version"],
                         payload["created_at"],
@@ -244,6 +246,7 @@ class SqliteRunStore:
                     """
                     SELECT
                         run_id,
+                        tenant_id,
                         status,
                         version,
                         created_at,
@@ -340,6 +343,7 @@ class SqliteRunStore:
                     """
                     SELECT
                         run_id,
+                        tenant_id,
                         status,
                         version,
                         created_at,
@@ -367,13 +371,14 @@ class SqliteRunStore:
 
         return self._deserialize_row(row)
 
-    def get_run(self, run_id: str) -> ReconciliationRun | None:
+    def get_run(self, run_id: str, *, tenant_id: str | None = None) -> ReconciliationRun | None:
         try:
             with self._connect() as connection:
                 row = connection.execute(
                     """
                     SELECT
                         run_id,
+                        tenant_id,
                         status,
                         version,
                         created_at,
@@ -391,8 +396,9 @@ class SqliteRunStore:
                         report_json
                     FROM reconciliation_runs
                     WHERE run_id = ?
+                      AND (? IS NULL OR tenant_id = ?)
                     """,
-                    (run_id,),
+                    (run_id, tenant_id, tenant_id),
                 ).fetchone()
         except sqlite3.Error as exc:
             raise RunStorageError(f"Failed to load reconciliation run: {exc}", run_id=run_id) from exc
@@ -405,18 +411,27 @@ class SqliteRunStore:
         self,
         *,
         status: RunStatus | None = None,
+        tenant_id: str | None = None,
         limit: int = 50,
         offset: int = 0,
         sort_order: SortOrder = "desc",
     ) -> tuple[list[ReconciliationRun], int]:
-        where_clause = ""
+        where_clauses: list[str] = []
         parameters: list[Any] = []
+
+        if tenant_id is not None:
+            where_clauses.append("tenant_id = ?")
+            parameters.append(tenant_id)
 
         filter_values = _status_filter_values(status)
         if filter_values:
             placeholders = ", ".join("?" for _ in filter_values)
-            where_clause = f"WHERE status IN ({placeholders})"
+            where_clauses.append(f"status IN ({placeholders})")
             parameters.extend(filter_values)
+
+        where_clause = ""
+        if where_clauses:
+            where_clause = "WHERE " + " AND ".join(where_clauses)
 
         order_by = "DESC" if sort_order == "desc" else "ASC"
 
@@ -430,6 +445,7 @@ class SqliteRunStore:
                     f"""
                     SELECT
                         run_id,
+                        tenant_id,
                         status,
                         version,
                         created_at,
@@ -464,6 +480,7 @@ class SqliteRunStore:
                 """
                 CREATE TABLE IF NOT EXISTS reconciliation_runs (
                     run_id TEXT PRIMARY KEY,
+                    tenant_id TEXT NOT NULL DEFAULT 'legacy-tenant',
                     status TEXT NOT NULL,
                     version INTEGER NOT NULL DEFAULT 0,
                     created_at TEXT NOT NULL,
@@ -491,6 +508,12 @@ class SqliteRunStore:
                 """
             )
             connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_reconciliation_runs_tenant_status_created_at ON reconciliation_runs (tenant_id, status, created_at, run_id)"
+            )
+            connection.execute(
+                "CREATE INDEX IF NOT EXISTS idx_reconciliation_runs_tenant_created_at ON reconciliation_runs (tenant_id, created_at, run_id)"
+            )
+            connection.execute(
                 "CREATE INDEX IF NOT EXISTS idx_reconciliation_runs_status_created_at ON reconciliation_runs (status, created_at, run_id)"
             )
             connection.execute(
@@ -503,6 +526,10 @@ class SqliteRunStore:
             row["name"]
             for row in connection.execute("PRAGMA table_info(reconciliation_runs)").fetchall()
         }
+        if "tenant_id" not in columns:
+            connection.execute(
+                "ALTER TABLE reconciliation_runs ADD COLUMN tenant_id TEXT NOT NULL DEFAULT 'legacy-tenant'"
+            )
         if "version" not in columns:
             connection.execute(
                 "ALTER TABLE reconciliation_runs ADD COLUMN version INTEGER NOT NULL DEFAULT 0"
@@ -558,6 +585,7 @@ class SqliteRunStore:
 
         return {
             "run_id": run.run_id,
+            "tenant_id": run.tenant_id,
             "status": run.status,
             "version": run.version,
             "created_at": self._serialize_datetime(run.created_at),
@@ -580,6 +608,7 @@ class SqliteRunStore:
         error_json = row["error_json"]
         payload = {
             "run_id": row["run_id"],
+            "tenant_id": row["tenant_id"],
             "status": _normalize_legacy_run_status(row["status"]),
             "version": row["version"],
             "created_at": self._deserialize_datetime(row["created_at"]),

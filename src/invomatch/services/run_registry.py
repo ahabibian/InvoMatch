@@ -17,16 +17,23 @@ class RunRegistry:
         self,
         *,
         status: RunStatus | None = None,
+        tenant_id: str | None = None,
         limit: int = 50,
         offset: int = 0,
         sort_order: SortOrder = "desc",
     ) -> tuple[list[ReconciliationRun], int]:
         return self._run_store.list_runs(
             status=status,
+            tenant_id=tenant_id,
             limit=limit,
             offset=offset,
             sort_order=sort_order,
         )
 
-    def get_run(self, run_id: str) -> ReconciliationRun | None:
-        return self._run_store.get_run(run_id)
+    def get_run(
+        self,
+        run_id: str,
+        *,
+        tenant_id: str | None = None
+    ) -> ReconciliationRun | None:
+        return self._run_store.get_run(run_id, tenant_id=tenant_id)

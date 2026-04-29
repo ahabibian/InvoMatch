@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from tests.helpers.security import TEST_AUTH_HEADER, attach_test_security
 
 from invomatch.api.reconciliation_runs import router
 
@@ -39,10 +40,17 @@ class FakeRunRegistry:
     def __init__(self, runs: dict[str, FakeRun]) -> None:
         self._runs = runs
 
-    def get_run(self, run_id: str):
+    def get_run(self, run_id: str, tenant_id: str | None = None):
         return self._runs.get(run_id)
 
-    def list_runs(self, status=None, limit=50, offset=0, sort_order="desc"):
+    def list_runs(
+        self,
+        status=None,
+        tenant_id: str | None = None,
+        limit=50,
+        offset=0,
+        sort_order="desc",
+    ):
         runs = list(self._runs.values())
         return runs, len(runs)
 
@@ -158,6 +166,7 @@ def _create_client(run: FakeRun) -> TestClient:
     app.state.review_store = review_store
     app.state.artifact_query_service = artifact_query_service
     app.state.export_readiness_evaluator = FakeExportReadinessEvaluator(is_export_ready=True)
+    attach_test_security(app)
     return TestClient(app)
 
 
@@ -171,7 +180,7 @@ def test_run_view_contract_has_expected_top_level_fields_only():
     )
     client = _create_client(run)
 
-    response = client.get("/api/reconciliation/runs/run_contract/view")
+    response = client.get("/api/reconciliation/runs/run_contract/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 200
     body = response.json()
@@ -199,7 +208,7 @@ def test_run_view_contract_does_not_leak_internal_fields():
     )
     client = _create_client(run)
 
-    response = client.get("/api/reconciliation/runs/run_contract/view")
+    response = client.get("/api/reconciliation/runs/run_contract/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 200
     body = response.json()
@@ -222,7 +231,7 @@ def test_run_view_contract_artifact_shape_is_lightweight_and_product_safe():
     )
     client = _create_client(run)
 
-    response = client.get("/api/reconciliation/runs/run_contract/view")
+    response = client.get("/api/reconciliation/runs/run_contract/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 200
     artifact = response.json()["artifacts"][0]
@@ -248,7 +257,7 @@ def test_run_view_contract_exposes_only_allowed_export_summary_statuses():
     )
     client = _create_client(run)
 
-    response = client.get("/api/reconciliation/runs/run_contract/view")
+    response = client.get("/api/reconciliation/runs/run_contract/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 200
     export_status = response.json()["export_summary"]["status"]
@@ -271,7 +280,7 @@ def test_run_view_contract_exposes_bounded_structured_error_when_run_failed():
     )
     client = _create_client(run)
 
-    response = client.get("/api/reconciliation/runs/run_contract/view")
+    response = client.get("/api/reconciliation/runs/run_contract/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 200
     body = response.json()

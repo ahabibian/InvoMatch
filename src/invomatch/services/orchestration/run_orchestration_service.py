@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from invomatch.domain.models import ReconciliationRun
+from invomatch.domain.tenant import TenantContext
 from invomatch.services.orchestration.review_case_generation_service import (
     ReviewCaseGenerationService,
 )
@@ -14,6 +15,8 @@ from invomatch.services.orchestration.review_requirement_evaluator import (
 from invomatch.services.orchestration.run_finalization_evaluator import (
     RunFinalizationEvaluator,
 )
+from invomatch.services.export.finalized_projection_store import FinalizedProjectionStore
+from invomatch.services.completed_run_projection_service import CompletedRunProjectionService
 from invomatch.services.reconciliation_runs import update_reconciliation_run
 from invomatch.services.review_service import ReviewService
 from invomatch.services.review_store import InMemoryReviewStore
@@ -31,13 +34,16 @@ class RunOrchestrationService:
         self,
         review_store: Optional[InMemoryReviewStore] = None,
         review_service: Optional[ReviewService] = None,
+        projection_store: FinalizedProjectionStore | None = None,
     ) -> None:
+        self._review_store = review_store or InMemoryReviewStore()
+        self._projection_store = projection_store
         self._review_requirement_evaluator = ReviewRequirementEvaluator()
         self._review_case_generation_service = ReviewCaseGenerationService()
         self._run_finalization_evaluator = RunFinalizationEvaluator()
         self._review_integration_service = ReviewIntegrationService(
             review_service=review_service or ReviewService(),
-            review_store=review_store or InMemoryReviewStore(),
+            review_store=self._review_store,
         )
 
     def orchestrate_post_matching(
@@ -45,6 +51,8 @@ class RunOrchestrationService:
         *,
         run_id: str,
         reconciliation_outcomes: List[Dict[str, Any]],
+        tenant_id: str | None = None,
+        tenant_context: TenantContext | None = None,
     ) -> RunOrchestrationResult:
         review_requirement = self._review_requirement_evaluator.evaluate(
             reconciliation_outcomes
@@ -88,10 +96,15 @@ class RunOrchestrationService:
         run_id: str,
         reconciliation_outcomes: List[Dict[str, Any]],
         run_store: RunStore,
+        tenant_id: str | None = None,
+        tenant_context: TenantContext | None = None,
     ) -> tuple[RunOrchestrationResult, ReconciliationRun]:
+        effective_tenant_id = tenant_context.tenant_id if tenant_context is not None else tenant_id
         orchestration_result = self.orchestrate_post_matching(
             run_id=run_id,
             reconciliation_outcomes=reconciliation_outcomes,
+            tenant_id=effective_tenant_id,
+            tenant_context=tenant_context,
         )
 
         persisted_run = update_reconciliation_run(
@@ -99,6 +112,11 @@ class RunOrchestrationService:
             status=orchestration_result.run_status,
             run_store=run_store,
         )
+
+        CompletedRunProjectionService(
+            projection_store=self._projection_store,
+            review_store=self._review_store,
+        ).persist_if_completed(persisted_run)
 
         return orchestration_result, persisted_run
 
@@ -137,8 +155,11 @@ class RunOrchestrationService:
         run_id: str,
         matching_completed: bool,
         run_store: RunStore,
+        tenant_id: str | None = None,
+        tenant_context: TenantContext | None = None,
     ) -> tuple[RunOrchestrationResult, ReconciliationRun]:
-        current_run = run_store.get_run(run_id)
+        effective_tenant_id = tenant_context.tenant_id if tenant_context is not None else tenant_id
+        current_run = run_store.get_run(run_id, tenant_id=effective_tenant_id)
         if current_run is None:
             raise KeyError(f"Reconciliation run not found: {run_id}")
 
@@ -160,4 +181,12 @@ class RunOrchestrationService:
             run_store=run_store,
         )
 
+        CompletedRunProjectionService(
+            projection_store=self._projection_store,
+            review_store=self._review_store,
+        ).persist_if_completed(persisted_run)
+
         return orchestration_result, persisted_run
+
+
+

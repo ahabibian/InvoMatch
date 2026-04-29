@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from invomatch.domain.match_record import MatchRecord
+from invomatch.domain.tenant import TenantContext
 from invomatch.domain.models import (
     MatchResult,
     Payment,
@@ -22,6 +23,8 @@ from invomatch.runtime import (
     RuntimeExecutor,
     RuntimePersistenceError,
 )
+from invomatch.services.export.finalized_projection_store import FinalizedProjectionStore
+from invomatch.services.completed_run_projection_service import CompletedRunProjectionService
 from invomatch.services.ingestion import load_invoices_from_csv, parse_payment_row
 from invomatch.services.match_record_store import MatchRecordStore
 from invomatch.services.matching_engine import match
@@ -34,6 +37,7 @@ from invomatch.services.reconciliation_runs import (
 from invomatch.services.reconciliation_validation import (
     validate_reconciliation_execution_paths,
 )
+from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import RunStore
 from invomatch.services.sqlite_match_record_store import SqliteMatchRecordStore
 
@@ -162,15 +166,22 @@ def _to_run_error(exc: RuntimeExecutionTerminalError) -> RunError:
 def reconcile_and_save(
     invoice_csv_path: Path,
     payment_csv_path: Path,
+    *,
+    tenant_id: str = "tenant-demo",
+    tenant_context: TenantContext | None = None,
     run_store: RunStore = DEFAULT_RUN_STORE,
     match_record_store: MatchRecordStore = DEFAULT_MATCH_RECORD_STORE,
     runtime_executor: RuntimeExecutor | None = None,
+    review_store: InMemoryReviewStore | None = None,
+    projection_store: FinalizedProjectionStore | None = None,
 ) -> ReconciliationRun:
     validate_reconciliation_execution_paths(invoice_csv_path, payment_csv_path)
 
     run = create_reconciliation_run(
         invoice_csv_path=invoice_csv_path,
         payment_csv_path=payment_csv_path,
+        tenant_id=tenant_id,
+        tenant_context=tenant_context,
         run_store=run_store,
     )
     run = update_reconciliation_run(run.run_id, status="processing", run_store=run_store)
@@ -225,9 +236,17 @@ def reconcile_and_save(
             run_id=run.run_id,
         ) from exc
 
-    return update_reconciliation_run(
+    finalized_run = update_reconciliation_run(
         run.run_id,
         status=_final_run_status(report),
         report=report,
         run_store=run_store,
     )
+
+    CompletedRunProjectionService(
+        projection_store=projection_store,
+        review_store=review_store or InMemoryReviewStore(),
+    ).persist_if_completed(finalized_run)
+
+    return finalized_run
+

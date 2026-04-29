@@ -74,6 +74,7 @@ class RunError(BaseModel):
 
 class ReconciliationRun(BaseModel):
     run_id: str
+    tenant_id: str
     status: RunStatus
     version: int = 0
     created_at: datetime

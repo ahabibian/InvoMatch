@@ -43,13 +43,14 @@ class RunStore(Protocol):
     ) -> ReconciliationRun:
         """Extend an active lease for the owning worker."""
 
-    def get_run(self, run_id: str) -> ReconciliationRun | None:
+    def get_run(self, run_id: str, *, tenant_id: str | None = None) -> ReconciliationRun | None:
         """Load a single reconciliation run by id."""
 
     def list_runs(
         self,
         *,
         status: RunStatus | None = None,
+        tenant_id: str | None = None,
         limit: int = 50,
         offset: int = 0,
         sort_order: SortOrder = "desc",
@@ -183,9 +184,9 @@ class JsonRunStore:
 
         raise KeyError(f"Reconciliation run not found: {run_id}")
 
-    def get_run(self, run_id: str) -> ReconciliationRun | None:
+    def get_run(self, run_id: str, *, tenant_id: str | None = None) -> ReconciliationRun | None:
         for run in self._load_all_runs():
-            if run.run_id == run_id:
+            if run.run_id == run_id and (tenant_id is None or run.tenant_id == tenant_id):
                 return run.model_copy(deep=True)
         return None
 
@@ -193,6 +194,7 @@ class JsonRunStore:
         self,
         *,
         status: RunStatus | None = None,
+        tenant_id: str | None = None,
         limit: int = 50,
         offset: int = 0,
         sort_order: SortOrder = "desc",
@@ -200,6 +202,7 @@ class JsonRunStore:
         return _query_runs(
             self._load_all_runs(),
             status=status,
+            tenant_id=tenant_id,
             limit=limit,
             offset=offset,
             sort_order=sort_order,
@@ -229,6 +232,7 @@ class JsonRunStore:
     def _backfill_legacy_run_payload(run_payload: dict[str, Any]) -> dict[str, Any]:
         payload = dict(run_payload)
         created_at = payload.get("created_at")
+        payload.setdefault("tenant_id", "legacy-tenant")
         payload.setdefault("status", "completed")
         payload.setdefault("version", 0)
         payload.setdefault("claimed_by", None)
@@ -345,9 +349,9 @@ class InMemoryRunStore:
 
         raise KeyError(f"Reconciliation run not found: {run_id}")
 
-    def get_run(self, run_id: str) -> ReconciliationRun | None:
+    def get_run(self, run_id: str, *, tenant_id: str | None = None) -> ReconciliationRun | None:
         for run in self._runs:
-            if run.run_id == run_id:
+            if run.run_id == run_id and (tenant_id is None or run.tenant_id == tenant_id):
                 return run.model_copy(deep=True)
         return None
 
@@ -355,6 +359,7 @@ class InMemoryRunStore:
         self,
         *,
         status: RunStatus | None = None,
+        tenant_id: str | None = None,
         limit: int = 50,
         offset: int = 0,
         sort_order: SortOrder = "desc",
@@ -362,6 +367,7 @@ class InMemoryRunStore:
         return _query_runs(
             [run.model_copy(deep=True) for run in self._runs],
             status=status,
+            tenant_id=tenant_id,
             limit=limit,
             offset=offset,
             sort_order=sort_order,
@@ -372,10 +378,14 @@ def _query_runs(
     runs: list[ReconciliationRun],
     *,
     status: RunStatus | None = None,
-    limit: int = 50,
+        tenant_id: str | None = None,
+        limit: int = 50,
     offset: int = 0,
     sort_order: SortOrder = "desc",
 ) -> tuple[list[ReconciliationRun], int]:
+    if tenant_id is not None:
+        runs = [run for run in runs if run.tenant_id == tenant_id]
+
     if status is not None:
         runs = [run for run in runs if run.status == status]
 

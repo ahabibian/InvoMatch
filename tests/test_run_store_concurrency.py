@@ -14,6 +14,8 @@ from invomatch.services.sqlite_run_store import SqliteRunStore
 def _build_run(run_id: str = "run-1") -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
+        tenant_id="test-tenant",
+
         run_id=run_id,
         status="queued",
         version=0,

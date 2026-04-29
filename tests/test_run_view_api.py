@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from tests.helpers.security import TEST_AUTH_HEADER, attach_test_security
 
 from invomatch.api.reconciliation_runs import router
 
@@ -39,7 +40,7 @@ class FakeRunRegistry:
     def __init__(self, runs: dict[str, FakeRun]) -> None:
         self._runs = runs
 
-    def get_run(self, run_id: str):
+    def get_run(self, run_id: str, tenant_id: str | None = None):
         return self._runs.get(run_id)
 
     def list_runs(self, status=None, limit=50, offset=0, sort_order="desc"):
@@ -129,13 +130,14 @@ def create_test_client(
     app.state.review_store = review_store
     app.state.artifact_query_service = artifact_query_service
     app.state.export_readiness_evaluator = export_readiness_evaluator
+    attach_test_security(app)
     return TestClient(app)
 
 
 def test_get_run_view_returns_404_when_run_missing():
     client = create_test_client(FakeRunRegistry(runs={}))
 
-    response = client.get("/api/reconciliation/runs/missing/view")
+    response = client.get("/api/reconciliation/runs/missing/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Reconciliation run not found"
@@ -155,7 +157,7 @@ def test_get_run_view_returns_default_projection_shape():
         artifact_query_service=FakeArtifactQueryService(artifacts_by_run={}),
     )
 
-    response = client.get("/api/reconciliation/runs/run_123/view")
+    response = client.get("/api/reconciliation/runs/run_123/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 200
     body = response.json()
@@ -211,7 +213,7 @@ def test_get_run_view_returns_review_aggregate_and_newest_ready_artifact_first()
         export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=False),
     )
 
-    response = client.get("/api/reconciliation/runs/run_456/view")
+    response = client.get("/api/reconciliation/runs/run_456/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 200
     body = response.json()
@@ -236,7 +238,7 @@ def test_get_run_view_returns_ready_when_export_evaluator_allows_but_no_ready_ar
         export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
     )
 
-    response = client.get("/api/reconciliation/runs/run_ready/view")
+    response = client.get("/api/reconciliation/runs/run_ready/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 200
     body = response.json()
@@ -263,7 +265,7 @@ def test_get_run_view_exposes_structured_error_for_failed_run():
         artifact_query_service=FakeArtifactQueryService(artifacts_by_run={}),
     )
 
-    response = client.get("/api/reconciliation/runs/run_failed/view")
+    response = client.get("/api/reconciliation/runs/run_failed/view", headers=TEST_AUTH_HEADER)
 
     assert response.status_code == 200
     body = response.json()

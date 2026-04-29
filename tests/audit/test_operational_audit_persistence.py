@@ -19,6 +19,7 @@ def test_persistent_operational_audit_repository_records_to_repository(tmp_path)
 
     event = service.record(
         OperationalAuditWrite(
+            tenant_id="tenant-test",
             run_id="run-1",
             event_type="startup_repair_applied",
             decision=OperationalDecision.REENTRY_TRIGGERED,
@@ -30,10 +31,12 @@ def test_persistent_operational_audit_repository_records_to_repository(tmp_path)
         )
     )
 
+    assert event.tenant_id == "tenant-test"
     assert event.run_id == "run-1"
 
-    stored = repository.list_events()
+    stored = repository.list_events(tenant_id="tenant-test")
     assert len(stored) == 1
+    assert stored[0].tenant_id == "tenant-test"
     assert stored[0].run_id == "run-1"
     assert stored[0].event_type == "startup_repair_applied"
     assert stored[0].new_operational_state == OperationalCondition.REENTRY_PENDING

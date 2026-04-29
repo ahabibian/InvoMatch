@@ -36,6 +36,8 @@ def test_startup_repair_persists_audit_event(tmp_path) -> None:
     created_at = datetime.now(UTC) - timedelta(minutes=10)
 
     run = ReconciliationRun(
+        tenant_id="tenant-test",
+
         run_id="run-1",
         status="processing",
         created_at=created_at,
@@ -91,7 +93,8 @@ def test_startup_repair_persists_audit_event(tmp_path) -> None:
     assert result.total_runs_scanned == 1
 
     events = app.state.audit_event_repository.list_events(
-        AuditEventQuery(run_id="run-1", limit=20, offset=0)
+        AuditEventQuery(tenant_id="tenant-test",
+run_id="run-1", limit=20, offset=0)
     )
 
     assert len(events) == 1

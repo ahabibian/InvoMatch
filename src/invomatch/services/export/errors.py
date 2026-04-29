@@ -23,3 +23,6 @@ class ExportDataIncompleteError(ExportError):
 
 class FinalizedResultIntegrityError(ExportError):
     """Raised when finalized result data violates export integrity rules."""
+
+class InconsistentProjectionStateError(ExportError):
+    """Raised when finalized system state is completed but projection is missing."""

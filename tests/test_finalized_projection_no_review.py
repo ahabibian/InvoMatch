@@ -67,6 +67,7 @@ def _run_with_match_result(
 
     return ReconciliationRun(
         run_id="run-no-review-001",
+            tenant_id="tenant-test",
         status="completed",
         version=1,
         created_at=now,

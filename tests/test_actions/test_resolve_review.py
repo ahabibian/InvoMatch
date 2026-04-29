@@ -32,6 +32,8 @@ def _base_payload():
 def _review_required_run(run_id: str) -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
+        tenant_id="tenant-test",
+
         run_id=run_id,
         status="review_required",
         version=0,
@@ -54,6 +56,8 @@ def test_resolve_review_handler_applies_approve_decision():
     handler = ResolveReviewActionHandler()
     command = ActionCommand(
         action_type="resolve_review",
+        tenant_id="tenant-test",
+
         run_id="run-123",
         target_id="case-1",
         payload=_base_payload(),
@@ -81,6 +85,8 @@ def test_resolve_review_handler_requires_reviewed_payload_for_modify():
 
     command = ActionCommand(
         action_type="resolve_review",
+        tenant_id="tenant-test",
+
         run_id="run-123",
         target_id="case-1",
         payload=payload,
@@ -106,6 +112,8 @@ def test_resolve_review_handler_uses_persisted_coordinator_path_and_completes_ru
     )
 
     orchestration_service.orchestrate_post_matching(
+        tenant_id="tenant-test",
+
         run_id=run.run_id,
         reconciliation_outcomes=[
             {"invoice_id": "INV-500", "status": "unmatched", "reason": "no_match"},
@@ -139,6 +147,8 @@ def test_resolve_review_handler_uses_persisted_coordinator_path_and_completes_ru
 
     command = ActionCommand(
         action_type="resolve_review",
+        tenant_id="tenant-test",
+
         run_id=run.run_id,
         target_id=feedback.source_reference,
         payload=payload,

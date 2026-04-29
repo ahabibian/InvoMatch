@@ -14,6 +14,7 @@ def _processing_run(run_id: str) -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
         run_id=run_id,
+            tenant_id="tenant-test",
         status="processing",
         version=0,
         created_at=now,
@@ -35,6 +36,7 @@ def _review_required_run(run_id: str) -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
         run_id=run_id,
+            tenant_id="tenant-test",
         status="review_required",
         version=0,
         created_at=now,
@@ -98,6 +100,7 @@ def test_orchestrate_and_persist_post_matching_fails_for_invalid_run_transition(
     now = datetime.now(timezone.utc)
     run = ReconciliationRun(
         run_id="run_invalid_transition",
+            tenant_id="tenant-test",
         status="queued",
         version=0,
         created_at=now,

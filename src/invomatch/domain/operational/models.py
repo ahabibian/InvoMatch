@@ -84,6 +84,7 @@ class RunOperationalMetadata:
 @dataclass(frozen=True, slots=True)
 class OperationalAuditEvent:
     event_id: str
+    tenant_id: str
     run_id: str
     event_type: str
     event_time: datetime

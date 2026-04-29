@@ -274,6 +274,7 @@ class SqliteRunStoreContractAdapter:
 
         normalized = {
             "run_id": payload["run_id"],
+            "tenant_id": payload.get("tenant_id", "test-tenant"),
             "status": payload.get("status", "queued"),
             "version": payload.get("version", 0),
             "created_at": created_at,

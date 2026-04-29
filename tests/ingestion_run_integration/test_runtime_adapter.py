@@ -12,6 +12,8 @@ def _fake_run(run_id: str) -> ReconciliationRun:
 
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
+        tenant_id="tenant-test",
+
         run_id=run_id,
         status="completed",
         version=1,

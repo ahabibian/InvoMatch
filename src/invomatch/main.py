@@ -26,7 +26,7 @@ from invomatch.repositories.export_artifact_repository_sqlite import (
 from invomatch.services.action_service import ActionService
 from invomatch.services.artifact_query_service import ArtifactQueryService
 from invomatch.services.audit import AuditQueryService
-from invomatch.services.export import ExportService, RunFinalizedResultReader
+from invomatch.services.export import ExportService, SqliteFinalizedProjectionStore
 from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.ingestion_run_integration.runtime_adapter import (
     IngestionRunRuntimeAdapter,
@@ -158,6 +158,10 @@ def create_app(
     export_root = storage_dependencies.export_root
     export_root.mkdir(parents=True, exist_ok=True)
 
+    finalized_projection_store = SqliteFinalizedProjectionStore(
+        export_root / "finalized_projections.sqlite3"
+    )
+
     token_provider = StaticTokenProvider(settings.security.seed_tokens_json)
     authentication_service = AuthenticationService(token_provider=token_provider)
     authorization_service = AuthorizationService()
@@ -184,12 +188,15 @@ def create_app(
     app.state.reconcile_and_save = partial(
         reconcile_and_save,
         run_store=resolved_run_store,
+        review_store=resolved_review_store,
+        projection_store=finalized_projection_store,
     )
     app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
         reconcile_and_save=app.state.reconcile_and_save,
     )
 
     app.state.review_store = resolved_review_store
+    app.state.finalized_projection_store = finalized_projection_store
 
     operational_metrics_store = InMemoryOperationalMetricsStore()
     operational_metrics_service = OperationalMetricsService(
@@ -197,11 +204,12 @@ def create_app(
     )
     restart_consistency_repair_service = RestartConsistencyRepairService(
         run_store=resolved_run_store,
-        review_store=app.state.review_store,
+        review_store=resolved_review_store,
+        projection_store=finalized_projection_store,
     )
     startup_repair_coordinator = StartupRepairCoordinator(
         run_store=resolved_run_store,
-        review_store=app.state.review_store,
+        review_store=resolved_review_store,
         repair_service=restart_consistency_repair_service,
         metrics_service=operational_metrics_service,
         audit_service=operational_audit_service,
@@ -220,10 +228,7 @@ def create_app(
     app.state.startup_repair_result = startup_repair_result
 
     export_service = ExportService(
-        reader=RunFinalizedResultReader(
-            run_store=resolved_run_store,
-            review_store=app.state.review_store,
-        ),
+        projection_store=finalized_projection_store,
         run_store=resolved_run_store,
     )
 
@@ -237,12 +242,13 @@ def create_app(
         artifact_storage or storage_dependencies.artifact_storage
     )
 
-    def export_generator(run_id: str, format: str) -> bytes:
+    def export_generator(run_id: str, format: str, *, tenant_id: str | None = None) -> bytes:
         from invomatch.domain.export import ExportFormat
 
         return export_service.export(
             run_id=run_id,
             export_format=ExportFormat(format),
+            tenant_id=tenant_id,
         ).content
 
     export_delivery_service = ExportDeliveryService(
@@ -256,7 +262,8 @@ def create_app(
     )
     export_readiness_evaluator = ExportReadinessEvaluator(
         run_store=resolved_run_store,
-        review_store=app.state.review_store,
+        review_store=resolved_review_store,
+        projection_store=finalized_projection_store,
     )
 
     app.state.export_service = export_service

@@ -16,11 +16,14 @@ from invomatch.domain.operational.models import (
 )
 
 
+OPERATIONAL_BOUNDARY_TENANT_ID = "operational-boundary"
+
+
 class OperationalAuditRepository(Protocol):
     def add(self, event: OperationalAuditEvent) -> None:
         ...
 
-    def list_events(self) -> list[OperationalAuditEvent]:
+    def list_events(self, *, tenant_id: str = OPERATIONAL_BOUNDARY_TENANT_ID) -> list[OperationalAuditEvent]:
         ...
 
 
@@ -31,8 +34,8 @@ class InMemoryOperationalAuditRepository:
     def add(self, event: OperationalAuditEvent) -> None:
         self._events.append(event)
 
-    def list_events(self) -> list[OperationalAuditEvent]:
-        return list(self._events)
+    def list_events(self, *, tenant_id: str = OPERATIONAL_BOUNDARY_TENANT_ID) -> list[OperationalAuditEvent]:
+        return [event for event in self._events if event.tenant_id == tenant_id]
 
 
 class PersistentOperationalAuditRepository:
@@ -48,6 +51,7 @@ class PersistentOperationalAuditRepository:
             AuditEvent(
                 event_id=event.event_id,
                 sequence_id=None,
+                tenant_id=event.tenant_id,
                 occurred_at=event.event_time,
                 recorded_at=event.event_time,
                 event_type=event.event_type,
@@ -65,13 +69,19 @@ class PersistentOperationalAuditRepository:
             )
         )
 
-    def list_events(self) -> list[OperationalAuditEvent]:
+    def list_events(self, *, tenant_id: str = OPERATIONAL_BOUNDARY_TENANT_ID) -> list[OperationalAuditEvent]:
         events = self._repository.list_events(
-            AuditEventQuery(category=AuditCategory.OPERATIONAL, limit=10000, offset=0)
+            AuditEventQuery(
+                tenant_id=tenant_id,
+                category=AuditCategory.OPERATIONAL,
+                limit=10000,
+                offset=0,
+            )
         )
         return [
             OperationalAuditEvent(
                 event_id=event.event_id,
+                tenant_id=event.tenant_id,
                 run_id=event.run_id or "",
                 event_type=event.event_type,
                 event_time=event.occurred_at,
@@ -92,6 +102,7 @@ class PersistentOperationalAuditRepository:
 
 @dataclass(frozen=True, slots=True)
 class OperationalAuditWrite:
+    tenant_id: str
     run_id: str
     event_type: str
     decision: OperationalDecision
@@ -112,6 +123,7 @@ class OperationalAuditService:
     def record(self, data: OperationalAuditWrite) -> OperationalAuditEvent:
         event = OperationalAuditEvent(
             event_id=str(uuid4()),
+            tenant_id=data.tenant_id,
             run_id=data.run_id,
             event_type=data.event_type,
             event_time=datetime.now(timezone.utc),

@@ -23,6 +23,7 @@ _TERMINAL_PROTECTED_STATES = {"failed", "cancelled"}
 @dataclass(frozen=True, slots=True)
 class StartupRepairScanItem:
     run_id: str
+    tenant_id: str
     original_status: str
     final_status: str
     repair_attempted: bool
@@ -112,11 +113,13 @@ class StartupRepairCoordinator:
 
     def _scan_run(self, run: Any) -> StartupRepairScanItem:
         run_id = str(getattr(run, "run_id"))
+        tenant_id = str(getattr(run, "tenant_id", "operational-boundary"))
         original_status = str(getattr(run, "status", "") or "").strip().lower()
 
         if self._has_valid_active_lease(run):
             item = StartupRepairScanItem(
                 run_id=run_id,
+                tenant_id=tenant_id,
                 original_status=original_status,
                 final_status=original_status,
                 repair_attempted=False,
@@ -133,6 +136,7 @@ class StartupRepairCoordinator:
         if original_status in _TERMINAL_PROTECTED_STATES:
             item = StartupRepairScanItem(
                 run_id=run_id,
+                tenant_id=tenant_id,
                 original_status=original_status,
                 final_status=original_status,
                 repair_attempted=False,
@@ -151,6 +155,7 @@ class StartupRepairCoordinator:
         except Exception:
             item = StartupRepairScanItem(
                 run_id=run_id,
+                tenant_id=tenant_id,
                 original_status=original_status,
                 final_status=original_status,
                 repair_attempted=True,
@@ -171,6 +176,7 @@ class StartupRepairCoordinator:
 
         item = StartupRepairScanItem(
             run_id=run_id,
+            tenant_id=tenant_id,
             original_status=original_status,
             final_status=final_status,
             repair_attempted=True,
@@ -242,6 +248,7 @@ class StartupRepairCoordinator:
                 try:
                     record(
                         OperationalAuditWrite(
+                            tenant_id=item.tenant_id,
                             run_id=item.run_id,
                             event_type=self._audit_event_type(item),
                             decision=self._audit_decision(item),

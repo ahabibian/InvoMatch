@@ -20,6 +20,7 @@ def _processing_run(
     now = _now()
     return ReconciliationRun(
         run_id=run_id,
+        tenant_id="tenant-test",
         status="processing",
         version=0,
         created_at=now,
@@ -41,6 +42,7 @@ def _queued_run(run_id: str) -> ReconciliationRun:
     now = _now()
     return ReconciliationRun(
         run_id=run_id,
+        tenant_id="tenant-test",
         status="queued",
         version=0,
         created_at=now,

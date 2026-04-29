@@ -86,6 +86,7 @@ def test_scenario_9_audit_persistence_integrity(tmp_path) -> None:
     created_at = datetime.now(UTC) - timedelta(minutes=5)
     run = ReconciliationRun(
         run_id="run-s9",
+        tenant_id="tenant-demo",
         status="processing",
         created_at=created_at,
         updated_at=created_at,
@@ -101,6 +102,8 @@ def test_scenario_9_audit_persistence_integrity(tmp_path) -> None:
         attempt_count=0,
     )
 
+    object.__setattr__(run, "tenant_id", principal.tenant_id)
+
     coordinator = app.state.startup_repair_coordinator.__class__(
         run_store=StubRunStore(run),
         review_store=StubReviewStore(),
@@ -114,7 +117,7 @@ def test_scenario_9_audit_persistence_integrity(tmp_path) -> None:
     assert result.total_runs_scanned == 1
 
     persisted_events = app.state.audit_event_repository.list_events(
-        AuditEventQuery(limit=20, offset=0)
+        AuditEventQuery(tenant_id=principal.tenant_id, limit=20, offset=0)
     )
 
     assert len(persisted_events) == 2
@@ -123,13 +126,13 @@ def test_scenario_9_audit_persistence_integrity(tmp_path) -> None:
     assert persisted_events[0].sequence_id < persisted_events[1].sequence_id
 
     security_events = app.state.audit_event_repository.list_events(
-        AuditEventQuery(user_id="admin-1", event_type="authorization_denied", limit=20, offset=0)
+        AuditEventQuery(tenant_id=principal.tenant_id, user_id="admin-1", event_type="authorization_denied", limit=20, offset=0)
     )
     assert len(security_events) == 1
     assert security_events[0].category.value == "security"
 
     run_events = app.state.audit_event_repository.list_events(
-        AuditEventQuery(run_id="run-s9", limit=20, offset=0)
+        AuditEventQuery(tenant_id=principal.tenant_id, run_id="run-s9", limit=20, offset=0)
     )
     assert len(run_events) == 1
     assert run_events[0].event_type == "startup_repair_applied"
@@ -147,7 +150,7 @@ def test_scenario_9_audit_persistence_integrity(tmp_path) -> None:
 
     app_reloaded, _ = _build_isolated_app(tmp_path)
     reloaded_events = app_reloaded.state.audit_event_repository.list_events(
-        AuditEventQuery(limit=20, offset=0)
+        AuditEventQuery(tenant_id=principal.tenant_id, limit=20, offset=0)
     )
 
     assert len(reloaded_events) >= 2

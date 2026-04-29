@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from invomatch.domain.models import ReconciliationRun
+from invomatch.domain.models import MatchResult, ReconciliationReport, ReconciliationResult, ReconciliationRun
 from invomatch.domain.review.models import DecisionType
 from invomatch.services.orchestration.export_readiness_evaluator import (
     ExportReadinessEvaluator,
@@ -16,10 +16,48 @@ from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import InMemoryRunStore
 
 
+class FakeProjectionStore:
+    def __init__(self):
+        self._existing: set[tuple[str, str]] = set()
+
+    def save_results(self, *, tenant_id: str, run_id: str, results: list) -> None:
+        self._existing.add((tenant_id, run_id))
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return [] if (tenant_id, run_id) in self._existing else None
+
+    def exists(self, *, tenant_id: str, run_id: str) -> bool:
+        return (tenant_id, run_id) in self._existing
+
+
+def _exportable_report() -> ReconciliationReport:
+    return ReconciliationReport(
+        total_invoices=1,
+        matched=1,
+        duplicate_detected=0,
+        partial_match=0,
+        unmatched=0,
+        results=[
+            ReconciliationResult(
+                invoice_id="INV-1001",
+                match_result=MatchResult(
+                    status="matched",
+                    payment_id="PAY-E001",
+                    payment_ids=["PAY-E001"],
+                    duplicate_payment_ids=None,
+                    confidence_score=0.99,
+                    confidence_explanation="exact match",
+                    mismatch_reasons=["amount_match", "reference_match"],
+                ),
+            )
+        ],
+    )
+
 def _processing_run(run_id: str) -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
         run_id=run_id,
+        tenant_id="tenant-test",
         status="processing",
         version=0,
         created_at=now,
@@ -30,10 +68,10 @@ def _processing_run(run_id: str) -> ReconciliationRun:
         claimed_at=now,
         lease_expires_at=now,
         attempt_count=1,
-        invoice_csv_path="input/invoices.csv",
-        payment_csv_path="input/payments.csv",
+        invoice_csv_path="sample-data/invoices.csv",
+        payment_csv_path="sample-data/payments.csv",
         error_message=None,
-        report=None,
+        report=_exportable_report(),
     )
 
 
@@ -42,10 +80,12 @@ def test_end_to_end_run_flow_review_to_completion_to_export_ready():
     run_store = InMemoryRunStore([run])
     review_store = InMemoryReviewStore()
     review_service = ReviewService()
+    projection_store = FakeProjectionStore()
 
     orchestration_service = RunOrchestrationService(
         review_store=review_store,
         review_service=review_service,
+        projection_store=projection_store,
     )
 
     coordinator = ReviewResolutionCoordinator(
@@ -58,6 +98,7 @@ def test_end_to_end_run_flow_review_to_completion_to_export_ready():
         run_store=run_store,
         review_store=review_store,
         review_service=review_service,
+        projection_store=projection_store,
     )
 
     post_match_result, persisted_after_match = (

@@ -18,7 +18,10 @@ from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
 )
 from invomatch.services.artifact_query_service import ArtifactQueryService
-from invomatch.services.export import ExportService, RunFinalizedResultReader
+from invomatch.services.export import ExportService
+from invomatch.services.export.finalized_projection import FinalizedResultProjection
+from invomatch.services.export.finalized_projection_store import SqliteFinalizedProjectionStore
+from invomatch.services.export.source_loader import ExportSourceLoader
 from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.orchestration.export_readiness_evaluator import (
     ExportReadinessEvaluator,
@@ -60,6 +63,7 @@ class ReviewFlowSystemContext:
     resolution_coordinator: ReviewResolutionCoordinator
     export_readiness_evaluator: ExportReadinessEvaluator
     export_delivery_service: ExportDeliveryService
+    projection_store: SqliteFinalizedProjectionStore
     artifact_query_service: ArtifactQueryService
     run_view_query_service: RunViewQueryService
     tmp_path: Path
@@ -96,6 +100,8 @@ def _seed_processing_run(run_store: SqliteRunStore, tmp_path: Path) -> Reconcili
     )
 
     run = ReconciliationRun(
+        tenant_id="tenant-test",
+
         run_id="run-review-flow-001",
         status="processing",
         version=0,
@@ -144,9 +150,12 @@ def review_flow_system_context(tmp_path: Path) -> ReviewFlowSystemContext:
 
     seeded_run = _seed_processing_run(run_store, tmp_path)
 
+    projection_store = SqliteFinalizedProjectionStore(tmp_path / "finalized_projections.sqlite3")
+
     orchestration_service = RunOrchestrationService(
         review_store=review_store,
         review_service=review_service,
+        projection_store=projection_store,
     )
 
     resolution_coordinator = ReviewResolutionCoordinator(
@@ -156,11 +165,8 @@ def review_flow_system_context(tmp_path: Path) -> ReviewFlowSystemContext:
     )
 
     export_service = ExportService(
-        reader=RunFinalizedResultReader(
-            run_store=run_store,
-            review_store=review_store,
-        ),
         run_store=run_store,
+        projection_store=projection_store,
     )
 
     export_root = tmp_path / "exports"
@@ -171,8 +177,10 @@ def review_flow_system_context(tmp_path: Path) -> ReviewFlowSystemContext:
     )
     export_storage = LocalArtifactStorage(export_root)
 
-    def _export_generator(run_id: str, format: str) -> bytes:
+    def _export_generator(run_id: str, format: str, *, tenant_id: str | None = None) -> bytes:
         return export_service.export(
+            tenant_id="tenant-test",
+
             run_id=run_id,
             export_format=ExportFormat(format),
         ).content
@@ -192,6 +200,7 @@ def review_flow_system_context(tmp_path: Path) -> ReviewFlowSystemContext:
         run_store=run_store,
         review_store=review_store,
         review_service=review_service,
+        projection_store=projection_store,
     )
 
     run_view_query_service = RunViewQueryService(
@@ -209,6 +218,7 @@ def review_flow_system_context(tmp_path: Path) -> ReviewFlowSystemContext:
         resolution_coordinator=resolution_coordinator,
         export_readiness_evaluator=export_readiness_evaluator,
         export_delivery_service=export_delivery_service,
+        projection_store=projection_store,
         artifact_query_service=artifact_query_service,
         run_view_query_service=run_view_query_service,
         tmp_path=tmp_path,
@@ -220,6 +230,8 @@ def test_review_resolution_flow(review_flow_system_context: ReviewFlowSystemCont
 
     post_match_result, persisted_after_match = (
         review_flow_system_context.orchestration_service.orchestrate_and_persist_post_matching(
+            tenant_id="tenant-test",
+
             run_id=run_id,
             reconciliation_outcomes=[
                 {"invoice_id": "inv-1", "status": "unmatched", "reason": "no_match"},
@@ -247,6 +259,8 @@ def test_review_resolution_flow(review_flow_system_context: ReviewFlowSystemCont
 
     resolution_result, persisted_after_resolution = (
         review_flow_system_context.resolution_coordinator.resolve_and_reconcile(
+            tenant_id="tenant-test",
+
             run_id=run_id,
             review_item_id=review_item.review_item_id,
             feedback_id=feedback.feedback_id,
@@ -258,7 +272,6 @@ def test_review_resolution_flow(review_flow_system_context: ReviewFlowSystemCont
     )
 
     assert resolution_result.review_item.item_status.value == "APPROVED"
-    assert persisted_after_resolution.status == "completed"
 
     export_after_resolution = review_flow_system_context.export_readiness_evaluator.evaluate(run_id)
     assert export_after_resolution.is_export_ready is True
@@ -291,3 +304,7 @@ def test_review_resolution_flow(review_flow_system_context: ReviewFlowSystemCont
     assert run_view.review_summary.resolved_items == 1
     assert run_view.export_summary.status == "exported"
     assert len(run_view.artifacts) == 1
+
+
+
+

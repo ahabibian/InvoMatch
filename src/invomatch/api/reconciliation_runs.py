@@ -21,7 +21,7 @@ from invomatch.api.reconciliation_schemas import (
     IngestionRunResponse,
     to_api_error_response,
 )
-from invomatch.api.security import record_privileged_success, require_permission
+from invomatch.api.security import get_tenant_context, record_privileged_success, require_permission
 from invomatch.domain.models import ReconciliationRun, RunStatus
 from invomatch.domain.security import Permission
 from invomatch.services.artifact_query_service import ArtifactQueryService
@@ -48,12 +48,14 @@ router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-runs
 )
 def create_reconciliation_run(request_body: CreateRunRequest, request: Request) -> ProductRunDetail:
     principal = require_permission(request, permission=Permission.RUNS_CREATE)
+    tenant_context = get_tenant_context(request)
 
     reconcile_and_save: Callable[[Path, Path], ReconciliationRun] = request.app.state.reconcile_and_save
     try:
         run = reconcile_and_save(
             Path(request_body.invoice_csv_path),
             Path(request_body.payment_csv_path),
+            tenant_context=tenant_context,
         )
     except ReconciliationInputValidationError as exc:
         raise HTTPException(status_code=400, detail=to_api_error_response(exc).model_dump(exclude_none=True)) from exc
@@ -124,10 +126,12 @@ def list_reconciliation_runs(
     sort_order: Literal["asc", "desc"] = "desc",
 ) -> ProductRunListResponse:
     require_permission(request, permission=Permission.RUNS_LIST)
+    tenant_context = get_tenant_context(request)
 
     registry: RunRegistry = request.app.state.run_registry
     runs, total = registry.list_runs(
         status=status,
+        tenant_id=tenant_context.tenant_id,
         limit=limit,
         offset=offset,
         sort_order=sort_order,
@@ -143,9 +147,10 @@ def list_reconciliation_runs(
 @router.get("/{run_id}", response_model=ProductRunDetail)
 def get_reconciliation_run(run_id: str, request: Request) -> ProductRunDetail:
     require_permission(request, permission=Permission.RUNS_READ)
+    tenant_context = get_tenant_context(request)
 
     registry: RunRegistry = request.app.state.run_registry
-    run = registry.get_run(run_id)
+    run = registry.get_run(run_id, tenant_id=tenant_context.tenant_id)
     if run is None:
         raise HTTPException(status_code=404, detail="Reconciliation run not found")
     return to_product_run_detail(run)
@@ -154,6 +159,7 @@ def get_reconciliation_run(run_id: str, request: Request) -> ProductRunDetail:
 @router.get("/{run_id}/view", response_model=ProductRunView)
 def get_reconciliation_run_view(run_id: str, request: Request) -> ProductRunView:
     require_permission(request, permission=Permission.RUNS_READ_VIEW)
+    tenant_context = get_tenant_context(request)
 
     registry: RunRegistry = request.app.state.run_registry
     review_store: InMemoryReviewStore | None = getattr(request.app.state, "review_store", None)
@@ -174,6 +180,10 @@ def get_reconciliation_run_view(run_id: str, request: Request) -> ProductRunView
         artifact_query_service=artifact_query_service,
         export_readiness_evaluator=export_readiness_evaluator,
     )
+    run = registry.get_run(run_id, tenant_id=tenant_context.tenant_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="Reconciliation run not found")
+
     run_view = query_service.get_run_view(run_id)
 
     if run_view is None:

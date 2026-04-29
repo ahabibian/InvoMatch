@@ -8,6 +8,7 @@ from invomatch.services.sqlite_run_store import SqliteRunStore
 def _make_run(run_id: str, ts: datetime):
     return ReconciliationRun(
         run_id=run_id,
+            tenant_id="tenant-test",
         status="queued",
         version=0,
         created_at=ts,

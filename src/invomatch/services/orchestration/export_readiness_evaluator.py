@@ -3,8 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 
-from invomatch.services.export.errors import ExportDataIncompleteError, RunNotExportableError
-from invomatch.services.export.run_finalized_result_reader import RunFinalizedResultReader
+from invomatch.services.export.errors import InconsistentProjectionStateError
+from invomatch.services.export.finalized_projection_store import FinalizedProjectionStore
 from invomatch.services.orchestration.review_integration_service import (
     ReviewIntegrationService,
 )
@@ -26,15 +26,13 @@ class ExportReadinessEvaluator:
         run_store: RunStore,
         review_store: Optional[InMemoryReviewStore] = None,
         review_service: Optional[ReviewService] = None,
+        projection_store: FinalizedProjectionStore | None = None,
     ) -> None:
         self._run_store = run_store
         self._review_store = review_store or InMemoryReviewStore()
+        self._projection_store = projection_store
         self._review_integration_service = ReviewIntegrationService(
             review_service=review_service or ReviewService(),
-            review_store=self._review_store,
-        )
-        self._finalized_result_reader = RunFinalizedResultReader(
-            run_store=run_store,
             review_store=self._review_store,
         )
 
@@ -64,12 +62,18 @@ class ExportReadinessEvaluator:
                 reason="active_blocking_review_cases_present",
             )
 
-        try:
-            self._finalized_result_reader.read(run_id=run_id)
-        except (ExportDataIncompleteError, RunNotExportableError) as exc:
+        if self._projection_store is None:
             return ExportReadinessResult(
                 is_export_ready=False,
-                reason=f"finalized_export_data_unavailable:{exc}",
+                reason="finalized_projection_store_unavailable",
+            )
+
+        if not self._projection_store.exists(
+            tenant_id=run.tenant_id,
+            run_id=run_id,
+        ):
+            raise InconsistentProjectionStateError(
+                f"completed run has no finalized projection: tenant_id={run.tenant_id}, run_id={run_id}"
             )
 
         return ExportReadinessResult(

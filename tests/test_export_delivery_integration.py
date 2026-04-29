@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+from tests.helpers.security import TEST_AUTH_HEADER, attach_test_security
+
 from invomatch.api.export import export_reconciliation_run
 from invomatch.domain.review.models import DecisionType, FeedbackRecord
 from invomatch.main import create_app
@@ -14,7 +16,8 @@ from invomatch.services.run_store import JsonRunStore
 
 
 def _request(app):
-    return SimpleNamespace(app=app)
+    attach_test_security(app)
+    return SimpleNamespace(app=app, headers=TEST_AUTH_HEADER)
 
 
 def _write_files(tmp_path: Path):
@@ -44,6 +47,7 @@ def _make_isolated_app(tmp_path: Path):
         review_store=review_store,
         export_base_dir=tmp_path / "exports",
     )
+    attach_test_security(app)
     return SimpleNamespace(
         app=app,
         run_store=run_store,
@@ -108,13 +112,17 @@ def _create_exportable_run(
     tmp_path: Path,
     run_store: JsonRunStore,
     review_store,
+    projection_store,
 ):
     invoice, payment = _write_files(tmp_path)
 
     run = reconcile_and_save(
         invoice_csv_path=invoice,
         payment_csv_path=payment,
+        tenant_id="tenant-test",
         run_store=run_store,
+        review_store=review_store,
+        projection_store=projection_store,
     )
     _seed_approved_review(review_store, run)
     return run
@@ -125,7 +133,7 @@ def test_export_creates_and_reuses_artifact(tmp_path: Path):
     app = deps.app
     run_store = deps.run_store
     review_store = deps.review_store
-    run = _create_exportable_run(tmp_path, run_store, review_store)
+    run = _create_exportable_run(tmp_path, run_store, review_store, app.state.finalized_projection_store)
 
     response1 = export_reconciliation_run(
         run.run_id,
@@ -149,7 +157,7 @@ def test_export_creates_file_on_disk(tmp_path: Path):
     run_store = deps.run_store
     review_store = deps.review_store
     export_root = tmp_path / "exports"
-    run = _create_exportable_run(tmp_path, run_store, review_store)
+    run = _create_exportable_run(tmp_path, run_store, review_store, app.state.finalized_projection_store)
 
     export_reconciliation_run(
         run.run_id,
@@ -166,7 +174,7 @@ def test_export_supports_multiple_formats(tmp_path: Path):
     app = deps.app
     run_store = deps.run_store
     review_store = deps.review_store
-    run = _create_exportable_run(tmp_path, run_store, review_store)
+    run = _create_exportable_run(tmp_path, run_store, review_store, app.state.finalized_projection_store)
 
     json_response = export_reconciliation_run(
         run.run_id,
@@ -189,7 +197,7 @@ def test_export_payload_is_valid_json(tmp_path: Path):
     app = deps.app
     run_store = deps.run_store
     review_store = deps.review_store
-    run = _create_exportable_run(tmp_path, run_store, review_store)
+    run = _create_exportable_run(tmp_path, run_store, review_store, app.state.finalized_projection_store)
 
     response = export_reconciliation_run(
         run.run_id,

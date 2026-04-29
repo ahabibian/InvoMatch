@@ -16,6 +16,7 @@ def test_operational_audit_service_records_structured_event() -> None:
 
     event = service.record(
         OperationalAuditWrite(
+            tenant_id="tenant-test",
             run_id="run-1",
             event_type="retry_triggered",
             decision=OperationalDecision.RETRY_TRIGGERED,
@@ -30,10 +31,11 @@ def test_operational_audit_service_records_structured_event() -> None:
         )
     )
 
-    events = repository.list_events()
+    events = repository.list_events(tenant_id="tenant-test")
 
     assert len(events) == 1
     assert events[0] == event
+    assert event.tenant_id == "tenant-test"
     assert event.run_id == "run-1"
     assert event.event_type == "retry_triggered"
     assert event.decision == OperationalDecision.RETRY_TRIGGERED

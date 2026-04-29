@@ -5,6 +5,8 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
+from tests.helpers.security import TEST_AUTH_HEADER, attach_test_security
+
 
 def _import_app():
     candidates = [
@@ -30,9 +32,13 @@ def _import_app():
 @pytest.fixture(scope="session")
 def app():
     os.environ.setdefault("PYTHONPATH", "src")
-    return _import_app()
+    application = _import_app()
+    attach_test_security(application)
+    return application
 
 
 @pytest.fixture()
 def client(app):
-    return TestClient(app)
+    client = TestClient(app)
+    client.headers.update(TEST_AUTH_HEADER)
+    return client

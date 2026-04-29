@@ -4,6 +4,7 @@ from fastapi import Request
 
 from invomatch.api.security.errors import forbidden, unauthorized
 from invomatch.domain.security import AuthenticatedPrincipal, Permission
+from invomatch.domain.tenant import TenantContext
 
 
 def _record_security_event(
@@ -95,6 +96,30 @@ def get_authenticated_principal(request: Request) -> AuthenticatedPrincipal:
     return principal
 
 
+
+def get_tenant_context(request: Request) -> TenantContext:
+    principal = get_authenticated_principal(request)
+
+    tenant_id = getattr(principal, "tenant_id", None)
+    if tenant_id is None:
+        tenant_id = getattr(principal, "organization_id", None)
+
+    if tenant_id is None:
+        _record_security_event(
+            request,
+            event_type="tenant_resolution_failure",
+            principal=principal,
+            outcome="denied",
+            reason="missing_tenant_id",
+        )
+        raise forbidden("Tenant context is required")
+
+    return TenantContext(
+        tenant_id=str(tenant_id),
+        user_id=str(principal.user_id),
+        authentication_source="api_auth",
+        correlation_id=None,
+    )
 def require_permission(
     request: Request,
     *,

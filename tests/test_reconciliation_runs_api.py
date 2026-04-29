@@ -35,7 +35,7 @@ def _request_for_store(
     authorization: str | None = "Bearer operator-token",
 ) -> SimpleNamespace:
     token_provider = StaticTokenProvider(
-        '[{"token":"viewer-token","user_id":"viewer-1","username":"viewer","role":"viewer","status":"active"},{"token":"operator-token","user_id":"operator-1","username":"operator","role":"operator","status":"active"}]'
+        '[{"token":"viewer-token","user_id":"viewer-1","username":"viewer","role":"viewer","status":"active","tenant_id":"tenant-test"},{"token":"operator-token","user_id":"operator-1","username":"operator","role":"operator","status":"active","tenant_id":"tenant-test"}]'
     )
     authentication_service = AuthenticationService(token_provider=token_provider)
     authorization_service = AuthorizationService()
@@ -88,11 +88,13 @@ def _seed_runs(run_store: RunStore) -> list[str]:
     pending = create_run_record(
         invoice_csv_path=Path("sample-data/invoices-pending.csv"),
         payment_csv_path=Path("sample-data/payments-pending.csv"),
+        tenant_id="tenant-test",
         run_store=run_store,
     )
     failed = create_run_record(
         invoice_csv_path=Path("sample-data/invoices-failed.csv"),
         payment_csv_path=Path("sample-data/payments-failed.csv"),
+        tenant_id="tenant-test",
         run_store=run_store,
     )
     update_reconciliation_run(failed.run_id, status="processing", run_store=run_store)
@@ -106,6 +108,7 @@ def _seed_runs(run_store: RunStore) -> list[str]:
         report=_report(matched=4, unmatched=3),
         invoice_csv_path=Path("sample-data/invoices-completed.csv"),
         payment_csv_path=Path("sample-data/payments-completed.csv"),
+        tenant_id="tenant-test",
         run_store=run_store,
     )
     return [pending.run_id, failed.run_id, completed.run_id]

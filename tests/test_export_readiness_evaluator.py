@@ -1,6 +1,9 @@
 from datetime import datetime, timezone
 
-from invomatch.domain.models import ReconciliationRun
+import pytest
+
+from invomatch.domain.models import MatchResult, ReconciliationReport, ReconciliationResult, ReconciliationRun
+from invomatch.services.export.errors import InconsistentProjectionStateError
 from invomatch.services.orchestration.export_readiness_evaluator import (
     ExportReadinessEvaluator,
 )
@@ -12,10 +15,48 @@ from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import InMemoryRunStore
 
 
+class FakeProjectionStore:
+    def __init__(self, existing: set[tuple[str, str]] | None = None):
+        self._existing = existing or set()
+
+    def save_results(self, *, tenant_id: str, run_id: str, results: list) -> None:
+        self._existing.add((tenant_id, run_id))
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return [] if (tenant_id, run_id) in self._existing else None
+
+    def exists(self, *, tenant_id: str, run_id: str) -> bool:
+        return (tenant_id, run_id) in self._existing
+
+
+def _exportable_report() -> ReconciliationReport:
+    return ReconciliationReport(
+        total_invoices=1,
+        matched=1,
+        duplicate_detected=0,
+        partial_match=0,
+        unmatched=0,
+        results=[
+            ReconciliationResult(
+                invoice_id="INV-1001",
+                match_result=MatchResult(
+                    status="matched",
+                    payment_id="PAY-E001",
+                    payment_ids=["PAY-E001"],
+                    duplicate_payment_ids=None,
+                    confidence_score=0.99,
+                    confidence_explanation="exact match",
+                    mismatch_reasons=["amount_match", "reference_match"],
+                ),
+            )
+        ],
+    )
+
 def _run(run_id: str, status: str) -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
         run_id=run_id,
+        tenant_id="tenant-test",
         status=status,
         version=0,
         created_at=now,
@@ -26,11 +67,27 @@ def _run(run_id: str, status: str) -> ReconciliationRun:
         claimed_at=now,
         lease_expires_at=now,
         attempt_count=1,
-        invoice_csv_path="input/invoices.csv",
-        payment_csv_path="input/payments.csv",
+        invoice_csv_path="sample-data/invoices.csv",
+        payment_csv_path="sample-data/payments.csv",
         error_message=None,
-        report=None,
+        report=_exportable_report(),
     )
+
+
+def test_export_is_blocked_for_completed_run_without_projection_store():
+    run = _run("run-122", "completed")
+    run_store = InMemoryRunStore([run])
+    review_store = InMemoryReviewStore()
+
+    evaluator = ExportReadinessEvaluator(
+        run_store=run_store,
+        review_store=review_store,
+    )
+
+    result = evaluator.evaluate(run.run_id)
+
+    assert result.is_export_ready is False
+    assert result.reason == "finalized_projection_store_unavailable"
 
 
 def test_export_is_allowed_for_completed_run_with_no_active_review_cases():
@@ -41,6 +98,7 @@ def test_export_is_allowed_for_completed_run_with_no_active_review_cases():
     evaluator = ExportReadinessEvaluator(
         run_store=run_store,
         review_store=review_store,
+        projection_store=FakeProjectionStore({(run.tenant_id, run.run_id)}),
     )
 
     result = evaluator.evaluate(run.run_id)
@@ -137,3 +195,21 @@ def test_export_is_blocked_when_deferred_review_case_exists():
 
     assert result.is_export_ready is False
     assert result.reason == "active_blocking_review_cases_present"
+
+def test_completed_run_without_projection_is_inconsistent_state():
+    run = _run("run-missing-projection", "completed")
+    run_store = InMemoryRunStore([run])
+    review_store = InMemoryReviewStore()
+    projection_store = FakeProjectionStore(existing=set())
+
+    evaluator = ExportReadinessEvaluator(
+        run_store=run_store,
+        review_store=review_store,
+        projection_store=projection_store,
+    )
+
+    with pytest.raises(InconsistentProjectionStateError) as exc_info:
+        evaluator.evaluate(run.run_id)
+
+    assert "completed run has no finalized projection" in str(exc_info.value)
+    assert run.run_id in str(exc_info.value)

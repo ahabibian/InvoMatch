@@ -10,10 +10,14 @@ from invomatch.domain.audit.repository import AuditEventRepository
 from invomatch.domain.security import AuthenticatedPrincipal
 
 
+SECURITY_BOUNDARY_TENANT_ID = "security-boundary"
+
+
 @dataclass(frozen=True)
 class SecurityAuditEvent:
     event_type: str
     occurred_at: datetime
+    tenant_id: str
     user_id: str | None = None
     username: str | None = None
     role: str | None = None
@@ -23,6 +27,12 @@ class SecurityAuditEvent:
     outcome: str | None = None
     reason: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+def _tenant_id_for_principal(principal: AuthenticatedPrincipal | None) -> str:
+    if principal is None:
+        return SECURITY_BOUNDARY_TENANT_ID
+    return principal.tenant_id
 
 
 class InMemorySecurityAuditService:
@@ -44,6 +54,7 @@ class InMemorySecurityAuditService:
         event = SecurityAuditEvent(
             event_type=event_type,
             occurred_at=datetime.now(UTC),
+            tenant_id=_tenant_id_for_principal(principal),
             user_id=principal.user_id if principal is not None else None,
             username=principal.username if principal is not None else None,
             role=principal.role.value if principal is not None else None,
@@ -57,8 +68,8 @@ class InMemorySecurityAuditService:
         self._events.append(event)
         return event
 
-    def list_events(self) -> list[SecurityAuditEvent]:
-        return list(self._events)
+    def list_events(self, *, tenant_id: str = SECURITY_BOUNDARY_TENANT_ID) -> list[SecurityAuditEvent]:
+        return [event for event in self._events if event.tenant_id == tenant_id]
 
 
 class PersistentSecurityAuditService:
@@ -78,6 +89,8 @@ class PersistentSecurityAuditService:
         metadata: dict[str, Any] | None = None,
     ) -> SecurityAuditEvent:
         occurred_at = datetime.now(UTC)
+        tenant_id = _tenant_id_for_principal(principal)
+
         payload_metadata = dict(metadata or {})
         if principal is not None:
             payload_metadata.setdefault("username", principal.username)
@@ -89,6 +102,7 @@ class PersistentSecurityAuditService:
             AuditEvent(
                 event_id=str(uuid4()),
                 sequence_id=None,
+                tenant_id=tenant_id,
                 occurred_at=occurred_at,
                 recorded_at=occurred_at,
                 event_type=event_type,
@@ -106,6 +120,7 @@ class PersistentSecurityAuditService:
         return SecurityAuditEvent(
             event_type=event_type,
             occurred_at=occurred_at,
+            tenant_id=tenant_id,
             user_id=principal.user_id if principal is not None else None,
             username=principal.username if principal is not None else None,
             role=principal.role.value if principal is not None else None,
@@ -117,14 +132,20 @@ class PersistentSecurityAuditService:
             metadata=metadata or {},
         )
 
-    def list_events(self) -> list[SecurityAuditEvent]:
+    def list_events(self, *, tenant_id: str = SECURITY_BOUNDARY_TENANT_ID) -> list[SecurityAuditEvent]:
         events = self._repository.list_events(
-            AuditEventQuery(category=AuditCategory.SECURITY, limit=10000, offset=0)
+            AuditEventQuery(
+                tenant_id=tenant_id,
+                category=AuditCategory.SECURITY,
+                limit=10000,
+                offset=0,
+            )
         )
         return [
             SecurityAuditEvent(
                 event_type=event.event_type,
                 occurred_at=event.occurred_at,
+                tenant_id=event.tenant_id,
                 user_id=event.user_id,
                 username=(event.metadata or {}).get("username"),
                 role=(event.metadata or {}).get("role"),

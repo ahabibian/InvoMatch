@@ -28,6 +28,7 @@ class ExportDeliveryService:
         run_id: str,
         format: str,
         *,
+        tenant_id: str | None = None,
         force_regenerate: bool = False,
     ) -> ExportArtifact:
 
@@ -36,7 +37,7 @@ class ExportDeliveryService:
             if existing is not None:
                 return existing
 
-        content: bytes = self._export_generator(run_id, format)
+        content: bytes = self._export_generator(run_id, format, tenant_id=tenant_id)
 
         artifact_id = self._generate_artifact_id()
         storage_key = self._build_storage_key(run_id, artifact_id, format)

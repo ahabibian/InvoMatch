@@ -19,6 +19,7 @@ def _review_required_run(run_id: str) -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
         run_id=run_id,
+            tenant_id="tenant-test",
         status="review_required",
         version=0,
         created_at=now,

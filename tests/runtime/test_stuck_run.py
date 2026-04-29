@@ -21,6 +21,8 @@ def _run(
 ) -> ReconciliationRun:
     now = _now()
     return ReconciliationRun(
+        tenant_id="tenant-test",
+
         run_id="run-1",
         status=status,
         version=1,

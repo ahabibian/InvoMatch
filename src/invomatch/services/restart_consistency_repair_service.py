@@ -4,6 +4,10 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 from invomatch.domain.review.models import ReviewItemStatus
+from invomatch.services.export.finalized_projection_store import FinalizedProjectionStore
+from invomatch.services.completed_run_projection_service import CompletedRunProjectionService
+from invomatch.services.export.finalized_projection_store import FinalizedProjectionStore
+from invomatch.services.completed_run_projection_service import CompletedRunProjectionService
 from invomatch.services.reconciliation_runs import update_reconciliation_run
 
 
@@ -23,9 +27,16 @@ class RestartConsistencyRepairResult:
 
 
 class RestartConsistencyRepairService:
-    def __init__(self, *, run_store: Any, review_store: Any) -> None:
+    def __init__(
+        self,
+        *,
+        run_store: Any,
+        review_store: Any,
+        projection_store: FinalizedProjectionStore | None = None,
+    ) -> None:
         self._run_store = run_store
         self._review_store = review_store
+        self._projection_store = projection_store
 
     def repair_run(self, run_id: str) -> Optional[RestartConsistencyRepairResult]:
         run = self._run_store.get_run(run_id)
@@ -53,6 +64,8 @@ class RestartConsistencyRepairService:
                 status="completed",
                 run_store=self._run_store,
             )
+            self._persist_projection_if_completed(persisted)
+
             return RestartConsistencyRepairResult(
                 run_id=persisted.run_id,
                 original_status="review_required",
@@ -85,6 +98,12 @@ class RestartConsistencyRepairService:
             repaired_status=run.status,
             reason="no_repair_needed",
         )
+
+    def _persist_projection_if_completed(self, run: Any) -> None:
+        CompletedRunProjectionService(
+            projection_store=self._projection_store,
+            review_store=self._review_store,
+        ).persist_if_completed(run)
 
     def _has_active_review_cases(self, *, run_id: str) -> bool:
         list_review_items = getattr(self._review_store, "list_review_items", None)

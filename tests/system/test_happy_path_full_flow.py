@@ -11,7 +11,8 @@ from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
 )
 from invomatch.services.artifact_query_service import ArtifactQueryService
-from invomatch.services.export import ExportService, RunFinalizedResultReader
+from invomatch.services.export import ExportService
+from invomatch.services.export.finalized_projection_store import SqliteFinalizedProjectionStore
 from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.ingestion_run_integration.runtime_adapter import (
     IngestionRunRuntimeAdapter,
@@ -35,7 +36,7 @@ from invomatch.services.storage.local_storage import LocalArtifactStorage
 
 
 """
-System Scenario 1 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Happy Path Full Flow
+System Scenario 1 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Happy Path Full Flow
 
 Valid input enters the system, passes ingestion and run creation,
 completes reconciliation without requiring review, reaches export-ready
@@ -61,6 +62,7 @@ class SystemContext:
     export_delivery_service: ExportDeliveryService
     artifact_query_service: ArtifactQueryService
     export_readiness_evaluator: ExportReadinessEvaluator
+    projection_store: SqliteFinalizedProjectionStore
     run_view_query_service: RunViewQueryService
     tmp_path: Path
 
@@ -99,10 +101,13 @@ def system_context(tmp_path: Path) -> SystemContext:
 
     run_store = SqliteRunStore(run_store_path)
     review_store = InMemoryReviewStore()
+    projection_store = SqliteFinalizedProjectionStore(tmp_path / "finalized_projections.sqlite3")
 
     reconcile_and_save_bound = partial(
         reconcile_and_save,
         run_store=run_store,
+        review_store=review_store,
+        projection_store=projection_store,
     )
 
     runtime_adapter = IngestionRunRuntimeAdapter(
@@ -129,19 +134,20 @@ def system_context(tmp_path: Path) -> SystemContext:
     )
 
     export_service = ExportService(
-        reader=RunFinalizedResultReader(
-            run_store=run_store,
-            review_store=review_store,
-        ),
         run_store=run_store,
+        projection_store=projection_store,
     )
 
     export_repository = SqliteExportArtifactRepository(str(export_db_path))
     export_storage = LocalArtifactStorage(export_root)
 
-    def _export_generator(run_id: str, format: str) -> bytes:
+    def _export_generator(run_id: str, format: str, *, tenant_id: str | None = None) -> bytes:
+        run = run_store.get_run(run_id)
+        assert run is not None
+
         return export_service.export(
             run_id=run_id,
+            tenant_id=run.tenant_id,
             export_format=ExportFormat(format),
         ).content
 
@@ -159,6 +165,7 @@ def system_context(tmp_path: Path) -> SystemContext:
     export_readiness_evaluator = ExportReadinessEvaluator(
         run_store=run_store,
         review_store=review_store,
+        projection_store=projection_store,
     )
 
     run_view_query_service = RunViewQueryService(
@@ -175,6 +182,7 @@ def system_context(tmp_path: Path) -> SystemContext:
         export_delivery_service=export_delivery_service,
         artifact_query_service=artifact_query_service,
         export_readiness_evaluator=export_readiness_evaluator,
+        projection_store=projection_store,
         run_view_query_service=run_view_query_service,
         tmp_path=tmp_path,
     )
@@ -241,3 +249,9 @@ def test_happy_path_full_flow(system_context: SystemContext) -> None:
         f"expected exported run view after artifact creation, got {run_view.export_summary.status}"
     )
     assert len(run_view.artifacts) == 1, f"expected one artifact in run view, got {len(run_view.artifacts)}"
+
+
+
+
+
+

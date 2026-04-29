@@ -13,6 +13,7 @@ def test_sqlite_audit_event_repository_persists_and_returns_sequence_ids(tmp_pat
     event_one = AuditEvent(
         event_id="event-1",
         sequence_id=None,
+        tenant_id="tenant-a",
         occurred_at=base_time,
         recorded_at=base_time,
         event_type="authentication_success",
@@ -26,6 +27,7 @@ def test_sqlite_audit_event_repository_persists_and_returns_sequence_ids(tmp_pat
     event_two = AuditEvent(
         event_id="event-2",
         sequence_id=None,
+        tenant_id="tenant-a",
         occurred_at=base_time + timedelta(minutes=1),
         recorded_at=base_time + timedelta(minutes=1),
         event_type="retry_triggered",
@@ -45,8 +47,10 @@ def test_sqlite_audit_event_repository_persists_and_returns_sequence_ids(tmp_pat
 
     assert stored_one.sequence_id == 1
     assert stored_two.sequence_id == 2
+    assert stored_one.tenant_id == "tenant-a"
+    assert stored_two.tenant_id == "tenant-a"
 
-    events = repository.list_events(AuditEventQuery(limit=10, offset=0))
+    events = repository.list_events(AuditEventQuery(tenant_id="tenant-a", limit=10, offset=0))
 
     assert len(events) == 2
     assert events[0].event_id == "event-1"
@@ -67,6 +71,7 @@ def test_sqlite_audit_event_repository_filters_by_run_user_type_and_time(tmp_pat
         AuditEvent(
             event_id="event-1",
             sequence_id=None,
+            tenant_id="tenant-a",
             occurred_at=base_time,
             recorded_at=base_time,
             event_type="authentication_success",
@@ -80,6 +85,7 @@ def test_sqlite_audit_event_repository_filters_by_run_user_type_and_time(tmp_pat
         AuditEvent(
             event_id="event-2",
             sequence_id=None,
+            tenant_id="tenant-a",
             occurred_at=base_time + timedelta(minutes=1),
             recorded_at=base_time + timedelta(minutes=1),
             event_type="authorization_denied",
@@ -94,6 +100,7 @@ def test_sqlite_audit_event_repository_filters_by_run_user_type_and_time(tmp_pat
         AuditEvent(
             event_id="event-3",
             sequence_id=None,
+            tenant_id="tenant-a",
             occurred_at=base_time + timedelta(minutes=2),
             recorded_at=base_time + timedelta(minutes=2),
             event_type="retry_triggered",
@@ -104,27 +111,42 @@ def test_sqlite_audit_event_repository_filters_by_run_user_type_and_time(tmp_pat
             metadata={},
         )
     )
+    repository.create(
+        AuditEvent(
+            event_id="event-4",
+            sequence_id=None,
+            tenant_id="tenant-b",
+            occurred_at=base_time + timedelta(minutes=3),
+            recorded_at=base_time + timedelta(minutes=3),
+            event_type="authentication_success",
+            category=AuditCategory.SECURITY,
+            user_id="user-1",
+            outcome="allowed",
+            metadata={},
+        )
+    )
 
     run_events = repository.list_events(
-        AuditEventQuery(run_id="run-1", limit=10, offset=0)
+        AuditEventQuery(tenant_id="tenant-a", run_id="run-1", limit=10, offset=0)
     )
     assert len(run_events) == 1
     assert run_events[0].event_id == "event-3"
 
     user_events = repository.list_events(
-        AuditEventQuery(user_id="user-2", limit=10, offset=0)
+        AuditEventQuery(tenant_id="tenant-a", user_id="user-2", limit=10, offset=0)
     )
     assert len(user_events) == 1
     assert user_events[0].event_id == "event-2"
 
     type_events = repository.list_events(
-        AuditEventQuery(event_type="authentication_success", limit=10, offset=0)
+        AuditEventQuery(tenant_id="tenant-a", event_type="authentication_success", limit=10, offset=0)
     )
     assert len(type_events) == 1
     assert type_events[0].event_id == "event-1"
 
     time_events = repository.list_events(
         AuditEventQuery(
+            tenant_id="tenant-a",
             occurred_from=base_time + timedelta(seconds=30),
             occurred_to=base_time + timedelta(minutes=1, seconds=30),
             limit=10,
@@ -133,3 +155,14 @@ def test_sqlite_audit_event_repository_filters_by_run_user_type_and_time(tmp_pat
     )
     assert len(time_events) == 1
     assert time_events[0].event_id == "event-2"
+
+    tenant_b_events = repository.list_events(
+        AuditEventQuery(tenant_id="tenant-b", limit=10, offset=0)
+    )
+    assert len(tenant_b_events) == 1
+    assert tenant_b_events[0].event_id == "event-4"
+
+    tenant_a_events = repository.list_events(
+        AuditEventQuery(tenant_id="tenant-a", limit=10, offset=0)
+    )
+    assert {event.event_id for event in tenant_a_events} == {"event-1", "event-2", "event-3"}

@@ -62,11 +62,13 @@ class RunViewQueryService:
         review_store=None,
         artifact_query_service=None,
         export_readiness_evaluator=None,
+        projection_store=None,
     ) -> None:
         self._run_store = run_store
         self._review_store = review_store
         self._artifact_query_service = artifact_query_service
         self._export_readiness_evaluator = export_readiness_evaluator
+        self._projection_store = projection_store
 
     def get_run_view(self, run_id: str) -> ProductRunView | None:
         run = self._run_store.get_run(run_id)
@@ -125,6 +127,68 @@ class RunViewQueryService:
         return None
 
     def _build_match_summary(self, run) -> ProductRunMatchSummary:
+        projection_summary = self._build_match_summary_from_projection(run)
+        if projection_summary is not None:
+            return projection_summary
+
+        return self._build_match_summary_from_report(run)
+
+    def _build_match_summary_from_projection(self, run) -> ProductRunMatchSummary | None:
+        projection_store = getattr(self, "_projection_store", None)
+        if projection_store is None:
+            return None
+
+        run_status = _normalize_run_status(getattr(run, "status", ""))
+        if run_status != "completed":
+            return None
+
+        tenant_id = getattr(run, "tenant_id", None)
+        run_id = getattr(run, "run_id", None)
+        if not tenant_id or not run_id:
+            return None
+
+        try:
+            results = projection_store.get_results(
+                tenant_id=str(tenant_id),
+                run_id=str(run_id),
+            )
+        except Exception:
+            return None
+
+        if results is None:
+            return None
+
+        matched_items = 0
+        unmatched_items = 0
+        ambiguous_items = 0
+
+        for result in results:
+            decision_type = str(getattr(getattr(result, "decision_type", None), "value", getattr(result, "decision_type", ""))).upper()
+
+            if decision_type == "MATCH":
+                matched_items += 1
+                continue
+
+            if decision_type == "UNMATCHED":
+                unmatched_items += 1
+                continue
+
+            if decision_type == "PARTIAL":
+                ambiguous_items += 1
+                continue
+
+            ambiguous_items += 1
+
+        total_items = matched_items + unmatched_items + ambiguous_items
+
+        return ProductRunMatchSummary(
+            total_items=total_items,
+            matched_items=matched_items,
+            unmatched_items=unmatched_items,
+            ambiguous_items=ambiguous_items,
+        )
+
+    def _build_match_summary_from_report(self, run) -> ProductRunMatchSummary:
         report = getattr(run, "report", None)
         if report is None:
             return ProductRunMatchSummary(

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
@@ -6,6 +6,7 @@ from typing import Any
 
 from invomatch.api.product_models.action import ProductActionRequest
 from invomatch.domain.security import AuthenticatedPrincipal, Permission
+from invomatch.domain.tenant import TenantContext
 from invomatch.repositories.export_artifact_repository_sqlite import (
     SqliteExportArtifactRepository,
 )
@@ -21,7 +22,7 @@ from invomatch.services.actions.handlers.export_run import ExportRunActionHandle
 from invomatch.services.actions.handlers.resolve_review import ResolveReviewActionHandler
 from invomatch.services.actions.result import ActionExecutionStatus
 from invomatch.services.export.export_service import ExportService
-from invomatch.services.export.run_finalized_result_reader import RunFinalizedResultReader
+from invomatch.services.export.finalized_projection_store import FinalizedProjectionStore, SqliteFinalizedProjectionStore
 from invomatch.services.export.errors import ExportDataIncompleteError, RunNotExportableError
 from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.review_store import InMemoryReviewStore
@@ -52,6 +53,7 @@ class ActionService:
         review_store: InMemoryReviewStore | None = None,
         export_base_dir: Path | None = None,
         authorization_service: AuthorizationService | None = None,
+        projection_store: FinalizedProjectionStore | None = None,
     ) -> None:
         self._run_store = run_store
         self._authorization_service = authorization_service or AuthorizationService()
@@ -66,20 +68,19 @@ class ActionService:
             str(export_root / "export_artifacts.sqlite3")
         )
         export_storage = LocalArtifactStorage(export_root)
-
-        export_reader = RunFinalizedResultReader(
-            run_store=run_store,
-            review_store=review_store or InMemoryReviewStore(),
+        effective_projection_store = projection_store or SqliteFinalizedProjectionStore(
+            export_root / "finalized_projections.sqlite3"
         )
 
         export_service = ExportService(
             run_store=run_store,
-            reader=export_reader,
+            projection_store=effective_projection_store,
         )
 
         def export_generator(run_id: str, format: str) -> bytes:
             return export_service.export(
                 run_id=run_id,
+                tenant_id="legacy-tenant",
                 export_format=format_enum(format),
             ).content
 
@@ -102,6 +103,7 @@ class ActionService:
         run_id: str,
         request: ProductActionRequest,
         principal: AuthenticatedPrincipal | None = None,
+        tenant_context: TenantContext | None = None,
     ) -> ActionExecutionResult:
         action_type = str(request.action_type)
 
@@ -131,7 +133,7 @@ class ActionService:
 
         if self._run_store is not None:
             try:
-                run_state = self._get_run_state(run_id)
+                run_state = self._get_run_state(run_id, tenant_context=tenant_context)
                 validate_action_for_state(run_state=run_state, action_type=action_type)
             except InvalidActionForStateError as exc:
                 return ActionExecutionResult(
@@ -170,6 +172,8 @@ class ActionService:
         command = ActionCommand(
             action_type=action_type,
             run_id=run_id,
+            tenant_context=tenant_context,
+            tenant_id=tenant_context.tenant_id if tenant_context is not None else None,
             target_id=request.target_id,
             payload=request.payload or {},
             note=request.note,
@@ -251,8 +255,8 @@ class ActionService:
 
         raise ValueError(f"Unsupported action type: {action_type}")
 
-    def _get_run_state(self, run_id: str) -> str:
-        run = self._load_run(run_id)
+    def _get_run_state(self, run_id: str, *, tenant_context: TenantContext | None = None) -> str:
+        run = self._load_run(run_id, tenant_context=tenant_context)
 
         status = getattr(run, "status", None)
         if not isinstance(status, str) or not status.strip():
@@ -260,13 +264,19 @@ class ActionService:
 
         return status
 
-    def _load_run(self, run_id: str) -> Any:
+    def _load_run(self, run_id: str, *, tenant_context: TenantContext | None = None) -> Any:
         if self._run_store is None:
             raise RuntimeError("ActionService requires run_store for action guard enforcement.")
 
         get_run = getattr(self._run_store, "get_run", None)
         if callable(get_run):
-            run = get_run(run_id)
+            try:
+                run = get_run(
+                    run_id,
+                    tenant_id=tenant_context.tenant_id if tenant_context is not None else None,
+                )
+            except TypeError:
+                run = get_run(run_id)
             if run is None:
                 raise RuntimeError(f"Run '{run_id}' was not found.")
             return run
@@ -285,3 +295,6 @@ def format_enum(value: str):
     from invomatch.domain.export import ExportFormat
 
     return ExportFormat(value)
+
+
+

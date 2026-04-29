@@ -19,6 +19,7 @@ class SqliteAuditEventRepository(AuditEventRepository):
                 '''
                 INSERT INTO audit_events (
                     event_id,
+                    tenant_id,
                     occurred_at,
                     recorded_at,
                     event_type,
@@ -37,10 +38,11 @@ class SqliteAuditEventRepository(AuditEventRepository):
                     request_path,
                     request_method,
                     metadata_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''',
                 (
                     event.event_id,
+                    event.tenant_id,
                     self._serialize_datetime(event.occurred_at),
                     self._serialize_datetime(event.recorded_at),
                     event.event_type,
@@ -67,6 +69,7 @@ class SqliteAuditEventRepository(AuditEventRepository):
         return AuditEvent(
             event_id=event.event_id,
             sequence_id=sequence_id,
+            tenant_id=event.tenant_id,
             occurred_at=event.occurred_at,
             recorded_at=event.recorded_at,
             event_type=event.event_type,
@@ -90,6 +93,9 @@ class SqliteAuditEventRepository(AuditEventRepository):
     def list_events(self, query: AuditEventQuery) -> list[AuditEvent]:
         where_clauses: list[str] = []
         params: list[object] = []
+
+        where_clauses.append("tenant_id = ?")
+        params.append(query.tenant_id)
 
         if query.run_id is not None:
             where_clauses.append("run_id = ?")
@@ -119,6 +125,7 @@ class SqliteAuditEventRepository(AuditEventRepository):
         SELECT
             sequence_id,
             event_id,
+            tenant_id,
             occurred_at,
             recorded_at,
             event_type,
@@ -159,6 +166,7 @@ class SqliteAuditEventRepository(AuditEventRepository):
                 CREATE TABLE IF NOT EXISTS audit_events (
                     sequence_id INTEGER PRIMARY KEY AUTOINCREMENT,
                     event_id TEXT NOT NULL UNIQUE,
+                    tenant_id TEXT NOT NULL,
                     occurred_at TEXT NOT NULL,
                     recorded_at TEXT NOT NULL,
                     event_type TEXT NOT NULL,
@@ -180,28 +188,37 @@ class SqliteAuditEventRepository(AuditEventRepository):
                 )
                 '''
             )
+            columns = {
+                row["name"]
+                for row in conn.execute("PRAGMA table_info(audit_events)").fetchall()
+            }
+            if "tenant_id" not in columns:
+                conn.execute(
+                    "ALTER TABLE audit_events ADD COLUMN tenant_id TEXT NOT NULL DEFAULT 'legacy-tenant'"
+                )
+
             conn.execute(
                 '''
-                CREATE INDEX IF NOT EXISTS idx_audit_events_run_sequence
-                ON audit_events (run_id, sequence_id)
+                CREATE INDEX IF NOT EXISTS idx_audit_events_tenant_run_sequence
+                ON audit_events (tenant_id, run_id, sequence_id)
                 '''
             )
             conn.execute(
                 '''
-                CREATE INDEX IF NOT EXISTS idx_audit_events_user_sequence
-                ON audit_events (user_id, sequence_id)
+                CREATE INDEX IF NOT EXISTS idx_audit_events_tenant_user_sequence
+                ON audit_events (tenant_id, user_id, sequence_id)
                 '''
             )
             conn.execute(
                 '''
-                CREATE INDEX IF NOT EXISTS idx_audit_events_type_sequence
-                ON audit_events (event_type, sequence_id)
+                CREATE INDEX IF NOT EXISTS idx_audit_events_tenant_type_sequence
+                ON audit_events (tenant_id, event_type, sequence_id)
                 '''
             )
             conn.execute(
                 '''
-                CREATE INDEX IF NOT EXISTS idx_audit_events_occurred_at
-                ON audit_events (occurred_at)
+                CREATE INDEX IF NOT EXISTS idx_audit_events_tenant_occurred_at
+                ON audit_events (tenant_id, occurred_at)
                 '''
             )
             conn.commit()
@@ -216,6 +233,7 @@ class SqliteAuditEventRepository(AuditEventRepository):
         return AuditEvent(
             event_id=row["event_id"],
             sequence_id=row["sequence_id"],
+            tenant_id=row["tenant_id"],
             occurred_at=SqliteAuditEventRepository._deserialize_datetime(row["occurred_at"]),
             recorded_at=SqliteAuditEventRepository._deserialize_datetime(row["recorded_at"]),
             event_type=row["event_type"],

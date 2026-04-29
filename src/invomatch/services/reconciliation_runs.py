@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from invomatch.domain.models import ReconciliationReport, ReconciliationRun, RunError, RunStatus
+from invomatch.domain.tenant import TenantContext
 from invomatch.services.lifecycle import (
     InvalidRunStateError,
     InvalidRunTransitionError,
@@ -30,11 +31,16 @@ def _utcnow() -> datetime:
 def create_reconciliation_run(
     invoice_csv_path: Path,
     payment_csv_path: Path,
+    *,
+    tenant_id: str = "tenant-demo",
+    tenant_context: TenantContext | None = None,
     run_store: RunStore = DEFAULT_RUN_STORE,
 ) -> ReconciliationRun:
+    effective_tenant_id = tenant_context.tenant_id if tenant_context is not None else tenant_id
     now = _utcnow()
     run = ReconciliationRun(
         run_id=uuid.uuid4().hex,
+        tenant_id=effective_tenant_id,
         status="queued",
         version=0,
         created_at=now,
@@ -148,11 +154,16 @@ def save_reconciliation_run(
     report: ReconciliationReport,
     invoice_csv_path: Path,
     payment_csv_path: Path,
+    *,
+    tenant_id: str = "tenant-demo",
+    tenant_context: TenantContext | None = None,
     run_store: RunStore = DEFAULT_RUN_STORE,
 ) -> ReconciliationRun:
     run = create_reconciliation_run(
         invoice_csv_path=invoice_csv_path,
         payment_csv_path=payment_csv_path,
+        tenant_id=tenant_id,
+        tenant_context=tenant_context,
         run_store=run_store,
     )
     run = update_reconciliation_run(run.run_id, status="processing", run_store=run_store)

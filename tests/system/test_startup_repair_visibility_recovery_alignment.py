@@ -26,6 +26,7 @@ def _build_run(
     now = _now()
     return ReconciliationRun(
         run_id=run_id,
+        tenant_id="tenant-test",
         status=status,
         version=version,
         created_at=now - timedelta(minutes=10),

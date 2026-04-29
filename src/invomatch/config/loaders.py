@@ -120,7 +120,7 @@ def load_settings_from_environment() -> ApplicationSettings:
         public_readiness_enabled=_get_bool("INVOMATCH_PUBLIC_READINESS_ENABLED", True),
         seed_tokens_json=os.getenv(
             "INVOMATCH_SECURITY_SEED_TOKENS_JSON",
-            '[{"token":"viewer-token","user_id":"viewer-1","username":"viewer","role":"viewer","status":"active"},{"token":"operator-token","user_id":"operator-1","username":"operator","role":"operator","status":"active"},{"token":"admin-token","user_id":"admin-1","username":"admin","role":"admin","status":"active"},{"token":"inactive-token","user_id":"inactive-1","username":"inactive-user","role":"viewer","status":"inactive"}]',
+            '[{"token":"viewer-token","user_id":"viewer-1","username":"viewer","role":"viewer","status":"active","tenant_id":"tenant-demo"},{"token":"operator-token","user_id":"operator-1","username":"operator","role":"operator","status":"active","tenant_id":"tenant-demo"},{"token":"admin-token","user_id":"admin-1","username":"admin","role":"admin","status":"active","tenant_id":"tenant-demo"},{"token":"inactive-token","user_id":"inactive-1","username":"inactive-user","role":"viewer","status":"inactive","tenant_id":"tenant-demo"}]',
         ),
         security_audit_enabled=_get_bool("INVOMATCH_SECURITY_AUDIT_ENABLED", True),
     )

@@ -19,6 +19,7 @@ def _processing_run(run_id: str) -> ReconciliationRun:
     now = _now()
     return ReconciliationRun(
         run_id=run_id,
+            tenant_id="tenant-test",
         status="processing",
         version=1,
         created_at=now - timedelta(minutes=10),

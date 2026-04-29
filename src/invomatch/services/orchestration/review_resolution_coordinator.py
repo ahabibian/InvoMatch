@@ -4,6 +4,7 @@ from typing import Optional
 
 from invomatch.domain.models import ReconciliationRun
 from invomatch.domain.review.models import DecisionType
+from invomatch.domain.tenant import TenantContext
 from invomatch.services.orchestration.run_orchestration_service import (
     RunOrchestrationService,
 )
@@ -39,6 +40,8 @@ class ReviewResolutionCoordinator:
         reviewer_id: str,
         decision: DecisionType,
         run_store: RunStore,
+        tenant_id: str | None = None,
+        tenant_context: TenantContext | None = None,
         reason: str | None = None,
         reviewed_payload: dict | None = None,
     ) -> tuple[ReviewDecisionResult, ReconciliationRun]:
@@ -71,6 +74,8 @@ class ReviewResolutionCoordinator:
             run_id=run_id,
             matching_completed=True,
             run_store=run_store,
+            tenant_id=tenant_id,
+            tenant_context=tenant_context,
         )
 
         return result, persisted_run

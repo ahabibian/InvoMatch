@@ -28,6 +28,7 @@ class StaticTokenProvider:
                 role=Role(str(item["role"]).strip()),
                 status=UserStatus(str(item["status"]).strip()),
                 auth_source="internal_token",
+                tenant_id=str(item.get("tenant_id", "tenant-test")).strip(),
             )
             records[token] = principal
 

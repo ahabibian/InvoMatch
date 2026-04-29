@@ -11,6 +11,7 @@ class AuthenticatedPrincipal:
     role: Role
     status: UserStatus
     auth_source: str
+    tenant_id: str
 
     @property
     def is_active(self) -> bool:

@@ -24,6 +24,7 @@ def _build_run(run_id: str) -> ReconciliationRun:
     now = _now()
     return ReconciliationRun(
         run_id=run_id,
+            tenant_id="tenant-test",
         status="failed",
         version=3,
         created_at=now - timedelta(minutes=10),
@@ -162,6 +163,7 @@ def test_restart_reload_preserves_processing_lease_metadata(store_factory):
 
     original = ReconciliationRun(
         run_id="run-processing-reload",
+            tenant_id="tenant-test",
         status="processing",
         version=2,
         created_at=now - timedelta(minutes=20),

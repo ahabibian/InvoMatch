@@ -11,6 +11,7 @@ from invomatch.api.export import export_reconciliation_run
 from invomatch.domain.review.models import DecisionType, FeedbackRecord
 from invomatch.main import create_app
 from invomatch.services.reconciliation import reconcile_and_save
+from invomatch.services.export.finalized_projection_writer import FinalizedProjectionWriter
 from invomatch.services.reconciliation_runs import create_reconciliation_run
 from invomatch.services.review_service import ReviewService
 from invomatch.services.review_store import InMemoryReviewStore
@@ -82,6 +83,14 @@ def isolated_export_app(tmp_path: Path):
         review_store=review_store,
     )
 
+
+
+def _persist_projection(app, review_store, run) -> None:
+    writer = FinalizedProjectionWriter(
+        projection_store=app.state.finalized_projection_store,
+        review_store=review_store,
+    )
+    writer.persist_for_completed_run(run)
 
 def _seed_approved_review(review_store, run) -> None:
     review_service = ReviewService()
@@ -192,6 +201,7 @@ def test_export_route_allows_export_for_completed_matched_run_without_review(
     run_store = isolated_export_app.run_store
 
     run = _create_completed_run(tmp_path, run_store)
+    _persist_projection(app, isolated_export_app.review_store, run)
 
     response = export_reconciliation_run(
         run.run_id,
@@ -219,6 +229,7 @@ def test_export_route_returns_json_export_for_completed_reviewed_run(
 
     run = _create_completed_run(tmp_path, run_store)
     _seed_approved_review(review_store, run)
+    _persist_projection(app, review_store, run)
 
     response = export_reconciliation_run(
         run.run_id,
@@ -248,6 +259,7 @@ def test_export_route_returns_csv_export_for_completed_reviewed_run(
 
     run = _create_completed_run(tmp_path, run_store)
     _seed_approved_review(review_store, run)
+    _persist_projection(app, review_store, run)
 
     response = export_reconciliation_run(
         run.run_id,

@@ -19,6 +19,7 @@ class AuditEvent:
     recorded_at: datetime
     event_type: str
     category: AuditCategory
+    tenant_id: str
     run_id: str | None = None
     user_id: str | None = None
     correlation_id: str | None = None
@@ -37,6 +38,7 @@ class AuditEvent:
 
 @dataclass(frozen=True, slots=True)
 class AuditEventQuery:
+    tenant_id: str
     run_id: str | None = None
     user_id: str | None = None
     event_type: str | None = None

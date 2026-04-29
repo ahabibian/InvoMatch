@@ -24,6 +24,7 @@ def _completed_run(run_id: str) -> ReconciliationRun:
     now = _now()
     return ReconciliationRun(
         run_id=run_id,
+            tenant_id="tenant-test",
         status="completed",
         version=2,
         created_at=now - timedelta(minutes=20),

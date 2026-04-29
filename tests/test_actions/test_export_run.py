@@ -11,7 +11,9 @@ from invomatch.services.actions.command import ActionCommand
 from invomatch.services.actions.handlers.export_run import ExportRunActionHandler
 from invomatch.services.actions.result import ActionExecutionStatus
 from invomatch.services.export.export_service import ExportService
-from invomatch.services.export.run_finalized_result_reader import RunFinalizedResultReader
+from invomatch.services.export.finalized_projection import FinalizedResultProjection
+from invomatch.services.export.finalized_projection_store import SqliteFinalizedProjectionStore
+from invomatch.services.export.source_loader import ExportSourceLoader
 from invomatch.services.export_delivery_service import ExportDeliveryService
 from invomatch.services.reconciliation_runs import (
     create_reconciliation_run,
@@ -54,6 +56,7 @@ def _completed_run_store(tmp_path: Path) -> tuple[JsonRunStore, str]:
     run = create_reconciliation_run(
         invoice_csv_path=invoice_path,
         payment_csv_path=payment_path,
+        tenant_id="tenant-test",
         run_store=run_store,
     )
 
@@ -146,12 +149,26 @@ def test_export_run_handler_returns_metadata(tmp_path: Path):
     review_store = InMemoryReviewStore()
     _seed_approved_review(review_store, run_id)
 
+    run = run_store.get_run(run_id, tenant_id="tenant-test")
+    assert run is not None
+
+    source_snapshot = ExportSourceLoader().load_sources_for_run(run)
+    projection_results = FinalizedResultProjection().build_results_for_run(
+        run=run,
+        source_snapshot=source_snapshot,
+        review_store=review_store,
+    )
+
+    projection_store = SqliteFinalizedProjectionStore(tmp_path / "finalized_projections.sqlite3")
+    projection_store.save_results(
+        tenant_id="tenant-test",
+        run_id=run_id,
+        results=projection_results,
+    )
+
     export_service = ExportService(
         run_store=run_store,
-        reader=RunFinalizedResultReader(
-            run_store=run_store,
-            review_store=review_store,
-        ),
+        projection_store=projection_store,
     )
 
     artifact_root = tmp_path / "artifacts"
@@ -159,11 +176,12 @@ def test_export_run_handler_returns_metadata(tmp_path: Path):
     repository = SqliteExportArtifactRepository(str(artifact_root / "export_artifacts.sqlite3"))
     storage = LocalArtifactStorage(artifact_root)
 
-    def export_generator(target_run_id: str, format: str) -> bytes:
+    def export_generator(target_run_id: str, format: str, *, tenant_id: str | None = None) -> bytes:
         from invomatch.domain.export import ExportFormat
 
         return export_service.export(
             run_id=target_run_id,
+            tenant_id="tenant-test",
             export_format=ExportFormat(format),
         ).content
 

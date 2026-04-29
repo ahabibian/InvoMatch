@@ -9,7 +9,7 @@ from invomatch.api.product_models.audit_event import (
     ProductAuditEvent,
     ProductAuditEventListResponse,
 )
-from invomatch.api.security import require_permission
+from invomatch.api.security import get_tenant_context, require_permission
 from invomatch.domain.audit.models import AuditCategory, AuditEventQuery
 from invomatch.domain.security import Permission
 from invomatch.services.audit import AuditQueryService
@@ -30,10 +30,12 @@ def list_audit_events(
     offset: int = 0,
 ) -> ProductAuditEventListResponse:
     require_permission(request, permission=Permission.OPERATIONS_VIEW_METRICS)
+    tenant_context = get_tenant_context(request)
 
     query_service: AuditQueryService = request.app.state.audit_query_service
 
     query = AuditEventQuery(
+        tenant_id=tenant_context.tenant_id,
         run_id=run_id,
         user_id=user_id,
         event_type=event_type,

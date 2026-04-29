@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from tests.helpers.security import TEST_AUTH_HEADER, attach_test_security
 
 from invomatch.domain.review.models import DecisionType, FeedbackRecord
 from invomatch.main import create_app
@@ -92,25 +93,29 @@ def test_run_view_reflects_exported_state_after_export_route_execution(tmp_path:
         review_store=review_store,
         export_base_dir=tmp_path / "exports",
     )
+    attach_test_security(app)
     client = TestClient(app)
 
     invoice, payment = _write_files(tmp_path)
     run = reconcile_and_save(
         invoice_csv_path=invoice,
         payment_csv_path=payment,
+        tenant_id="tenant-test",
         run_store=run_store,
+        review_store=review_store,
+        projection_store=app.state.finalized_projection_store,
     )
     _seed_approved_review(review_store, run)
 
-    pre_export_view = client.get(f"/api/reconciliation/runs/{run.run_id}/view")
+    pre_export_view = client.get(f"/api/reconciliation/runs/{run.run_id}/view", headers=TEST_AUTH_HEADER)
     assert pre_export_view.status_code == 200
     pre_body = pre_export_view.json()
     assert pre_body["export_summary"]["status"] in {"ready", "not_ready"}
 
-    export_response = client.get(f"/api/reconciliation/runs/{run.run_id}/export?format=json")
+    export_response = client.get(f"/api/reconciliation/runs/{run.run_id}/export?format=json", headers=TEST_AUTH_HEADER)
     assert export_response.status_code == 200
 
-    post_export_view = client.get(f"/api/reconciliation/runs/{run.run_id}/view")
+    post_export_view = client.get(f"/api/reconciliation/runs/{run.run_id}/view", headers=TEST_AUTH_HEADER)
     assert post_export_view.status_code == 200
     post_body = post_export_view.json()
 

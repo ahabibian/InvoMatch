@@ -69,6 +69,7 @@ def test_duplicate_create_is_rejected(run_store: SqliteRunStore, tmp_path: Path)
     now = utc_now()
     run = ReconciliationRun(
         run_id="run-duplicate",
+            tenant_id="tenant-test",
         status="queued",
         version=0,
         created_at=now,

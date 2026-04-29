@@ -14,6 +14,7 @@ def test_persistent_security_audit_service_records_to_repository(tmp_path) -> No
         role=Role.OPERATOR,
         status=UserStatus.ACTIVE,
         auth_source="token",
+        tenant_id="tenant-test",
     )
 
     event = service.record(
@@ -27,8 +28,10 @@ def test_persistent_security_audit_service_records_to_repository(tmp_path) -> No
 
     assert event.event_type == "authentication_success"
     assert event.user_id == "user-1"
+    assert event.tenant_id == "tenant-test"
 
-    stored = service.list_events()
+    stored = service.list_events(tenant_id="tenant-test")
     assert len(stored) == 1
     assert stored[0].event_type == "authentication_success"
     assert stored[0].user_id == "user-1"
+    assert stored[0].tenant_id == "tenant-test"
