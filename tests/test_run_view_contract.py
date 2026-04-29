@@ -292,3 +292,60 @@ def test_run_view_contract_exposes_bounded_structured_error_when_run_failed():
         "retryable": False,
         "terminal": True,
     }
+
+
+class FakeProjectionResult:
+    def __init__(self, decision_type: str) -> None:
+        self.decision_type = decision_type
+
+
+class FakeProjectionStore:
+    def __init__(self, results) -> None:
+        self._results = results
+        self.calls = []
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        self.calls.append((tenant_id, run_id))
+        return list(self._results)
+
+
+def test_run_view_api_reads_match_summary_from_finalized_projection_store():
+    run = FakeRun(
+        run_id="run_contract",
+        status="completed",
+        report=FakeRunReport(matched=99, unmatched=99, ambiguous=99, total=297),
+        error=None,
+        error_message=None,
+    )
+    run.tenant_id = "tenant_test"
+
+    projection_store = FakeProjectionStore(
+        results=[
+            FakeProjectionResult("MATCH"),
+            FakeProjectionResult("UNMATCHED"),
+            FakeProjectionResult("PARTIAL"),
+        ]
+    )
+
+    app = FastAPI()
+    app.include_router(router)
+    app.state.run_registry = FakeRunRegistry(runs={run.run_id: run})
+    app.state.review_store = FakeReviewStore()
+    app.state.artifact_query_service = FakeArtifactQueryService({})
+    app.state.export_readiness_evaluator = FakeExportReadinessEvaluator(is_export_ready=True)
+    app.state.finalized_projection_store = projection_store
+    attach_test_security(app)
+
+    client = TestClient(app)
+
+    response = client.get("/api/reconciliation/runs/run_contract/view", headers=TEST_AUTH_HEADER)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert projection_store.calls == [("tenant_test", "run_contract")]
+    assert body["match_summary"] == {
+        "total_items": 3,
+        "matched_items": 1,
+        "unmatched_items": 1,
+        "ambiguous_items": 1,
+    }

@@ -381,3 +381,73 @@ def test_review_summary_treats_enum_approved_status_as_resolved():
     assert result.review_summary.total_items == 1
     assert result.review_summary.open_items == 0
     assert result.review_summary.resolved_items == 1
+
+
+class FakeMissingProjectionStore:
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return None
+
+
+class FakeProjectionResult:
+    def __init__(self, decision_type: str) -> None:
+        self.decision_type = decision_type
+
+
+class FakeProjectionStore:
+    def __init__(self, results) -> None:
+        self._results = results
+        self.calls = []
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        self.calls.append((tenant_id, run_id))
+        return list(self._results)
+
+
+def test_completed_run_match_summary_does_not_fallback_to_report_when_projection_is_missing():
+    run = _run(
+        status="completed",
+        report=FakeRunReport(matched=9, unmatched=8, ambiguous=7, total=24),
+    )
+    run.tenant_id = "tenant_a"
+
+    service = RunViewQueryService(
+        run_store=FakeRunStore(run=run),
+        projection_store=FakeMissingProjectionStore(),
+    )
+
+    result = service.get_run_view("run_123")
+
+    assert result is not None
+    assert result.match_summary.total_items == 0
+    assert result.match_summary.matched_items == 0
+    assert result.match_summary.unmatched_items == 0
+    assert result.match_summary.ambiguous_items == 0
+
+
+def test_completed_run_match_summary_uses_tenant_scoped_finalized_projection():
+    run = _run(
+        status="completed",
+        report=FakeRunReport(matched=99, unmatched=99, ambiguous=99, total=297),
+    )
+    run.tenant_id = "tenant_a"
+    projection_store = FakeProjectionStore(
+        results=[
+            FakeProjectionResult("MATCH"),
+            FakeProjectionResult("UNMATCHED"),
+            FakeProjectionResult("PARTIAL"),
+        ]
+    )
+
+    service = RunViewQueryService(
+        run_store=FakeRunStore(run=run),
+        projection_store=projection_store,
+    )
+
+    result = service.get_run_view("run_123")
+
+    assert result is not None
+    assert projection_store.calls == [("tenant_a", "run_123")]
+    assert result.match_summary.total_items == 3
+    assert result.match_summary.matched_items == 1
+    assert result.match_summary.unmatched_items == 1
+    assert result.match_summary.ambiguous_items == 1

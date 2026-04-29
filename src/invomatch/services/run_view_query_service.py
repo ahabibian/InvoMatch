@@ -131,6 +131,15 @@ class RunViewQueryService:
         if projection_summary is not None:
             return projection_summary
 
+        run_status = _normalize_run_status(getattr(run, "status", ""))
+        if run_status == "completed":
+            return ProductRunMatchSummary(
+                total_items=0,
+                matched_items=0,
+                unmatched_items=0,
+                ambiguous_items=0,
+            )
+
         return self._build_match_summary_from_report(run)
 
     def _build_match_summary_from_projection(self, run) -> ProductRunMatchSummary | None:

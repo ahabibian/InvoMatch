@@ -173,12 +173,18 @@ def get_reconciliation_run_view(run_id: str, request: Request) -> ProductRunView
         "export_readiness_evaluator",
         None,
     )
+    projection_store = getattr(
+        request.app.state,
+        "finalized_projection_store",
+        None,
+    )
 
     query_service = RunViewQueryService(
         run_store=registry,
         review_store=review_store,
         artifact_query_service=artifact_query_service,
         export_readiness_evaluator=export_readiness_evaluator,
+        projection_store=projection_store,
     )
     run = registry.get_run(run_id, tenant_id=tenant_context.tenant_id)
     if run is None:
