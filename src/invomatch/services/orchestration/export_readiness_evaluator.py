@@ -76,6 +76,15 @@ class ExportReadinessEvaluator:
                 f"completed run has no finalized projection: tenant_id={run.tenant_id}, run_id={run_id}"
             )
 
+        results = self._projection_store.get_results(
+            tenant_id=run.tenant_id,
+            run_id=run_id,
+        )
+        if results is None:
+            raise InconsistentProjectionStateError(
+                f"completed run has no readable finalized projection: tenant_id={run.tenant_id}, run_id={run_id}"
+            )
+
         return ExportReadinessResult(
             is_export_ready=True,
             reason="export_allowed",

@@ -213,3 +213,26 @@ def test_completed_run_without_projection_is_inconsistent_state():
 
     assert "completed run has no finalized projection" in str(exc_info.value)
     assert run.run_id in str(exc_info.value)
+
+
+class MalformedProjectionStore:
+    def exists(self, *, tenant_id: str, run_id: str) -> bool:
+        return True
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        raise ValueError("unsupported finalized projection payload version")
+
+
+def test_export_readiness_rejects_malformed_existing_projection():
+    run = _run("run-malformed-projection", "completed")
+    run_store = InMemoryRunStore([run])
+    review_store = InMemoryReviewStore()
+
+    evaluator = ExportReadinessEvaluator(
+        run_store=run_store,
+        review_store=review_store,
+        projection_store=MalformedProjectionStore(),
+    )
+
+    with pytest.raises(ValueError, match="unsupported finalized projection payload version"):
+        evaluator.evaluate(run.run_id)

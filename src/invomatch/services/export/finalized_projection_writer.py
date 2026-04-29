@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from typing import Any
 
 from invomatch.domain.models import ReconciliationRun
@@ -43,4 +44,21 @@ class FinalizedProjectionWriter:
             tenant_id=run.tenant_id,
             run_id=run.run_id,
             results=results,
+            created_from_run_version=int(getattr(run, "version", 0)),
+            source_fingerprint=_build_source_fingerprint(run),
+            created_by_system="finalized_projection_writer",
         )
+
+
+def _build_source_fingerprint(run: ReconciliationRun) -> str:
+    material = "|".join(
+        [
+            str(getattr(run, "tenant_id", "")),
+            str(getattr(run, "run_id", "")),
+            str(getattr(run, "version", "")),
+            str(getattr(run, "invoice_csv_path", "")),
+            str(getattr(run, "payment_csv_path", "")),
+            str(getattr(run, "updated_at", "")),
+        ]
+    )
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()

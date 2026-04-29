@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import json
 import sqlite3
@@ -23,7 +23,11 @@ _SQLITE_TIMEOUT_SECONDS = 30.0
 _SQLITE_BUSY_TIMEOUT_MS = int(_SQLITE_TIMEOUT_SECONDS * 1000)
 _SQLITE_JOURNAL_MODE = "WAL"
 _SQLITE_SYNCHRONOUS = "NORMAL"
-_PAYLOAD_VERSION = 1
+_PROJECTION_VERSION = 1
+
+
+class DuplicateFinalizedProjectionError(RuntimeError):
+    pass
 
 
 class FinalizedProjectionStore(Protocol):
@@ -33,6 +37,9 @@ class FinalizedProjectionStore(Protocol):
         tenant_id: str,
         run_id: str,
         results: list[FinalizedResult],
+        created_from_run_version: int | None = None,
+        source_fingerprint: str | None = None,
+        created_by_system: str = "unknown",
     ) -> None:
         ...
 
@@ -64,6 +71,9 @@ class SqliteFinalizedProjectionStore:
         tenant_id: str,
         run_id: str,
         results: list[FinalizedResult],
+        created_from_run_version: int | None = None,
+        source_fingerprint: str | None = None,
+        created_by_system: str = "unknown",
     ) -> None:
         if not tenant_id:
             raise ValueError("tenant_id is required")
@@ -71,33 +81,51 @@ class SqliteFinalizedProjectionStore:
             raise ValueError("run_id is required")
         if not results:
             raise ValueError("finalized projection results are required")
+        if created_from_run_version is None:
+            raise ValueError("created_from_run_version is required")
+        if not source_fingerprint:
+            raise ValueError("source_fingerprint is required")
+        if not created_by_system:
+            raise ValueError("created_by_system is required")
 
+        created_at = datetime.now(UTC).isoformat()
         payload = json.dumps(
             {
-                "version": _PAYLOAD_VERSION,
+                "projection_version": _PROJECTION_VERSION,
+                "lineage": {
+                    "created_from_run_version": created_from_run_version,
+                    "source_fingerprint": source_fingerprint,
+                    "created_at": created_at,
+                    "created_by_system": created_by_system,
+                },
                 "results": [_to_primitive(result) for result in results],
             },
             sort_keys=True,
             ensure_ascii=False,
         )
 
-        with self._connect() as connection:
-            connection.execute(
-                """
-                INSERT INTO finalized_projections (
-                    tenant_id,
-                    run_id,
-                    payload_json,
-                    created_at
-                ) VALUES (?, ?, ?, ?)
-                """,
-                (
-                    tenant_id,
-                    run_id,
-                    payload,
-                    datetime.now(UTC).isoformat(),
-                ),
-            )
+        try:
+            with self._connect() as connection:
+                connection.execute(
+                    """
+                    INSERT INTO finalized_projections (
+                        tenant_id,
+                        run_id,
+                        payload_json,
+                        created_at
+                    ) VALUES (?, ?, ?, ?)
+                    """,
+                    (
+                        tenant_id,
+                        run_id,
+                        payload,
+                        created_at,
+                    ),
+                )
+        except sqlite3.IntegrityError as exc:
+            raise DuplicateFinalizedProjectionError(
+                f"finalized projection already exists: tenant_id={tenant_id}, run_id={run_id}"
+            ) from exc
 
     def get_results(
         self,
@@ -125,8 +153,20 @@ class SqliteFinalizedProjectionStore:
             return None
 
         payload = json.loads(row["payload_json"])
-        if payload.get("version") != _PAYLOAD_VERSION:
+        if payload.get("projection_version") != _PROJECTION_VERSION:
             raise ValueError("unsupported finalized projection payload version")
+
+        lineage_payload = payload.get("lineage")
+        if not isinstance(lineage_payload, dict):
+            raise ValueError("finalized projection lineage payload must be an object")
+        if lineage_payload.get("created_from_run_version") is None:
+            raise ValueError("finalized projection lineage.created_from_run_version is required")
+        if not lineage_payload.get("source_fingerprint"):
+            raise ValueError("finalized projection lineage.source_fingerprint is required")
+        if not lineage_payload.get("created_at"):
+            raise ValueError("finalized projection lineage.created_at is required")
+        if not lineage_payload.get("created_by_system"):
+            raise ValueError("finalized projection lineage.created_by_system is required")
 
         results_payload = payload.get("results")
         if not isinstance(results_payload, list):
