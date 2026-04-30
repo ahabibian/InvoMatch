@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from tests.helpers.security import TEST_AUTH_HEADER
 
 from invomatch.domain.models import ReconciliationRun
 from invomatch.main import create_app
@@ -15,6 +16,7 @@ def _fake_run(run_id: str, batch_id: str) -> ReconciliationRun:
     now = datetime.now(timezone.utc)
     return ReconciliationRun(
         run_id=run_id,
+        tenant_id="tenant-test",
         status="completed",
         version=1,
         created_at=now,
@@ -49,6 +51,7 @@ def test_post_ingest_creates_run(tmp_path: Path):
 
     response = client.post(
         "/api/reconciliation/runs/ingest",
+        headers=TEST_AUTH_HEADER,
         json={
             "ingestion_batch_id": "batch-1",
             "invoices": [
@@ -116,8 +119,8 @@ def test_post_ingest_reuses_existing_run_for_same_batch(tmp_path: Path):
         ],
     }
 
-    first = client.post("/api/reconciliation/runs/ingest", json=payload)
-    second = client.post("/api/reconciliation/runs/ingest", json=payload)
+    first = client.post("/api/reconciliation/runs/ingest", json=payload, headers=TEST_AUTH_HEADER)
+    second = client.post("/api/reconciliation/runs/ingest", json=payload, headers=TEST_AUTH_HEADER)
 
     assert first.status_code == 200
     assert second.status_code == 200
@@ -139,6 +142,7 @@ def test_post_ingest_rejects_when_invoices_missing(tmp_path: Path):
 
     response = client.post(
         "/api/reconciliation/runs/ingest",
+        headers=TEST_AUTH_HEADER,
         json={
             "ingestion_batch_id": "batch-no-invoices",
             "invoices": [],
@@ -176,6 +180,7 @@ def test_post_ingest_rejects_when_payments_missing(tmp_path: Path):
 
     response = client.post(
         "/api/reconciliation/runs/ingest",
+        headers=TEST_AUTH_HEADER,
         json={
             "ingestion_batch_id": "batch-no-payments",
             "invoices": [
@@ -211,6 +216,7 @@ def test_post_ingest_rejects_when_invoices_missing(tmp_path: Path):
 
     response = client.post(
         "/api/reconciliation/runs/ingest",
+        headers=TEST_AUTH_HEADER,
         json={
             "ingestion_batch_id": "batch-no-invoices",
             "invoices": [],
@@ -248,6 +254,7 @@ def test_post_ingest_rejects_when_payments_missing(tmp_path: Path):
 
     response = client.post(
         "/api/reconciliation/runs/ingest",
+        headers=TEST_AUTH_HEADER,
         json={
             "ingestion_batch_id": "batch-no-payments",
             "invoices": [

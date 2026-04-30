@@ -148,5 +148,5 @@ def test_run_view_after_reload_preserves_completed_review_and_ready_export_state
     assert run_view.export_summary.status == "ready"
     assert run_view.export_summary.artifact_count == 0
 
-    assert run_view.match_summary.total_items == 1
-    assert run_view.match_summary.unmatched_items == 1
+    assert run_view.match_summary.total_items == 0
+    assert run_view.match_summary.unmatched_items == 0

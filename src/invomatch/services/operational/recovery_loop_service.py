@@ -9,6 +9,7 @@ from invomatch.domain.operational.models import (
     OperationalReasonCode,
 )
 from invomatch.services.operational.operational_audit import (
+    OPERATIONAL_BOUNDARY_TENANT_ID,
     OperationalAuditService,
     OperationalAuditWrite,
 )
@@ -35,6 +36,7 @@ class RecoveryCandidate:
     run_id: str
     incident_key: str
     eligibility: RecoveryEligibilityInput
+    tenant_id: str = OPERATIONAL_BOUNDARY_TENANT_ID
 
 
 @dataclass(frozen=True, slots=True)
@@ -199,6 +201,7 @@ class RecoveryLoopService:
 
         self._audit_service.record(
             OperationalAuditWrite(
+                tenant_id=candidate.tenant_id,
                 run_id=candidate.run_id,
                 event_type=result.decision.value,
                 decision=result.decision,

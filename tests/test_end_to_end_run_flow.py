@@ -20,7 +20,16 @@ class FakeProjectionStore:
     def __init__(self):
         self._existing: set[tuple[str, str]] = set()
 
-    def save_results(self, *, tenant_id: str, run_id: str, results: list) -> None:
+    def save_results(
+        self,
+        *,
+        tenant_id: str,
+        run_id: str,
+        results: list,
+        created_from_run_version: int | None = None,
+        source_fingerprint: str | None = None,
+        created_by_system: str = "unknown",
+    ) -> None:
         self._existing.add((tenant_id, run_id))
 
     def get_results(self, *, tenant_id: str, run_id: str):

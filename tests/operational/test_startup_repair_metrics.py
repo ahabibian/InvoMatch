@@ -11,6 +11,7 @@ def test_operational_metrics_service_tracks_startup_repair_items() -> None:
 
     service.record_startup_repair_item(
         item=StartupRepairScanItem(
+            tenant_id="tenant-test",
             run_id="run-1",
             original_status="processing",
             final_status="review_required",
@@ -26,6 +27,7 @@ def test_operational_metrics_service_tracks_startup_repair_items() -> None:
 
     service.record_startup_repair_item(
         item=StartupRepairScanItem(
+            tenant_id="tenant-test",
             run_id="run-2",
             original_status="processing",
             final_status="processing",
@@ -41,6 +43,7 @@ def test_operational_metrics_service_tracks_startup_repair_items() -> None:
 
     service.record_startup_repair_item(
         item=StartupRepairScanItem(
+            tenant_id="tenant-test",
             run_id="run-3",
             original_status="review_required",
             final_status="review_required",
@@ -56,6 +59,7 @@ def test_operational_metrics_service_tracks_startup_repair_items() -> None:
 
     service.record_startup_repair_item(
         item=StartupRepairScanItem(
+            tenant_id="tenant-test",
             run_id="run-4",
             original_status="completed",
             final_status="completed",

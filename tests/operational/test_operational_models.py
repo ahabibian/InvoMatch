@@ -24,6 +24,7 @@ def test_operational_audit_event_preserves_structured_fields() -> None:
 
     event = OperationalAuditEvent(
         event_id="evt-1",
+        tenant_id="tenant-test",
         run_id="run-1",
         event_type="retry_triggered",
         event_time=now,

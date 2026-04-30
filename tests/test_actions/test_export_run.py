@@ -164,6 +164,9 @@ def test_export_run_handler_returns_metadata(tmp_path: Path):
         tenant_id="tenant-test",
         run_id=run_id,
         results=projection_results,
+        created_from_run_version=int(getattr(run, "version", 0)),
+        source_fingerprint="test-source-fingerprint",
+        created_by_system="test_export_run_handler",
     )
 
     export_service = ExportService(
