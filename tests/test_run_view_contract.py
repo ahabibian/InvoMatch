@@ -34,6 +34,7 @@ class FakeRun:
         self.report = report
         self.error = error
         self.error_message = error_message
+        self.tenant_id = "tenant_a"
 
 
 class FakeRunRegistry:
@@ -166,6 +167,7 @@ def _create_client(run: FakeRun) -> TestClient:
     app.state.review_store = review_store
     app.state.artifact_query_service = artifact_query_service
     app.state.export_readiness_evaluator = FakeExportReadinessEvaluator(is_export_ready=True)
+    app.state.finalized_projection_store = FakeProjectionStore()
     attach_test_security(app)
     return TestClient(app)
 
@@ -300,8 +302,8 @@ class FakeProjectionResult:
 
 
 class FakeProjectionStore:
-    def __init__(self, results) -> None:
-        self._results = results
+    def __init__(self, results=None) -> None:
+        self._results = list(results or [FakeProjectionResult("MATCH")])
         self.calls = []
 
     def get_results(self, *, tenant_id: str, run_id: str):
@@ -333,6 +335,7 @@ def test_run_view_api_reads_match_summary_from_finalized_projection_store():
     app.state.review_store = FakeReviewStore()
     app.state.artifact_query_service = FakeArtifactQueryService({})
     app.state.export_readiness_evaluator = FakeExportReadinessEvaluator(is_export_ready=True)
+    app.state.finalized_projection_store = FakeProjectionStore()
     app.state.finalized_projection_store = projection_store
     attach_test_security(app)
 

@@ -23,6 +23,7 @@ class FakeRun:
     report: FakeRunReport | None = None
     error: object | None = None
     error_message: str | None = None
+    tenant_id: str = "tenant_a"
 
 
 @dataclass
@@ -111,6 +112,19 @@ class FakeExportReadinessEvaluator:
 
     def evaluate(self, run_id: str):
         return FakeExportReadinessResult(is_export_ready=self._is_export_ready)
+
+
+class FakeProjectionResult:
+    def __init__(self, decision_type: str) -> None:
+        self.decision_type = decision_type
+
+
+class FakeProjectionStore:
+    def __init__(self, results=None) -> None:
+        self._results = list(results or [FakeProjectionResult("MATCH")])
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return list(self._results)
 
 
 def _run(status: str = "processing", report: FakeRunReport | None = None) -> FakeRun:
@@ -242,6 +256,7 @@ def test_failed_export_is_only_reported_for_completed_export_eligible_run():
             }
         ),
         export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=False),
+        projection_store=FakeProjectionStore(),
     )
 
     result = service.get_run_view("run_123")
@@ -275,6 +290,7 @@ def test_ready_artifact_still_wins_over_failed_artifact():
             }
         ),
         export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=False),
+        projection_store=FakeProjectionStore(),
     )
 
     result = service.get_run_view("run_123")

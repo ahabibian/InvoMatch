@@ -11,6 +11,7 @@ from invomatch.api.product_models.run_view import (
     ProductRunReviewSummary,
     ProductRunView,
 )
+from invomatch.services.export.errors import InconsistentProjectionStateError
 
 
 def _utc_min_datetime() -> datetime:
@@ -69,11 +70,15 @@ class RunViewQueryService:
         self._artifact_query_service = artifact_query_service
         self._export_readiness_evaluator = export_readiness_evaluator
         self._projection_store = projection_store
+        self._completed_projection_results_by_run_id = {}
 
     def get_run_view(self, run_id: str) -> ProductRunView | None:
         run = self._run_store.get_run(run_id)
         if run is None:
             return None
+
+        if _normalize_run_status(getattr(run, "status", "")) == "completed":
+            self._assert_completed_run_has_projection(run)
 
         review_summary = self._build_review_summary(run_id)
         raw_artifacts = self._safe_list_raw_artifacts(run_id)
@@ -98,6 +103,32 @@ class RunViewQueryService:
             export_summary=export_summary,
             artifacts=artifacts,
         )
+
+    def _assert_completed_run_has_projection(self, run) -> None:
+        projection_store = getattr(self, "_projection_store", None)
+        tenant_id = getattr(run, "tenant_id", None)
+        run_id = getattr(run, "run_id", None)
+
+        if projection_store is None:
+            raise InconsistentProjectionStateError(
+                f"completed run has no finalized projection store: tenant_id={tenant_id}, run_id={run_id}"
+            )
+
+        if not tenant_id or not run_id:
+            raise InconsistentProjectionStateError(
+                f"completed run cannot load finalized projection without tenant_id and run_id: tenant_id={tenant_id}, run_id={run_id}"
+            )
+
+        results = projection_store.get_results(
+            tenant_id=str(tenant_id),
+            run_id=str(run_id),
+        )
+        if results is None:
+            raise InconsistentProjectionStateError(
+                f"completed run has no finalized projection: tenant_id={tenant_id}, run_id={run_id}"
+            )
+
+        self._completed_projection_results_by_run_id[str(run_id)] = list(results)
 
     def _build_run_error(self, run) -> ProductRunError | None:
         error = getattr(run, "error", None)
@@ -127,45 +158,40 @@ class RunViewQueryService:
         return None
 
     def _build_match_summary(self, run) -> ProductRunMatchSummary:
-        projection_summary = self._build_match_summary_from_projection(run)
-        if projection_summary is not None:
-            return projection_summary
-
         run_status = _normalize_run_status(getattr(run, "status", ""))
         if run_status == "completed":
-            return ProductRunMatchSummary(
-                total_items=0,
-                matched_items=0,
-                unmatched_items=0,
-                ambiguous_items=0,
-            )
+            return self._build_match_summary_from_projection(run)
 
         return self._build_match_summary_from_report(run)
 
-    def _build_match_summary_from_projection(self, run) -> ProductRunMatchSummary | None:
+    def _build_match_summary_from_projection(self, run) -> ProductRunMatchSummary:
         projection_store = getattr(self, "_projection_store", None)
-        if projection_store is None:
-            return None
-
-        run_status = _normalize_run_status(getattr(run, "status", ""))
-        if run_status != "completed":
-            return None
-
         tenant_id = getattr(run, "tenant_id", None)
         run_id = getattr(run, "run_id", None)
-        if not tenant_id or not run_id:
-            return None
 
-        try:
+        if projection_store is None:
+            raise InconsistentProjectionStateError(
+                f"completed run has no finalized projection store: tenant_id={tenant_id}, run_id={run_id}"
+            )
+
+        if not tenant_id or not run_id:
+            raise InconsistentProjectionStateError(
+                f"completed run cannot load finalized projection without tenant_id and run_id: tenant_id={tenant_id}, run_id={run_id}"
+            )
+
+        cached_results = self._completed_projection_results_by_run_id.get(str(run_id))
+        if cached_results is not None:
+            results = cached_results
+        else:
             results = projection_store.get_results(
                 tenant_id=str(tenant_id),
                 run_id=str(run_id),
             )
-        except Exception:
-            return None
 
-        if results is None:
-            return None
+            if results is None:
+                raise InconsistentProjectionStateError(
+                    f"completed run has no finalized projection: tenant_id={tenant_id}, run_id={run_id}"
+                )
 
         matched_items = 0
         unmatched_items = 0
@@ -381,10 +407,16 @@ class RunViewQueryService:
                     result = evaluate(run_id)
                     return bool(getattr(result, "is_export_ready", False))
                 except Exception:
+                    if _normalize_run_status(getattr(run, "status", "")) == "completed":
+                        raise
                     return False
 
         run_status = _normalize_run_status(getattr(run, "status", ""))
-        return run_status == "completed" and review_summary.open_items == 0
+        if run_status == "completed":
+            raise InconsistentProjectionStateError(
+                f"completed run cannot evaluate export readiness without projection evaluator: run_id={run_id}"
+            )
+        return False
 
     def _build_artifacts_from_raw(
         self,

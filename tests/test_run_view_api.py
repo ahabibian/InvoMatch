@@ -34,6 +34,7 @@ class FakeRun:
         self.report = report
         self.error = error
         self.error_message = error_message
+        self.tenant_id = "tenant_a"
 
 
 class FakeRunRegistry:
@@ -118,11 +119,25 @@ class FakeExportReadinessEvaluator:
         return FakeExportReadinessResult(is_export_ready=self._is_export_ready)
 
 
+class FakeProjectionResult:
+    def __init__(self, decision_type: str) -> None:
+        self.decision_type = decision_type
+
+
+class FakeProjectionStore:
+    def __init__(self, results=None) -> None:
+        self._results = list(results or [FakeProjectionResult("MATCH")])
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return list(self._results)
+
+
 def create_test_client(
     registry: FakeRunRegistry,
     review_store=None,
     artifact_query_service=None,
     export_readiness_evaluator=None,
+    projection_store=None,
 ) -> TestClient:
     app = FastAPI()
     app.include_router(router)
@@ -130,6 +145,7 @@ def create_test_client(
     app.state.review_store = review_store
     app.state.artifact_query_service = artifact_query_service
     app.state.export_readiness_evaluator = export_readiness_evaluator
+    app.state.finalized_projection_store = projection_store or FakeProjectionStore()
     attach_test_security(app)
     return TestClient(app)
 

@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+import pytest
+
+from invomatch.services.export.errors import InconsistentProjectionStateError
 from invomatch.services.run_view_query_service import RunViewQueryService
 
 
@@ -31,6 +34,7 @@ class FakeRun:
     report: FakeRunReport | None = None
     error: FakeRunError | None = None
     error_message: str | None = None
+    tenant_id: str = "tenant_a"
 
 
 @dataclass
@@ -206,6 +210,8 @@ def test_review_summary_treats_unknown_status_as_open():
     service = RunViewQueryService(
         run_store=FakeRunStore(run=run),
         review_store=review_store,
+        projection_store=FakeProjectionStore(results=[FakeProjectionResult("MATCH")]),
+        export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
     )
 
     result = service.get_run_view("run_123")
@@ -238,6 +244,7 @@ def test_export_summary_is_not_ready_when_completed_but_evaluator_returns_false(
     run = _run(status="completed")
     service = RunViewQueryService(
         run_store=FakeRunStore(run=run),
+        projection_store=FakeProjectionStore(results=[FakeProjectionResult("MATCH")]),
         export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=False),
     )
 
@@ -252,6 +259,7 @@ def test_export_summary_is_ready_when_completed_and_evaluator_returns_true():
     run = _run(status="completed")
     service = RunViewQueryService(
         run_store=FakeRunStore(run=run),
+        projection_store=FakeProjectionStore(results=[FakeProjectionResult("MATCH")]),
         export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
     )
 
@@ -280,6 +288,7 @@ def test_export_summary_is_exported_when_ready_artifact_exists():
     service = RunViewQueryService(
         run_store=FakeRunStore(run=run),
         artifact_query_service=artifact_service,
+        projection_store=FakeProjectionStore(results=[FakeProjectionResult("MATCH")]),
         export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=False),
     )
 
@@ -309,6 +318,7 @@ def test_export_summary_is_failed_when_only_failed_artifacts_exist():
     service = RunViewQueryService(
         run_store=FakeRunStore(run=run),
         artifact_query_service=artifact_service,
+        projection_store=FakeProjectionStore(results=[FakeProjectionResult("MATCH")]),
         export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=False),
     )
 
@@ -345,6 +355,8 @@ def test_artifacts_are_sorted_newest_first():
     service = RunViewQueryService(
         run_store=FakeRunStore(run=run),
         artifact_query_service=artifact_service,
+        projection_store=FakeProjectionStore(results=[FakeProjectionResult("MATCH")]),
+        export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
     )
 
     result = service.get_run_view("run_123")
@@ -372,6 +384,8 @@ def test_review_summary_treats_enum_approved_status_as_resolved():
     service = RunViewQueryService(
         run_store=FakeRunStore(run=run),
         review_store=review_store,
+        projection_store=FakeProjectionStore(results=[FakeProjectionResult("MATCH")]),
+        export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
     )
 
     result = service.get_run_view("run_123")
@@ -403,25 +417,20 @@ class FakeProjectionStore:
         return list(self._results)
 
 
-def test_completed_run_match_summary_does_not_fallback_to_report_when_projection_is_missing():
+def test_completed_run_without_projection_should_fail_hard():
     run = _run(
         status="completed",
         report=FakeRunReport(matched=9, unmatched=8, ambiguous=7, total=24),
     )
-    run.tenant_id = "tenant_a"
 
     service = RunViewQueryService(
         run_store=FakeRunStore(run=run),
         projection_store=FakeMissingProjectionStore(),
+        export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
     )
 
-    result = service.get_run_view("run_123")
-
-    assert result is not None
-    assert result.match_summary.total_items == 0
-    assert result.match_summary.matched_items == 0
-    assert result.match_summary.unmatched_items == 0
-    assert result.match_summary.ambiguous_items == 0
+    with pytest.raises(InconsistentProjectionStateError, match="completed run has no finalized projection"):
+        service.get_run_view("run_123")
 
 
 def test_completed_run_match_summary_uses_tenant_scoped_finalized_projection():
@@ -441,6 +450,7 @@ def test_completed_run_match_summary_uses_tenant_scoped_finalized_projection():
     service = RunViewQueryService(
         run_store=FakeRunStore(run=run),
         projection_store=projection_store,
+        export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
     )
 
     result = service.get_run_view("run_123")
@@ -451,3 +461,31 @@ def test_completed_run_match_summary_uses_tenant_scoped_finalized_projection():
     assert result.match_summary.matched_items == 1
     assert result.match_summary.unmatched_items == 1
     assert result.match_summary.ambiguous_items == 1
+
+
+def test_completed_run_without_projection_store_should_fail_hard():
+    run = _run(
+        status="completed",
+        report=FakeRunReport(matched=9, unmatched=8, ambiguous=7, total=24),
+    )
+
+    service = RunViewQueryService(
+        run_store=FakeRunStore(run=run),
+        export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
+    )
+
+    with pytest.raises(InconsistentProjectionStateError, match="finalized projection store"):
+        service.get_run_view("run_123")
+
+
+def test_completed_run_without_export_readiness_evaluator_should_fail_hard():
+    run = _run(status="completed")
+    projection_store = FakeProjectionStore(results=[FakeProjectionResult("MATCH")])
+
+    service = RunViewQueryService(
+        run_store=FakeRunStore(run=run),
+        projection_store=projection_store,
+    )
+
+    with pytest.raises(InconsistentProjectionStateError, match="projection evaluator"):
+        service.get_run_view("run_123")
