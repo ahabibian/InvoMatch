@@ -64,6 +64,12 @@ def get_authenticated_principal(request: Request) -> AuthenticatedPrincipal:
             outcome="denied",
             reason=result.failure_reason,
         )
+
+        if result.failure_reason == "token_expired":
+            raise unauthorized("Token expired")
+        if result.failure_reason == "token_revoked":
+            raise unauthorized("Token revoked")
+
         raise unauthorized("Authentication required")
 
     principal = result.principal

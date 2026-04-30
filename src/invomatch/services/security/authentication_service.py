@@ -41,11 +41,23 @@ class AuthenticationService:
                 failure_reason="empty_bearer_token",
             )
 
-        principal = self._token_provider.get_principal_for_token(token)
-        if principal is None:
+        token_record = self._token_provider.get_token_record(token)
+        if token_record is None:
             return AuthenticationResult(
                 principal=None,
                 failure_reason="unknown_token",
             )
 
-        return AuthenticationResult(principal=principal)
+        if token_record.revoked:
+            return AuthenticationResult(
+                principal=None,
+                failure_reason="token_revoked",
+            )
+
+        if token_record.is_expired():
+            return AuthenticationResult(
+                principal=None,
+                failure_reason="token_expired",
+            )
+
+        return AuthenticationResult(principal=token_record.principal)
