@@ -4,6 +4,7 @@ import pytest
 
 from invomatch.runtime import RuntimeExecutor
 from invomatch.runtime.runtime_policy import RuntimeRetryPolicy
+from invomatch.services.completed_run_projection_service import CompletedRunProjectionIntegrityError
 from invomatch.services.reconciliation import reconcile, reconcile_and_save
 from invomatch.services.reconciliation_errors import (
     ReconciliationExecutionError,
@@ -235,3 +236,119 @@ def test_reconcile_and_save_does_not_persist_false_completed_state_after_runtime
     assert persisted_run.error is not None
     assert persisted_run.error.code == "retry_exhausted"
     assert persisted_run.error_message is not None
+
+def _write_single_matched_reconciliation_files(tmp_path: Path) -> tuple[Path, Path]:
+    invoice = tmp_path / "single_matched_invoices.csv"
+    payment = tmp_path / "single_matched_payments.csv"
+
+    invoice.write_text(
+        "id,date,amount,currency,reference\n"
+        "inv-1,2024-01-10,100.00,USD,INV-1\n",
+        encoding="utf-8",
+    )
+
+    payment.write_text(
+        "id,date,amount,currency,reference,invoice_id\n"
+        "pay-1,2024-01-12,100.00,USD,INV-1,inv-1\n",
+        encoding="utf-8",
+    )
+
+    return invoice, payment
+
+
+class _FailingProjectionSaveStore:
+    def exists(self, *, tenant_id: str, run_id: str) -> bool:
+        return False
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        raise AssertionError("get_results should not be called after save failure")
+
+    def save_results(self, **kwargs) -> None:
+        raise RuntimeError("projection persistence unavailable")
+
+
+class _UnreadableAfterSaveProjectionStore:
+    def exists(self, *, tenant_id: str, run_id: str) -> bool:
+        return False
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return None
+
+    def save_results(self, **kwargs) -> None:
+        return None
+
+
+def test_reconcile_and_save_does_not_persist_completed_when_projection_save_fails(tmp_path: Path):
+    run_store = InMemoryRunStore()
+    invoice, payment = _write_single_matched_reconciliation_files(tmp_path)
+
+    with pytest.raises(RuntimeError, match="projection persistence unavailable"):
+        reconcile_and_save(
+            invoice_csv_path=invoice,
+            payment_csv_path=payment,
+            tenant_id="tenant-test",
+            run_store=run_store,
+            projection_store=_FailingProjectionSaveStore(),
+        )
+
+    runs, total = run_store.list_runs()
+    assert total == 1
+    persisted_run = runs[0]
+
+    assert persisted_run.status == "processing"
+    assert persisted_run.finished_at is None
+    assert persisted_run.report is None
+
+
+def test_reconcile_and_save_does_not_persist_completed_when_projection_readback_fails(tmp_path: Path):
+    run_store = InMemoryRunStore()
+    invoice, payment = _write_single_matched_reconciliation_files(tmp_path)
+
+    with pytest.raises(
+        CompletedRunProjectionIntegrityError,
+        match="not readable after persistence",
+    ):
+        reconcile_and_save(
+            invoice_csv_path=invoice,
+            payment_csv_path=payment,
+            tenant_id="tenant-test",
+            run_store=run_store,
+            projection_store=_UnreadableAfterSaveProjectionStore(),
+        )
+
+    runs, total = run_store.list_runs()
+    assert total == 1
+    persisted_run = runs[0]
+
+    assert persisted_run.status == "processing"
+    assert persisted_run.finished_at is None
+    assert persisted_run.report is None
+
+
+def test_reconcile_and_save_completed_run_has_readable_projection(tmp_path: Path):
+    from invomatch.services.export.finalized_projection_store import SqliteFinalizedProjectionStore
+
+    run_store = InMemoryRunStore()
+    projection_store = SqliteFinalizedProjectionStore(tmp_path / "finalized_projections.sqlite3")
+    invoice, payment = _write_single_matched_reconciliation_files(tmp_path)
+
+    run = reconcile_and_save(
+        invoice_csv_path=invoice,
+        payment_csv_path=payment,
+        tenant_id="tenant-test",
+        run_store=run_store,
+        projection_store=projection_store,
+    )
+
+    assert run.status == "completed"
+
+    persisted_run = run_store.get_run(run.run_id, tenant_id="tenant-test")
+    assert persisted_run is not None
+    assert persisted_run.status == "completed"
+
+    results = projection_store.get_results(
+        tenant_id="tenant-test",
+        run_id=run.run_id,
+    )
+    assert results is not None
+    assert len(results) == 1

@@ -31,6 +31,7 @@ from invomatch.services.matching_engine import match
 from invomatch.services.reconciliation_errors import ReconciliationExecutionError
 from invomatch.services.reconciliation_runs import (
     DEFAULT_RUN_STORE,
+    build_reconciliation_run_update,
     create_reconciliation_run,
     update_reconciliation_run,
 )
@@ -236,17 +237,22 @@ def reconcile_and_save(
             run_id=run.run_id,
         ) from exc
 
-    finalized_run = update_reconciliation_run(
+    final_status = _final_run_status(report)
+    finalized_candidate = build_reconciliation_run_update(
         run.run_id,
-        status=_final_run_status(report),
+        status=final_status,
         report=report,
         run_store=run_store,
     )
 
-    CompletedRunProjectionService(
-        projection_store=projection_store,
-        review_store=review_store or InMemoryReviewStore(),
-    ).persist_if_completed(finalized_run)
+    if finalized_candidate.status == "completed":
+        CompletedRunProjectionService(
+            projection_store=projection_store,
+            review_store=review_store or InMemoryReviewStore(),
+        ).ensure_for_completed_run(finalized_candidate)
 
-    return finalized_run
+    return run_store.update_run(
+        finalized_candidate,
+        expected_version=finalized_candidate.version - 1,
+    )
 

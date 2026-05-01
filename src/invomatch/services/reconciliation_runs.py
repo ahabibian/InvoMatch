@@ -103,7 +103,7 @@ def heartbeat_reconciliation_run(
     )
 
 
-def update_reconciliation_run(
+def build_reconciliation_run_update(
     run_id: str,
     *,
     status: RunStatus,
@@ -135,7 +135,7 @@ def update_reconciliation_run(
             started_at = now
         finished_at = now
 
-    updated_run = run.model_copy(
+    return run.model_copy(
         update={
             "status": status,
             "version": run.version + 1,
@@ -147,7 +147,26 @@ def update_reconciliation_run(
             "report": report if report is not None else run.report,
         }
     )
-    return run_store.update_run(updated_run, expected_version=run.version)
+
+
+def update_reconciliation_run(
+    run_id: str,
+    *,
+    status: RunStatus,
+    report: ReconciliationReport | None = None,
+    error: RunError | None = None,
+    error_message: str | None = None,
+    run_store: RunStore = DEFAULT_RUN_STORE,
+) -> ReconciliationRun:
+    updated_run = build_reconciliation_run_update(
+        run_id,
+        status=status,
+        report=report,
+        error=error,
+        error_message=error_message,
+        run_store=run_store,
+    )
+    return run_store.update_run(updated_run, expected_version=updated_run.version - 1)
 
 
 def save_reconciliation_run(

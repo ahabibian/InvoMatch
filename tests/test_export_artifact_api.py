@@ -11,6 +11,7 @@ from invomatch.domain.export_delivery.models import (
     GenerationMode,
 )
 from invomatch.main import create_app
+from invomatch.services.export.finalized_projection_store import SqliteFinalizedProjectionStore
 from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.run_store import JsonRunStore
 
@@ -49,11 +50,29 @@ def _write_source_files(tmp_path: Path) -> tuple[Path, Path]:
 
 
 def _create_completed_run(tmp_path: Path, run_store: JsonRunStore):
-    invoice_path, payment_path = _write_source_files(tmp_path)
+    invoice_csv = tmp_path / "invoices.csv"
+    payment_csv = tmp_path / "payments.csv"
+
+    invoice_csv.write_text(
+        "id,date,amount,currency,reference\n"
+        "INV-001,2024-01-10,100.00,USD,INV-001\n",
+        encoding="utf-8",
+    )
+    payment_csv.write_text(
+        "id,date,amount,currency,reference,invoice_id\n"
+        "PAY-001,2024-01-10,100.00,USD,INV-001,INV-001\n",
+        encoding="utf-8",
+    )
+
+    projection_store = SqliteFinalizedProjectionStore(
+        tmp_path / "finalized_projections.sqlite3"
+    )
+
     return reconcile_and_save(
-        invoice_csv_path=invoice_path,
-        payment_csv_path=payment_path,
+        invoice_csv_path=invoice_csv,
+        payment_csv_path=payment_csv,
         run_store=run_store,
+        projection_store=projection_store,
     )
 
 

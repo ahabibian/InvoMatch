@@ -12,6 +12,17 @@ from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import InMemoryRunStore
 
 
+class _ReadableExistingProjectionStore:
+    def exists(self, *, tenant_id: str, run_id: str) -> bool:
+        return True
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return [object()]
+
+    def save_results(self, **kwargs) -> None:
+        raise AssertionError("save_results should not be called when projection already exists")
+
+
 def _base_payload():
     return {
         "decision": "APPROVE",
@@ -109,6 +120,7 @@ def test_resolve_review_handler_uses_persisted_coordinator_path_and_completes_ru
     orchestration_service = RunOrchestrationService(
         review_store=review_store,
         review_service=review_service,
+        projection_store=_ReadableExistingProjectionStore(),
     )
 
     orchestration_service.orchestrate_post_matching(

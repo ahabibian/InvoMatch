@@ -17,7 +17,7 @@ from invomatch.services.orchestration.run_finalization_evaluator import (
 )
 from invomatch.services.export.finalized_projection_store import FinalizedProjectionStore
 from invomatch.services.completed_run_projection_service import CompletedRunProjectionService
-from invomatch.services.reconciliation_runs import update_reconciliation_run
+from invomatch.services.reconciliation_runs import build_reconciliation_run_update, update_reconciliation_run
 from invomatch.services.review_service import ReviewService
 from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import RunStore
@@ -107,16 +107,29 @@ class RunOrchestrationService:
             tenant_context=tenant_context,
         )
 
+        if orchestration_result.run_status == "completed":
+            completed_candidate = build_reconciliation_run_update(
+                run_id,
+                status="completed",
+                run_store=run_store,
+            )
+
+            CompletedRunProjectionService(
+                projection_store=self._projection_store,
+                review_store=self._review_store,
+            ).ensure_for_completed_run(completed_candidate)
+
+            persisted_run = run_store.update_run(
+                completed_candidate,
+                expected_version=completed_candidate.version - 1,
+            )
+            return orchestration_result, persisted_run
+
         persisted_run = update_reconciliation_run(
             run_id,
             status=orchestration_result.run_status,
             run_store=run_store,
         )
-
-        CompletedRunProjectionService(
-            projection_store=self._projection_store,
-            review_store=self._review_store,
-        ).persist_if_completed(persisted_run)
 
         return orchestration_result, persisted_run
 
@@ -175,16 +188,29 @@ class RunOrchestrationService:
         if orchestration_result.run_status == "review_required":
             return orchestration_result, current_run
 
+        if orchestration_result.run_status == "completed":
+            completed_candidate = build_reconciliation_run_update(
+                run_id,
+                status="completed",
+                run_store=run_store,
+            )
+
+            CompletedRunProjectionService(
+                projection_store=self._projection_store,
+                review_store=self._review_store,
+            ).ensure_for_completed_run(completed_candidate)
+
+            persisted_run = run_store.update_run(
+                completed_candidate,
+                expected_version=completed_candidate.version - 1,
+            )
+            return orchestration_result, persisted_run
+
         persisted_run = update_reconciliation_run(
             run_id,
             status=orchestration_result.run_status,
             run_store=run_store,
         )
-
-        CompletedRunProjectionService(
-            projection_store=self._projection_store,
-            review_store=self._review_store,
-        ).persist_if_completed(persisted_run)
 
         return orchestration_result, persisted_run
 

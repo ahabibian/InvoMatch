@@ -18,6 +18,16 @@ def _now() -> datetime:
     return datetime(2026, 4, 19, 22, 0, 0, tzinfo=timezone.utc)
 
 
+
+class _ReadableExistingProjectionStore:
+    def exists(self, *, tenant_id: str, run_id: str) -> bool:
+        return True
+
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return [object()]
+
+    def save_results(self, **kwargs) -> None:
+        raise AssertionError("save_results should not be called when projection already exists")
 def _processing_run(run_id: str) -> ReconciliationRun:
     now = _now()
     return ReconciliationRun(
@@ -144,6 +154,7 @@ def test_restart_recovery_consistency_end_to_end(tmp_path: Path):
     repair_service_2 = RestartConsistencyRepairService(
         run_store=restarted_run_store_2,
         review_store=restarted_review_store_2,
+        projection_store=_ReadableExistingProjectionStore(),
     )
     repaired_2 = repair_service_2.repair_run(run.run_id)
 
@@ -160,6 +171,7 @@ def test_restart_recovery_consistency_end_to_end(tmp_path: Path):
         review_store=restarted_review_store_2,
         artifact_query_service=EmptyArtifactQueryService(),
         export_readiness_evaluator=ExportReadyEvaluator(),
+        projection_store=_ReadableExistingProjectionStore(),
     ).get_run_view(run.run_id)
 
     assert run_view is not None

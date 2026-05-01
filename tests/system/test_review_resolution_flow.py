@@ -208,6 +208,7 @@ def review_flow_system_context(tmp_path: Path) -> ReviewFlowSystemContext:
         review_store=review_store,
         artifact_query_service=artifact_query_service,
         export_readiness_evaluator=export_readiness_evaluator,
+        projection_store=projection_store,
     )
 
     return ReviewFlowSystemContext(

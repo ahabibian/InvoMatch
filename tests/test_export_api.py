@@ -11,6 +11,7 @@ from invomatch.api.export import export_reconciliation_run
 from invomatch.domain.review.models import DecisionType, FeedbackRecord
 from invomatch.main import create_app
 from invomatch.services.reconciliation import reconcile_and_save
+from invomatch.services.export.finalized_projection_store import SqliteFinalizedProjectionStore
 from invomatch.services.export.finalized_projection_writer import FinalizedProjectionWriter
 from invomatch.services.reconciliation_runs import create_reconciliation_run
 from invomatch.services.review_service import ReviewService
@@ -60,12 +61,34 @@ def _write_source_files(tmp_path: Path) -> tuple[Path, Path]:
     return invoice_path, payment_path
 
 
-def _create_completed_run(tmp_path: Path, run_store: JsonRunStore):
-    invoice_path, payment_path = _write_source_files(tmp_path)
+def _create_completed_run(
+    tmp_path: Path,
+    run_store: JsonRunStore,
+    projection_store=None,
+):
+    invoice_csv = tmp_path / "invoices.csv"
+    payment_csv = tmp_path / "payments.csv"
+
+    invoice_csv.write_text(
+        "id,date,amount,currency,reference\n"
+        "inv-1,2024-01-10,100.00,USD,INV-1\n",
+        encoding="utf-8",
+    )
+    payment_csv.write_text(
+        "id,date,amount,currency,reference,invoice_id\n"
+        "pay-1,2024-01-10,100.00,USD,INV-1,inv-1\n",
+        encoding="utf-8",
+    )
+
+    effective_projection_store = projection_store or SqliteFinalizedProjectionStore(
+        tmp_path / "finalized_projections.sqlite3"
+    )
+
     return reconcile_and_save(
-        invoice_csv_path=invoice_path,
-        payment_csv_path=payment_path,
+        invoice_csv_path=invoice_csv,
+        payment_csv_path=payment_csv,
         run_store=run_store,
+        projection_store=effective_projection_store,
     )
 
 
@@ -200,7 +223,7 @@ def test_export_route_allows_export_for_completed_matched_run_without_review(
     app = isolated_export_app.app
     run_store = isolated_export_app.run_store
 
-    run = _create_completed_run(tmp_path, run_store)
+    run = _create_completed_run(tmp_path, run_store, app.state.finalized_projection_store)
     _persist_projection(app, isolated_export_app.review_store, run)
 
     response = export_reconciliation_run(
@@ -227,7 +250,7 @@ def test_export_route_returns_json_export_for_completed_reviewed_run(
     run_store = isolated_export_app.run_store
     review_store = isolated_export_app.review_store
 
-    run = _create_completed_run(tmp_path, run_store)
+    run = _create_completed_run(tmp_path, run_store, app.state.finalized_projection_store)
     _seed_approved_review(review_store, run)
     _persist_projection(app, review_store, run)
 
@@ -257,7 +280,7 @@ def test_export_route_returns_csv_export_for_completed_reviewed_run(
     run_store = isolated_export_app.run_store
     review_store = isolated_export_app.review_store
 
-    run = _create_completed_run(tmp_path, run_store)
+    run = _create_completed_run(tmp_path, run_store, app.state.finalized_projection_store)
     _seed_approved_review(review_store, run)
     _persist_projection(app, review_store, run)
 
