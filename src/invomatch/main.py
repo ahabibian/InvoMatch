@@ -12,6 +12,7 @@ from invomatch.api.audit_events import router as audit_events_router
 from invomatch.api.export import router as export_router
 from invomatch.api.export_artifacts import router as export_artifacts_router
 from invomatch.api.health import router as health_router
+from invomatch.api.operations import router as operations_router
 from invomatch.api.reconciliation_runs import router as reconciliation_runs_router
 from invomatch.api.review_cases import router as review_cases_router
 from invomatch.api.routes.input_boundary import router as input_boundary_router
@@ -43,6 +44,7 @@ from invomatch.services.operational import (
     OperationalAuditService,
     PersistentOperationalAuditRepository,
 )
+from invomatch.services.operational.condition_detector import OperationalConditionDetector
 from invomatch.services.operational.operational_metrics import (
     InMemoryOperationalMetricsStore,
     OperationalMetricsService,
@@ -221,8 +223,11 @@ def create_app(
     else:
         startup_repair_result = None
 
+    operational_condition_detector = OperationalConditionDetector()
+
     app.state.operational_metrics_store = operational_metrics_store
     app.state.operational_metrics_service = operational_metrics_service
+    app.state.operational_condition_detector = operational_condition_detector
     app.state.restart_consistency_repair_service = restart_consistency_repair_service
     app.state.startup_repair_coordinator = startup_repair_coordinator
     app.state.startup_repair_result = startup_repair_result
@@ -310,6 +315,7 @@ def create_app(
     app.include_router(input_boundary_router)
     app.include_router(health_router)
     app.include_router(audit_events_router)
+    app.include_router(operations_router)
     app.include_router(reconciliation_runs_router)
     app.include_router(review_cases_router)
     app.include_router(actions_router)
