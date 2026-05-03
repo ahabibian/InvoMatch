@@ -427,3 +427,94 @@ def test_operations_alerts_response_shape_is_stable(tmp_path):
         "generated_at",
         "alerts",
     }
+
+
+def test_operations_metrics_openapi_response_contract_is_typed(tmp_path):
+    client = _client(tmp_path)
+
+    schema = client.get("/openapi.json").json()
+    response_schema = schema["paths"]["/api/operations/metrics"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+
+    assert response_schema["$ref"] == "#/components/schemas/OperationalMetricsResponse"
+
+    model_schema = schema["components"]["schemas"]["OperationalMetricsResponse"]
+    assert set(model_schema["properties"].keys()) == {
+        "status",
+        "generated_at",
+        "signals",
+        "counters",
+        "decision_counts",
+        "reason_counts",
+    }
+    assert set(model_schema["required"]) == {
+        "status",
+        "generated_at",
+        "signals",
+        "counters",
+        "decision_counts",
+        "reason_counts",
+    }
+
+
+def test_operations_health_summary_openapi_response_contract_is_typed(tmp_path):
+    client = _client(tmp_path)
+
+    schema = client.get("/openapi.json").json()
+    response_schema = schema["paths"]["/api/operations/health-summary"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+
+    assert response_schema["$ref"] == "#/components/schemas/OperationalHealthSummaryResponse"
+
+    model_schema = schema["components"]["schemas"]["OperationalHealthSummaryResponse"]
+    assert set(model_schema["properties"].keys()) == {
+        "status",
+        "generated_at",
+        "summary",
+        "signals",
+        "recommended_action",
+    }
+    assert set(model_schema["required"]) == {
+        "status",
+        "generated_at",
+        "summary",
+        "signals",
+        "recommended_action",
+    }
+
+
+def test_operations_alerts_openapi_response_contract_is_typed(tmp_path):
+    client = _client(tmp_path)
+
+    schema = client.get("/openapi.json").json()
+    response_schema = schema["paths"]["/api/operations/alerts"]["get"]["responses"]["200"]["content"]["application/json"]["schema"]
+
+    assert response_schema["$ref"] == "#/components/schemas/OperationalAlertsResponse"
+
+    model_schema = schema["components"]["schemas"]["OperationalAlertsResponse"]
+    assert set(model_schema["properties"].keys()) == {
+        "status",
+        "generated_at",
+        "alerts",
+    }
+    assert set(model_schema["required"]) == {
+        "status",
+        "generated_at",
+        "alerts",
+    }
+
+    alert_model_schema = schema["components"]["schemas"]["OperationalAlertResponse"]
+    assert set(alert_model_schema["properties"].keys()) == {
+        "code",
+        "severity",
+        "message",
+        "recommended_action",
+        "signal",
+        "value",
+    }
+    assert set(alert_model_schema["required"]) == {
+        "code",
+        "severity",
+        "message",
+        "recommended_action",
+        "signal",
+        "value",
+    }

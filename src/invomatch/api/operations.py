@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
-
 from fastapi import APIRouter, HTTPException, Request
 
 from invomatch.api.security import require_permission
+from invomatch.api.operations_models import (
+    OperationalAlertsResponse,
+    OperationalHealthSummaryResponse,
+    OperationalMetricsResponse,
+)
 from invomatch.domain.security import Permission
 from invomatch.services.operational.alert_policy import OperationalAlertPolicy
 from invomatch.services.operational.condition_detector import (
@@ -40,8 +43,8 @@ def _build_alert_policy(request: Request) -> OperationalAlertPolicy:
     return OperationalAlertPolicy()
 
 
-@router.get("/metrics")
-def get_operational_metrics(request: Request) -> dict[str, Any]:
+@router.get("/metrics", response_model=OperationalMetricsResponse)
+def get_operational_metrics(request: Request) -> OperationalMetricsResponse:
     require_permission(request, permission=Permission.OPERATIONS_VIEW_METRICS)
 
     snapshot = _get_metrics_snapshot(request)
@@ -62,8 +65,8 @@ def get_operational_metrics(request: Request) -> dict[str, Any]:
     }
 
 
-@router.get("/health-summary")
-def get_operational_health_summary(request: Request) -> dict[str, Any]:
+@router.get("/health-summary", response_model=OperationalHealthSummaryResponse)
+def get_operational_health_summary(request: Request) -> OperationalHealthSummaryResponse:
     require_permission(request, permission=Permission.OPERATIONS_VIEW_METRICS)
 
     snapshot = _get_metrics_snapshot(request)
@@ -79,8 +82,8 @@ def get_operational_health_summary(request: Request) -> dict[str, Any]:
         "recommended_action": condition.recommended_action,
     }
 
-@router.get("/alerts")
-def get_operational_alerts(request: Request) -> dict[str, Any]:
+@router.get("/alerts", response_model=OperationalAlertsResponse)
+def get_operational_alerts(request: Request) -> OperationalAlertsResponse:
     require_permission(request, permission=Permission.OPERATIONS_VIEW_METRICS)
 
     snapshot = _get_metrics_snapshot(request)
