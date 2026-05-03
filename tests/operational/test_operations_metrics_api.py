@@ -323,3 +323,107 @@ def test_operations_health_summary_response_shape_is_stable(tmp_path):
         "startup_repair_unresolved_total",
         "startup_repair_skipped_total",
     }
+
+def test_operations_alerts_requires_authentication(tmp_path):
+    client = _client(tmp_path)
+
+    response = client.get("/api/operations/alerts")
+
+    assert response.status_code == 401
+
+
+def test_operations_alerts_forbids_viewer(tmp_path):
+    client = _client(tmp_path)
+
+    response = client.get(
+        "/api/operations/alerts",
+        headers={"Authorization": "Bearer viewer-token"},
+    )
+
+    assert response.status_code == 403
+
+
+def test_operations_alerts_reports_clear_when_no_alerts(tmp_path):
+    client = _client(tmp_path)
+
+    response = client.get(
+        "/api/operations/alerts",
+        headers={"Authorization": "Bearer admin-token"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["status"] == "clear"
+    assert body["alerts"] == []
+    assert "generated_at" in body
+
+
+def test_operations_alerts_reports_startup_repair_critical_alert(tmp_path):
+    app = create_app(
+        review_store_backend="sqlite",
+        review_store_path=tmp_path / "reviews.sqlite3",
+        export_base_dir=tmp_path / "exports",
+    )
+    app.state.operational_metrics_store.increment_counter("startup_repair_failed_total")
+
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/operations/alerts",
+        headers={"Authorization": "Bearer admin-token"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["status"] == "active"
+    assert body["alerts"][0]["code"] == "startup_repair_failed"
+    assert body["alerts"][0]["severity"] == "critical"
+    assert body["alerts"][0]["recommended_action"] == "inspect_startup_repair"
+    assert body["alerts"][0]["signal"] == "startup_repair_failed_total"
+    assert body["alerts"][0]["value"] == 1
+
+
+def test_operations_alerts_reports_terminal_failure_warning_alert(tmp_path):
+    app = create_app(
+        review_store_backend="sqlite",
+        review_store_path=tmp_path / "reviews.sqlite3",
+        export_base_dir=tmp_path / "exports",
+    )
+    app.state.operational_metrics_store.increment_counter(
+        "terminal_failures_confirmed_total"
+    )
+
+    client = TestClient(app)
+
+    response = client.get(
+        "/api/operations/alerts",
+        headers={"Authorization": "Bearer admin-token"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["status"] == "active"
+    assert body["alerts"][0]["code"] == "terminal_failures_confirmed"
+    assert body["alerts"][0]["severity"] == "warning"
+    assert body["alerts"][0]["recommended_action"] == "inspect_terminal_failures"
+
+
+def test_operations_alerts_response_shape_is_stable(tmp_path):
+    client = _client(tmp_path)
+
+    response = client.get(
+        "/api/operations/alerts",
+        headers={"Authorization": "Bearer admin-token"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert set(body.keys()) == {
+        "status",
+        "generated_at",
+        "alerts",
+    }

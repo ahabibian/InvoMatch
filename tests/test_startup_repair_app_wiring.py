@@ -15,6 +15,7 @@ def test_create_app_exposes_startup_repair_state(tmp_path: Path) -> None:
     assert hasattr(app.state, "operational_metrics_store")
     assert hasattr(app.state, "operational_metrics_service")
     assert hasattr(app.state, "operational_condition_detector")
+    assert hasattr(app.state, "operational_alert_policy")
     assert hasattr(app.state, "restart_consistency_repair_service")
     assert hasattr(app.state, "startup_repair_coordinator")
     assert hasattr(app.state, "startup_repair_result")

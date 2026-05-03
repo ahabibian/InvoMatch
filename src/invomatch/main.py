@@ -44,6 +44,7 @@ from invomatch.services.operational import (
     OperationalAuditService,
     PersistentOperationalAuditRepository,
 )
+from invomatch.services.operational.alert_policy import OperationalAlertPolicy
 from invomatch.services.operational.condition_detector import OperationalConditionDetector
 from invomatch.services.operational.operational_metrics import (
     InMemoryOperationalMetricsStore,
@@ -224,10 +225,12 @@ def create_app(
         startup_repair_result = None
 
     operational_condition_detector = OperationalConditionDetector()
+    operational_alert_policy = OperationalAlertPolicy()
 
     app.state.operational_metrics_store = operational_metrics_store
     app.state.operational_metrics_service = operational_metrics_service
     app.state.operational_condition_detector = operational_condition_detector
+    app.state.operational_alert_policy = operational_alert_policy
     app.state.restart_consistency_repair_service = restart_consistency_repair_service
     app.state.startup_repair_coordinator = startup_repair_coordinator
     app.state.startup_repair_result = startup_repair_result
