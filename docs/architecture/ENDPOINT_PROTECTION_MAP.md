@@ -257,9 +257,75 @@ Notes:
 - viewer is denied in the initial policy
 - artifact download is treated as protected business data extraction, not simple read visibility
 
-## Reserved Admin-Only Operational Surface
+## Admin-Only Operational Visibility Surface
 
-The current repository contains privileged operational and repair services, even though they are not yet fully exposed as public API routes.
+The repository now exposes read-only operational visibility routes under `/api/operations`.
+
+These routes are not product-user routes. They expose operational health, metric counters, summarized system condition, and alert-level operator signals. They must remain admin-only.
+
+### GET /api/operations/metrics
+
+Authentication:
+- required
+
+Allowed roles:
+- admin
+
+Denied roles:
+- viewer
+- operator
+
+Required capability:
+- operations.view_metrics
+
+Notes:
+- exposes operational counters, decision counts, reason counts, and normalized health signals
+- does not execute repair or recovery actions
+- intended for privileged system visibility only
+
+### GET /api/operations/health-summary
+
+Authentication:
+- required
+
+Allowed roles:
+- admin
+
+Denied roles:
+- viewer
+- operator
+
+Required capability:
+- operations.view_metrics
+
+Notes:
+- exposes operator-facing operational condition summary
+- includes status, normalized signals, summary text, and recommended action
+- read-only route; does not mutate operational state
+
+### GET /api/operations/alerts
+
+Authentication:
+- required
+
+Allowed roles:
+- admin
+
+Denied roles:
+- viewer
+- operator
+
+Required capability:
+- operations.view_metrics
+
+Notes:
+- exposes machine-readable operational alerts derived from normalized operational signals
+- includes alert code, severity, message, related signal, value, and recommended action
+- read-only route; does not execute recovery, startup repair, or security configuration changes
+
+## Reserved Admin-Only Operational Control Surface
+
+The current repository contains privileged operational and repair services that are not yet exposed as public mutation/control API routes.
 
 If or when routes are introduced for these capabilities, they must be admin-only by default.
 
@@ -268,13 +334,11 @@ Reserved admin-only capability areas:
 - startup repair execution
 - restart consistency repair execution
 - runtime recovery execution
-- operational metrics access
 - operational control / repair endpoints
 - future security configuration endpoints
 
 Associated admin-only capabilities:
 
-- operations.view_metrics
 - operations.execute_recovery
 - operations.execute_startup_repair
 - operations.manage_admin_surface

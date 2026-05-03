@@ -131,7 +131,17 @@ Allows downloading an already-created export artifact.
 
 ### operations.view_metrics
 
-Allows access to privileged operational system visibility endpoints if or when exposed.
+Allows access to privileged operational system visibility endpoints.
+
+Currently protects:
+
+- GET /api/operations/metrics
+- GET /api/operations/health-summary
+- GET /api/operations/alerts
+
+This capability is admin-only in the current role matrix.
+
+It grants read-only operational visibility. It does not grant permission to execute recovery, startup repair, restart repair, or admin configuration changes.
 
 ### operations.execute_recovery
 
