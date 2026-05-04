@@ -1,9 +1,10 @@
 import { useState } from "react";
+import OperationalVisibilityPage from "./pages/OperationalVisibilityPage";
 import RunDetailPage from "./pages/RunDetailPage";
 import RunListPage from "./pages/RunListPage";
 import UploadPage from "./pages/UploadPage";
 
-type ViewMode = "upload" | "list" | "detail";
+type ViewMode = "upload" | "list" | "detail" | "operations";
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("upload");
@@ -22,6 +23,10 @@ function App() {
     setViewMode("upload");
   }
 
+  function goToOperations() {
+    setViewMode("operations");
+  }
+
   function backToRunList() {
     setViewMode("list");
   }
@@ -32,8 +37,11 @@ function App() {
         <button onClick={goToUpload} style={{ marginRight: 8 }}>
           Upload
         </button>
-        <button onClick={goToRunList}>
+        <button onClick={goToRunList} style={{ marginRight: 8 }}>
           Run List
+        </button>
+        <button onClick={goToOperations}>
+          Admin Ops
         </button>
       </div>
 
@@ -53,6 +61,10 @@ function App() {
           runId={selectedRunId}
           onBack={backToRunList}
         />
+      )}
+
+      {viewMode === "operations" && (
+        <OperationalVisibilityPage />
       )}
     </div>
   );
