@@ -91,6 +91,84 @@ export type ActionResponse = {
 
 export type ExportResponse = Record<string, unknown>;
 
+export type OperationalStatus = "healthy" | "degraded" | "attention_required";
+
+export type OperationalAlertStatus = "clear" | "active";
+
+export type OperationalAlertSeverity = "info" | "warning" | "critical";
+
+export type OperationalRecommendedAction =
+  | "none"
+  | "inspect_startup_repair"
+  | "inspect_terminal_failures"
+  | "inspect_recovery_activity";
+
+export type OperationalSignals = Record<string, number>;
+
+export type OperationalMetricsResponse = {
+  status: OperationalStatus;
+  generated_at: string;
+  signals: OperationalSignals;
+  counters: Record<string, number>;
+  decision_counts: Record<string, number>;
+  reason_counts: Record<string, number>;
+};
+
+export type OperationalHealthSummaryResponse = {
+  status: OperationalStatus;
+  generated_at: string;
+  summary: Record<string, string>;
+  signals: OperationalSignals;
+  recommended_action: OperationalRecommendedAction;
+};
+
+export type OperationalAlertResponse = {
+  code: string;
+  severity: OperationalAlertSeverity;
+  message: string;
+  recommended_action: OperationalRecommendedAction;
+  signal: string;
+  value: number;
+};
+
+export type OperationalAlertsResponse = {
+  status: OperationalAlertStatus;
+  generated_at: string;
+  alerts: OperationalAlertResponse[];
+};
+
+export const OPERATIONAL_METRICS_RESPONSE_FIELDS = [
+  "status",
+  "generated_at",
+  "signals",
+  "counters",
+  "decision_counts",
+  "reason_counts",
+] as const;
+
+export const OPERATIONAL_HEALTH_SUMMARY_RESPONSE_FIELDS = [
+  "status",
+  "generated_at",
+  "summary",
+  "signals",
+  "recommended_action",
+] as const;
+
+export const OPERATIONAL_ALERTS_RESPONSE_FIELDS = [
+  "status",
+  "generated_at",
+  "alerts",
+] as const;
+
+export const OPERATIONAL_ALERT_RESPONSE_FIELDS = [
+  "code",
+  "severity",
+  "message",
+  "recommended_action",
+  "signal",
+  "value",
+] as const;
+
 async function parseJsonSafe(response: Response): Promise<unknown> {
   const text = await response.text();
 
@@ -187,6 +265,29 @@ export async function executeRunAction(
 
 export async function getRunExport(runId: string): Promise<ExportResponse> {
   return request<ExportResponse>(`/api/reconciliation/runs/${runId}/export`, {
+    method: "GET",
+  });
+}
+
+/*
+ * Operational visibility endpoints are admin-only integration surfaces.
+ * They require backend authorization through operations.view_metrics.
+ * The UI client must not expose these methods from non-admin navigation.
+ */
+export async function getOperationalMetrics(): Promise<OperationalMetricsResponse> {
+  return request<OperationalMetricsResponse>("/api/operations/metrics", {
+    method: "GET",
+  });
+}
+
+export async function getOperationalHealthSummary(): Promise<OperationalHealthSummaryResponse> {
+  return request<OperationalHealthSummaryResponse>("/api/operations/health-summary", {
+    method: "GET",
+  });
+}
+
+export async function getOperationalAlerts(): Promise<OperationalAlertsResponse> {
+  return request<OperationalAlertsResponse>("/api/operations/alerts", {
     method: "GET",
   });
 }
