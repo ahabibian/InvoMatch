@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   getOperationalAlerts,
   getOperationalHealthSummary,
@@ -12,11 +12,46 @@ import type {
 } from "../services/api";
 
 type KeyValueTableProps = {
+  emptyMessage: string;
   title: string;
   values: Record<string, number | string>;
 };
 
-function KeyValueTable({ title, values }: KeyValueTableProps) {
+type OperationalVisibilityState = {
+  alerts: OperationalAlertsResponse | null;
+  healthSummary: OperationalHealthSummaryResponse | null;
+  metrics: OperationalMetricsResponse | null;
+};
+
+const initialOperationalVisibilityState: OperationalVisibilityState = {
+  alerts: null,
+  healthSummary: null,
+  metrics: null,
+};
+
+function formatClientTimestamp(value: Date | null): string {
+  if (!value) {
+    return "Not loaded yet";
+  }
+
+  return value.toLocaleString();
+}
+
+function getOperationalErrorMessage(err: unknown): string {
+  const apiError = err as Partial<ApiError>;
+
+  if (apiError?.status === 401 || apiError?.status === 403) {
+    return [
+      "Operational visibility is restricted by backend authorization.",
+      "The current request was not authorized for operations.view_metrics.",
+      "Frontend role-aware navigation is not available yet because the UI has no session, role, or permission context.",
+    ].join(" ");
+  }
+
+  return apiError?.message ?? "Failed to load operational visibility data.";
+}
+
+function KeyValueTable({ emptyMessage, title, values }: KeyValueTableProps) {
   const entries = Object.entries(values);
 
   return (
@@ -24,7 +59,7 @@ function KeyValueTable({ title, values }: KeyValueTableProps) {
       <h3>{title}</h3>
 
       {entries.length === 0 ? (
-        <p>No data available</p>
+        <p>{emptyMessage}</p>
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
           <thead>
@@ -52,53 +87,100 @@ function KeyValueTable({ title, values }: KeyValueTableProps) {
 }
 
 export default function OperationalVisibilityPage() {
-  const [metrics, setMetrics] = useState<OperationalMetricsResponse | null>(null);
-  const [healthSummary, setHealthSummary] =
-    useState<OperationalHealthSummaryResponse | null>(null);
-  const [alerts, setAlerts] = useState<OperationalAlertsResponse | null>(null);
+  const [data, setData] = useState<OperationalVisibilityState>(
+    initialOperationalVisibilityState,
+  );
+  const [lastLoadedAt, setLastLoadedAt] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadOperationalVisibility() {
-      setLoading(true);
-      setError(null);
+  const loadOperationalVisibility = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const [metricsResponse, healthSummaryResponse, alertsResponse] =
-          await Promise.all([
-            getOperationalMetrics(),
-            getOperationalHealthSummary(),
-            getOperationalAlerts(),
-          ]);
+    try {
+      const [metricsResponse, healthSummaryResponse, alertsResponse] =
+        await Promise.all([
+          getOperationalMetrics(),
+          getOperationalHealthSummary(),
+          getOperationalAlerts(),
+        ]);
 
-        setMetrics(metricsResponse);
-        setHealthSummary(healthSummaryResponse);
-        setAlerts(alertsResponse);
-      } catch (err: unknown) {
-        const apiError = err as Partial<ApiError>;
-        setError(apiError?.message ?? "Failed to load operational visibility data");
-      } finally {
-        setLoading(false);
-      }
+      setData({
+        alerts: alertsResponse,
+        healthSummary: healthSummaryResponse,
+        metrics: metricsResponse,
+      });
+      setLastLoadedAt(new Date());
+    } catch (err: unknown) {
+      setError(getOperationalErrorMessage(err));
+    } finally {
+      setLoading(false);
     }
-
-    void loadOperationalVisibility();
   }, []);
+
+  useEffect(() => {
+    void loadOperationalVisibility();
+  }, [loadOperationalVisibility]);
+
+  const { alerts, healthSummary, metrics } = data;
+  const hasCompleteData = Boolean(metrics && healthSummary && alerts);
 
   return (
     <div style={{ padding: 20 }}>
       <h2>Operational Visibility</h2>
 
-      <p style={{ marginBottom: 16 }}>
+      <p style={{ marginBottom: 12 }}>
         Admin-only operational dashboard. Access is enforced by the backend through
         operations.view_metrics.
       </p>
 
-      {loading && <p>Loading operational visibility...</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      <p style={{ marginBottom: 16 }}>
+        Frontend role-aware navigation is not enabled yet because the current UI has
+        no authenticated user, role, or permission context. The backend remains the
+        security boundary.
+      </p>
 
-      {!loading && !error && metrics && healthSummary && alerts && (
+      <div style={{ marginBottom: 16 }}>
+        <button
+          disabled={loading}
+          onClick={() => {
+            void loadOperationalVisibility();
+          }}
+          style={{ marginRight: 12 }}
+        >
+          {loading ? "Refreshing..." : "Refresh"}
+        </button>
+        <span>Last loaded: {formatClientTimestamp(lastLoadedAt)}</span>
+      </div>
+
+      {loading && !hasCompleteData && (
+        <p>Loading operational visibility from the backend...</p>
+      )}
+
+      {error && (
+        <div
+          role="alert"
+          style={{
+            border: "1px solid #a33",
+            color: "red",
+            marginBottom: 16,
+            padding: 12,
+          }}
+        >
+          <strong>Operational visibility unavailable.</strong>
+          <p style={{ marginBottom: 0 }}>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && !hasCompleteData && (
+        <p>
+          No operational visibility payload is available. Refresh the dashboard or
+          inspect backend availability and authorization.
+        </p>
+      )}
+
+      {hasCompleteData && metrics && healthSummary && alerts && (
         <>
           <div style={{ marginTop: 16 }}>
             <h3>Operational Status</h3>
@@ -111,17 +193,37 @@ export default function OperationalVisibilityPage() {
             <p>Recommended Action: {healthSummary.recommended_action}</p>
           </div>
 
-          <KeyValueTable title="Health Summary" values={healthSummary.summary} />
-          <KeyValueTable title="Key Signals" values={healthSummary.signals} />
-          <KeyValueTable title="Raw Counters" values={metrics.counters} />
-          <KeyValueTable title="Decision Counts" values={metrics.decision_counts} />
-          <KeyValueTable title="Reason Counts" values={metrics.reason_counts} />
+          <KeyValueTable
+            emptyMessage="No health summary fields were returned by the backend."
+            title="Health Summary"
+            values={healthSummary.summary}
+          />
+          <KeyValueTable
+            emptyMessage="No operational health signals were returned by the backend."
+            title="Key Signals"
+            values={healthSummary.signals}
+          />
+          <KeyValueTable
+            emptyMessage="No raw operational counters were returned by the backend."
+            title="Raw Counters"
+            values={metrics.counters}
+          />
+          <KeyValueTable
+            emptyMessage="No operational decision counts were returned by the backend."
+            title="Decision Counts"
+            values={metrics.decision_counts}
+          />
+          <KeyValueTable
+            emptyMessage="No operational reason counts were returned by the backend."
+            title="Reason Counts"
+            values={metrics.reason_counts}
+          />
 
           <div style={{ marginTop: 16 }}>
             <h3>Alerts</h3>
 
             {alerts.alerts.length === 0 ? (
-              <p>No active alerts</p>
+              <p>No active operational alerts were returned by the backend.</p>
             ) : (
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: 8 }}>
                 <thead>

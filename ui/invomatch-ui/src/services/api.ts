@@ -271,8 +271,14 @@ export async function getRunExport(runId: string): Promise<ExportResponse> {
 
 /*
  * Operational visibility endpoints are admin-only integration surfaces.
- * They require backend authorization through operations.view_metrics.
- * The UI client must not expose these methods from non-admin navigation.
+ * Backend authorization through operations.view_metrics remains the source of truth.
+ *
+ * Current frontend state:
+ * - there is no authenticated user/session/role/permission context in the UI;
+ * - therefore the UI must not pretend to enforce RBAC locally.
+ *
+ * A later product-grade admin console can hide or disable these calls once real
+ * frontend auth/session primitives exist.
  */
 export async function getOperationalMetrics(): Promise<OperationalMetricsResponse> {
   return request<OperationalMetricsResponse>("/api/operations/metrics", {

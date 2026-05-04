@@ -40,7 +40,16 @@ function App() {
         <button onClick={goToRunList} style={{ marginRight: 8 }}>
           Run List
         </button>
-        <button onClick={goToOperations}>
+        {/*
+          Current UI has no authenticated user/session/role/permission context.
+          Do not add fake frontend RBAC here. Backend operations.view_metrics
+          authorization remains the source of truth until real frontend auth
+          primitives exist.
+        */}
+        <button
+          onClick={goToOperations}
+          title="Admin-only backend surface. Frontend role-aware navigation is not available yet."
+        >
           Admin Ops
         </button>
       </div>
