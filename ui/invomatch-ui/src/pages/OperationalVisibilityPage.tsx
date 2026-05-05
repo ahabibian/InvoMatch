@@ -44,7 +44,7 @@ function getOperationalErrorMessage(err: unknown): string {
     return [
       "Operational visibility is restricted by backend authorization.",
       "The current request was not authorized for operations.view_metrics.",
-      "Frontend role-aware navigation is intentionally not enabled yet; backend authorization remains the source of truth.",
+      "Backend authorization remains the source of truth even when frontend navigation is permission-aware.",
     ].join(" ");
   }
 
@@ -136,9 +136,9 @@ export default function OperationalVisibilityPage() {
       </p>
 
       <p style={{ marginBottom: 16 }}>
-        Frontend role-aware navigation is intentionally not enabled yet. The UI may
-        load backend-derived session state, but the backend remains the security
-        boundary for operational permissions.
+        Navigation only exposes this page when the backend-derived session includes
+        operations.view_metrics. The backend still enforces authorization on every
+        operational request.
       </p>
 
       <div style={{ marginBottom: 16 }}>

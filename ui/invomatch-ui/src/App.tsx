@@ -1,14 +1,31 @@
 import { useState } from "react";
+import { useAuthSession } from "./auth/useAuthSession";
 import OperationalVisibilityPage from "./pages/OperationalVisibilityPage";
 import RunDetailPage from "./pages/RunDetailPage";
 import RunListPage from "./pages/RunListPage";
 import UploadPage from "./pages/UploadPage";
+
+const OPERATIONS_VIEW_METRICS_PERMISSION = "operations.view_metrics";
 
 type ViewMode = "upload" | "list" | "detail" | "operations";
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>("upload");
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const {
+    error: authSessionError,
+    hasPermission,
+    loading: authSessionLoading,
+    reloadSession,
+    status: authSessionStatus,
+    user,
+  } = useAuthSession();
+
+  const canViewOperations =
+    authSessionStatus === "authenticated" &&
+    hasPermission(OPERATIONS_VIEW_METRICS_PERMISSION);
+  const effectiveViewMode =
+    viewMode === "operations" && !canViewOperations ? "list" : viewMode;
 
   function openRun(runId: string) {
     setSelectedRunId(runId);
@@ -24,6 +41,10 @@ function App() {
   }
 
   function goToOperations() {
+    if (!canViewOperations) {
+      return;
+    }
+
     setViewMode("operations");
   }
 
@@ -34,45 +55,70 @@ function App() {
   return (
     <div>
       <div style={{ padding: 20, borderBottom: "1px solid #444", marginBottom: 12 }}>
-        <button onClick={goToUpload} style={{ marginRight: 8 }}>
-          Upload
-        </button>
-        <button onClick={goToRunList} style={{ marginRight: 8 }}>
-          Run List
-        </button>
-        {/*
-          The frontend now has backend-derived session primitives, but this
-          Mini-EPIC intentionally does not make navigation role-aware yet.
-          Do not add fake frontend RBAC here. Backend operations.view_metrics
-          authorization remains the source of truth.
-        */}
-        <button
-          onClick={goToOperations}
-          title="Admin-only backend surface. Navigation is not role-aware yet; backend authorization remains the source of truth."
-        >
-          Admin Ops
-        </button>
+        <div style={{ marginBottom: 12 }}>
+          <button onClick={goToUpload} style={{ marginRight: 8 }}>
+            Upload
+          </button>
+          <button onClick={goToRunList} style={{ marginRight: 8 }}>
+            Run List
+          </button>
+          {canViewOperations && (
+            <button
+              onClick={goToOperations}
+              title="Backend-derived operations.view_metrics permission is present for the current session."
+            >
+              Admin Ops
+            </button>
+          )}
+        </div>
+
+        <div style={{ fontSize: 13 }}>
+          <span style={{ marginRight: 12 }}>
+            Session: {authSessionLoading ? "loading" : authSessionStatus}
+          </span>
+
+          {user && (
+            <span style={{ marginRight: 12 }}>
+              User: {user.username} / Tenant: {user.tenant_id}
+            </span>
+          )}
+
+          {authSessionError && (
+            <span style={{ color: "red", marginRight: 12 }}>
+              {authSessionError}
+            </span>
+          )}
+
+          <button
+            disabled={authSessionLoading}
+            onClick={() => {
+              void reloadSession();
+            }}
+          >
+            Refresh session
+          </button>
+        </div>
       </div>
 
-      {viewMode === "upload" && (
+      {effectiveViewMode === "upload" && (
         <UploadPage
           onOpenRun={openRun}
           onGoToRunList={goToRunList}
         />
       )}
 
-      {viewMode === "list" && (
+      {effectiveViewMode === "list" && (
         <RunListPage onSelectRun={openRun} />
       )}
 
-      {viewMode === "detail" && selectedRunId && (
+      {effectiveViewMode === "detail" && selectedRunId && (
         <RunDetailPage
           runId={selectedRunId}
           onBack={backToRunList}
         />
       )}
 
-      {viewMode === "operations" && (
+      {effectiveViewMode === "operations" && canViewOperations && (
         <OperationalVisibilityPage />
       )}
     </div>

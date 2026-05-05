@@ -302,13 +302,9 @@ export async function getRunExport(runId: string): Promise<ExportResponse> {
  * Operational visibility endpoints are admin-only integration surfaces.
  * Backend authorization through operations.view_metrics remains the source of truth.
  *
- * Current frontend state:
- * - backend-derived session and permission primitives exist;
- * - navigation is intentionally not role-aware in this Mini-EPIC;
- * - therefore the UI must not invent frontend-only RBAC.
- *
- * A later product-grade admin console can hide or disable these calls using
- * backend-derived permissions without weakening backend authorization.
+ * The frontend may hide or show navigation using backend-derived session
+ * permissions, but it must not invent frontend-only roles or weaken backend
+ * authorization on operational endpoints.
  */
 export async function getOperationalMetrics(): Promise<OperationalMetricsResponse> {
   return request<OperationalMetricsResponse>("/api/operations/metrics", {
