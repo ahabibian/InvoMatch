@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from invomatch.api.actions import router as actions_router
 from invomatch.api.audit_events import router as audit_events_router
+from invomatch.api.auth_session import router as auth_session_router
 from invomatch.api.export import router as export_router
 from invomatch.api.export_artifacts import router as export_artifacts_router
 from invomatch.api.health import router as health_router
@@ -316,6 +317,7 @@ def create_app(
     app.state.file_input_service = file_input_service
 
     app.include_router(input_boundary_router)
+    app.include_router(auth_session_router)
     app.include_router(health_router)
     app.include_router(audit_events_router)
     app.include_router(operations_router)

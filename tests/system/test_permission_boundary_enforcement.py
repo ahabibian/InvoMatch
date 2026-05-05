@@ -48,12 +48,13 @@ def _write_source_files(tmp_path: Path) -> tuple[Path, Path]:
     return invoice_path, payment_path
 
 
-def _create_completed_run(tmp_path: Path, run_store: JsonRunStore):
+def _create_completed_run(tmp_path: Path, run_store: JsonRunStore, projection_store):
     invoice_path, payment_path = _write_source_files(tmp_path)
     return reconcile_and_save(
         invoice_csv_path=invoice_path,
         payment_csv_path=payment_path,
         run_store=run_store,
+        projection_store=projection_store,
     )
 
 
@@ -142,7 +143,7 @@ def test_scenario_8_permission_boundary_enforcement(tmp_path: Path) -> None:
     )
     assert viewer_resolve_review.status_code == 403
 
-    run = _create_completed_run(tmp_path, run_store)
+    run = _create_completed_run(tmp_path, run_store, app.state.finalized_projection_store)
     repository = app.state.export_artifact_repository
     storage = app.state.export_artifact_storage
 
