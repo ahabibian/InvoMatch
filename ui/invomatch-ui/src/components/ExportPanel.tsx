@@ -1,12 +1,38 @@
 import { useAuthSession } from "../auth/useAuthSession";
 import type { RunArtifactReference, RunExportSummary } from "../services/api";
 
+const ARTIFACTS_LIST_PERMISSION = "artifacts.list";
+const ARTIFACTS_READ_METADATA_PERMISSION = "artifacts.read_metadata";
 const ARTIFACTS_DOWNLOAD_PERMISSION = "artifacts.download";
 
 type ExportPanelProps = {
   exportSummary: RunExportSummary;
   artifacts: RunArtifactReference[];
 };
+
+function artifactMetadataMessage(
+  status: string,
+  error: string | null,
+  canReadArtifactMetadata: boolean,
+): string | null {
+  if (status === "loading") {
+    return "Artifact metadata is waiting for the authenticated session.";
+  }
+
+  if (status === "unauthenticated") {
+    return "Artifact metadata is unavailable because the current session is not authenticated.";
+  }
+
+  if (status === "error") {
+    return error ?? "Artifact metadata is unavailable because the session could not be loaded.";
+  }
+
+  if (!canReadArtifactMetadata) {
+    return "Artifact metadata is hidden because the current session does not include artifacts.list and artifacts.read_metadata.";
+  }
+
+  return null;
+}
 
 function downloadControlMessage(
   status: string,
@@ -35,10 +61,20 @@ function downloadControlMessage(
 export default function ExportPanel({ exportSummary, artifacts }: ExportPanelProps) {
   const { status, error, hasPermission } = useAuthSession();
 
+  const canReadArtifactMetadata =
+    status === "authenticated" &&
+    hasPermission(ARTIFACTS_LIST_PERMISSION) &&
+    hasPermission(ARTIFACTS_READ_METADATA_PERMISSION);
+
   const canDownloadArtifacts =
     status === "authenticated" &&
     hasPermission(ARTIFACTS_DOWNLOAD_PERMISSION);
 
+  const metadataMessage = artifactMetadataMessage(
+    status,
+    error,
+    canReadArtifactMetadata,
+  );
   const controlMessage = downloadControlMessage(status, error, canDownloadArtifacts);
 
   return (
@@ -48,7 +84,10 @@ export default function ExportPanel({ exportSummary, artifacts }: ExportPanelPro
       <p>Artifact Count: {exportSummary.artifact_count}</p>
 
       <h4>Artifacts</h4>
-      {artifacts.length === 0 ? (
+
+      {metadataMessage ? (
+        <p style={{ color: "#555" }}>{metadataMessage}</p>
+      ) : artifacts.length === 0 ? (
         <p>No artifacts available</p>
       ) : (
         <>
