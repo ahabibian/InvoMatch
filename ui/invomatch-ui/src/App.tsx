@@ -41,14 +41,14 @@ function App() {
           Run List
         </button>
         {/*
-          Current UI has no authenticated user/session/role/permission context.
+          The frontend now has backend-derived session primitives, but this
+          Mini-EPIC intentionally does not make navigation role-aware yet.
           Do not add fake frontend RBAC here. Backend operations.view_metrics
-          authorization remains the source of truth until real frontend auth
-          primitives exist.
+          authorization remains the source of truth.
         */}
         <button
           onClick={goToOperations}
-          title="Admin-only backend surface. Frontend role-aware navigation is not available yet."
+          title="Admin-only backend surface. Navigation is not role-aware yet; backend authorization remains the source of truth."
         >
           Admin Ops
         </button>

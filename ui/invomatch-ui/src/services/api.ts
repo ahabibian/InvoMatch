@@ -1,10 +1,25 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+const API_AUTH_TOKEN = import.meta.env.VITE_API_AUTH_TOKEN ?? "";
 
 export type ApiError = {
   status: number;
   code: string;
   message: string;
   details?: unknown;
+};
+
+export type AuthSessionUser = {
+  user_id: string;
+  username: string;
+  role: string;
+  status: string;
+  tenant_id: string;
+  auth_source: string;
+};
+
+export type AuthSessionResponse = {
+  user: AuthSessionUser;
+  permissions: string[];
 };
 
 export type InputSubmissionResponse = {
@@ -183,12 +198,20 @@ async function parseJsonSafe(response: Response): Promise<unknown> {
   }
 }
 
+function buildRequestHeaders(init?: RequestInit): Headers {
+  const headers = new Headers(init?.headers);
+
+  if (API_AUTH_TOKEN && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${API_AUTH_TOKEN}`);
+  }
+
+  return headers;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
-    headers: {
-      ...(init?.headers ?? {}),
-    },
+    headers: buildRequestHeaders(init),
   });
 
   const body = await parseJsonSafe(response);
@@ -208,6 +231,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return body as T;
+}
+
+export async function getAuthSession(): Promise<AuthSessionResponse> {
+  return request<AuthSessionResponse>("/api/auth/session", {
+    method: "GET",
+  });
 }
 
 export async function submitJsonInput(
@@ -274,11 +303,12 @@ export async function getRunExport(runId: string): Promise<ExportResponse> {
  * Backend authorization through operations.view_metrics remains the source of truth.
  *
  * Current frontend state:
- * - there is no authenticated user/session/role/permission context in the UI;
- * - therefore the UI must not pretend to enforce RBAC locally.
+ * - backend-derived session and permission primitives exist;
+ * - navigation is intentionally not role-aware in this Mini-EPIC;
+ * - therefore the UI must not invent frontend-only RBAC.
  *
- * A later product-grade admin console can hide or disable these calls once real
- * frontend auth/session primitives exist.
+ * A later product-grade admin console can hide or disable these calls using
+ * backend-derived permissions without weakening backend authorization.
  */
 export async function getOperationalMetrics(): Promise<OperationalMetricsResponse> {
   return request<OperationalMetricsResponse>("/api/operations/metrics", {
