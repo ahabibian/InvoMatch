@@ -788,3 +788,34 @@ Mini-EPIC 32.7 keeps validation evidence traceability separate from runtime iden
 This preserves a clean boundary:
 
     runtime release identity != validation evidence index != release publication
+
+## Mini-EPIC 32.8 - Release Artifact Boundary and Package Manifest Design
+
+Mini-EPIC 32.8 defines the future release artifact/package boundary for InvoMatch.
+
+This is a documentation-first architecture step. It does not create a package, Docker image, deployment workflow, semantic version tag, GitHub Release, published artifact, changelog generator, rollback mechanism, environment promotion workflow, runtime release registry, or database-backed release evidence store.
+
+The release package is defined as a bounded release candidate handoff unit tied to:
+
+- a specific package identity
+- a source commit SHA
+- a branch/ref
+- a related release candidate evidence index
+- a validation status reference
+- explicitly included components
+- explicitly excluded components
+- build environment assumptions
+- reproducibility notes
+- a non-deployment boundary
+
+The package manifest is not the evidence index.
+
+The package manifest identifies the package and its boundary.
+
+The evidence index maps validation evidence and release candidate evidence references.
+
+The architecture definition is documented in:
+
+- `docs/architecture/RELEASE_ARTIFACT_PACKAGE_MANIFEST.md`
+
+Mini-EPIC 32.8 intentionally keeps package generation out of scope. Future packaging work may implement manifest generation and validation only after this boundary is stable.
