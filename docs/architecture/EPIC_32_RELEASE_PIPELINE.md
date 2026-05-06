@@ -395,3 +395,67 @@ Mini-EPIC 32.0 is complete only if:
 - frontend build passes
 - closure document is created
 - all changes are committed
+
+## CI Release-Gate Evidence Model
+
+EPIC 32 treats GitHub Actions CI validation as release-gate evidence, not merely as a convenience check.
+
+A green CI run means that the configured release validation baseline passed on a specific commit. A red CI run blocks release-related closure until the failure is understood, repaired if necessary, and followed by a final passing CI run.
+
+### Release-Blocking CI Steps
+
+The following CI steps are release-blocking:
+
+| CI Step | Release-Gate Meaning |
+|---|---|
+| Backend full test baseline | Backend regression surface must pass on GitHub Actions. |
+| Contract tests | API and boundary contracts must remain stable. |
+| Operational tests | Operational visibility and repair behavior must remain valid. |
+| Required scenario regression pack | Critical end-to-end product scenarios must remain valid. |
+| Frontend lint | Frontend code must pass configured lint rules. |
+| Frontend build | Frontend production build must compile successfully. |
+
+Any failed release-blocking step blocks release closure.
+
+Warnings do not block release closure unless they affect runtime behavior, security, future compatibility, deployment safety, validation reliability, or evidence trustworthiness.
+
+### Required CI Evidence For Release-Related EPIC Closure
+
+Release-related EPIC closure must capture:
+
+| Evidence Field | Required |
+|---|---|
+| Workflow name | Yes |
+| GitHub Actions run number | Yes |
+| Commit SHA | Yes |
+| Branch | Yes |
+| Status | Yes |
+| Duration | Yes, if available |
+| Failed step | Required for failed runs |
+| Failure reason | Required for failed runs |
+| Repair commit | Required if a repair was made |
+| Final passing run | Required after any failed run |
+| Local validation command(s) | Required when local validation is used as supporting evidence |
+| CI/local drift note | Required if CI and local behavior differed |
+
+### Mini-EPIC 32.1 CI Evidence Captured
+
+| Evidence | Value |
+|---|---|
+| Initial CI run | #153 |
+| Initial commit | 9ddc8b0 |
+| Initial status | Failed |
+| Failure reason | Missing `.pytest_tmp` parent directory on a clean GitHub Actions runner. |
+| Release-gate result | Blocked until repaired. |
+| Repair commit | 6e0cce0 |
+| Repair commit message | ci: prepare pytest temp root in validation workflow |
+| Final CI run | #154 |
+| Final commit | 6e0cce0 |
+| Final status | Passed |
+| Release-gate result | CI validation baseline became usable as release evidence. |
+
+### CI/Local Drift Rule
+
+If local validation passes but CI fails, CI is treated as the release-gate source of truth for closure.
+
+The drift must be investigated, repaired, committed, pushed, and validated by a final passing GitHub Actions run before release-related closure.
