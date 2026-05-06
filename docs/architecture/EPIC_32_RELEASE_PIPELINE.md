@@ -983,3 +983,56 @@ Targeted tests validate:
 - local-only output path behavior
 
 Mini-EPIC 32.11 remains contract/test-only and does not modify CI, create packages, publish artifacts, tag releases, create GitHub Releases, deploy, promote environments, or persist release state.
+
+## Mini-EPIC 32.12 - Release Package Manifest Schema Validator
+
+Mini-EPIC 32.12 adds a local schema validation layer for the release package manifest dry-run preview.
+
+The validator is implemented inside the local dry-run generator boundary and validates the structured preview before it is printed or written to the local preview path.
+
+### Schema Validation Decision
+
+The dry-run manifest preview must now be rejected if required schema fields are missing, unsafe, or inconsistent with dry-run behavior.
+
+The validator enforces:
+
+- required top-level manifest sections
+- required `package_identity` fields
+- required `source_identity` fields
+- required `evidence_reference` fields
+- non-empty mappings for included and excluded component boundaries
+- expected `non_deployment_boundary` keys
+- all `non_deployment_boundary` values remaining `false`
+- `dry_run: true`
+- `package_status: preview`
+- JSON serializability
+
+The validator intentionally allows `evidence_reference.evidence_included_in_package` to be an empty list because the dry-run does not create or include package artifacts.
+
+### Deterministic Failure Behavior
+
+Schema failures use deterministic messages prefixed with:
+
+~~~text
+manifest schema invalid:
+~~~
+
+This keeps invalid preview failures testable and prevents silent drift in the manifest contract.
+
+### Validation
+
+Targeted tests cover:
+
+- acceptance of the current deterministic preview
+- missing top-level section rejection
+- missing nested `package_identity` field rejection
+- missing `source_identity` field rejection
+- missing `evidence_reference` field rejection
+- unsafe non-deployment boundary flag rejection
+- wrong `dry_run` value rejection
+- wrong `package_status` rejection
+- non-JSON-serializable manifest rejection
+- validated local preview writing
+
+Mini-EPIC 32.12 remains local-only. It does not create packages, ZIP/tar archives, Docker images, semantic version tags, GitHub Releases, deployments, CI workflow changes, runtime release registry entries, database persistence, artifact publishing, rollback behavior, or environment promotion.
+

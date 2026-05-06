@@ -2,7 +2,7 @@
 
 ## Status
 
-Updated for Mini-EPIC 32.11.
+Updated for Mini-EPIC 32.12.
 
 This document defines the safe dry-run boundary for generating an InvoMatch release package manifest preview.
 
@@ -283,3 +283,71 @@ Mini-EPIC 32.11 introduces only:
 - closure evidence
 
 It does not introduce real release packaging.
+
+## Local Schema Validation
+
+Mini-EPIC 32.12 introduces a local schema validation layer for the dry-run manifest preview.
+
+The validator is intentionally kept inside the local dry-run generator boundary. It validates the manifest preview before stdout output or optional local preview writing.
+
+The validator must fail with deterministic error messages using this prefix:
+
+~~~text
+manifest schema invalid:
+~~~
+
+Required validation rules:
+
+- `dry_run` must be `true`
+- `package_status` must be `preview`
+- required top-level content sections must exist as non-empty mappings:
+  - `package_identity`
+  - `source_identity`
+  - `evidence_reference`
+  - `included_components`
+  - `excluded_components`
+  - `build_environment_assumptions`
+  - `reproducibility_notes`
+  - `non_deployment_boundary`
+- required `package_identity` fields must exist:
+  - `package_id`
+  - `package_name`
+  - `package_type`
+  - `package_manifest_version`
+  - `package_created_at`
+  - `release_candidate_id`
+  - `release_identity`
+  - `package_status`
+- `package_identity.package_status` must be `preview`
+- `package_identity.package_type` must be `dry-run-preview`
+- required `source_identity` fields must exist:
+  - `branch`
+  - `commit_sha`
+  - `working_tree_clean`
+- `source_identity.working_tree_clean` must be boolean
+- required `evidence_reference` fields must exist:
+  - `evidence_index_path`
+  - `evidence_index_version`
+  - `validation_status`
+  - `validation_summary_reference`
+  - `validation_executed_at`
+  - `validation_scope`
+  - `evidence_included_in_package`
+  - `evidence_referenced_only`
+- `evidence_reference.evidence_included_in_package` must remain an empty list because no package exists in dry-run mode
+- `non_deployment_boundary` keys must match the expected local non-deployment boundary
+- every `non_deployment_boundary` value must be `false`
+- the manifest must remain JSON serializable
+
+Examples of deterministic failure messages:
+
+~~~text
+manifest schema invalid: missing required field package_identity.package_type
+manifest schema invalid: missing required field source_identity.commit_sha
+manifest schema invalid: non_deployment_boundary.creates_package_archive must be false
+manifest schema invalid: dry_run must be true
+manifest schema invalid: package_status must be preview
+~~~
+
+This validation layer does not create a real package, archive, tag, GitHub Release, Docker image, deployment, CI workflow change, runtime release registry, database record, or environment promotion.
+

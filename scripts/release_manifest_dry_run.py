@@ -41,6 +41,36 @@ NON_DEPLOYMENT_BOUNDARY = {
     "promotes_environment": False,
 }
 
+REQUIRED_PACKAGE_IDENTITY_FIELDS = [
+    "package_id",
+    "package_name",
+    "package_type",
+    "package_manifest_version",
+    "package_created_at",
+    "release_candidate_id",
+    "release_identity",
+    "package_status",
+]
+
+REQUIRED_SOURCE_IDENTITY_FIELDS = [
+    "branch",
+    "commit_sha",
+    "working_tree_clean",
+]
+
+REQUIRED_EVIDENCE_REFERENCE_FIELDS = [
+    "evidence_index_path",
+    "evidence_index_version",
+    "validation_status",
+    "validation_summary_reference",
+    "validation_executed_at",
+    "validation_scope",
+    "evidence_included_in_package",
+    "evidence_referenced_only",
+]
+
+EXPECTED_NON_DEPLOYMENT_BOUNDARY_FIELDS = list(NON_DEPLOYMENT_BOUNDARY.keys())
+
 PACKAGE_IDENTITY_PREVIEW = {
     "package_id": "preview-not-created",
     "package_name": "InvoMatch Release Package Manifest Preview",
@@ -184,6 +214,10 @@ class ReleaseManifestDryRunError(RuntimeError):
     """Raised when a dry-run manifest preview cannot be generated safely."""
 
 
+def _schema_error(message: str) -> ReleaseManifestDryRunError:
+    return ReleaseManifestDryRunError(f"manifest schema invalid: {message}")
+
+
 def _run_git(repo_root: Path, args: list[str]) -> str:
     result = subprocess.run(
         ["git", *args],
@@ -200,6 +234,42 @@ def _run_git(repo_root: Path, args: list[str]) -> str:
         )
 
     return result.stdout.strip()
+
+
+def _require_mapping(manifest: dict[str, Any], field_path: str) -> dict[str, Any]:
+    value: Any = manifest
+    for part in field_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            raise _schema_error(f"missing required field {field_path}")
+        value = value[part]
+
+    if not isinstance(value, dict) or not value:
+        raise _schema_error(f"{field_path} must be a non-empty mapping")
+
+    return value
+
+
+def _require_field(manifest: dict[str, Any], field_path: str) -> Any:
+    value: Any = manifest
+    for part in field_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            raise _schema_error(f"missing required field {field_path}")
+        value = value[part]
+
+    if value in ({}, [], None, ""):
+        raise _schema_error(f"{field_path} must not be empty")
+
+    return value
+
+
+def _require_present_field(manifest: dict[str, Any], field_path: str) -> Any:
+    value: Any = manifest
+    for part in field_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            raise _schema_error(f"missing required field {field_path}")
+        value = value[part]
+
+    return value
 
 
 def read_source_identity(repo_root: Path) -> dict[str, Any]:
@@ -237,7 +307,63 @@ def build_manifest_preview(
     }
 
 
+def validate_manifest_preview(manifest: dict[str, Any]) -> None:
+    """Validate the local-only dry-run package manifest preview schema."""
+
+    if not isinstance(manifest, dict):
+        raise _schema_error("manifest must be a mapping")
+
+    if manifest.get("dry_run") is not True:
+        raise _schema_error("dry_run must be true")
+
+    if manifest.get("package_status") != "preview":
+        raise _schema_error("package_status must be preview")
+
+    for section in EXPECTED_MANIFEST_FIELDS:
+        _require_mapping(manifest, section)
+
+    for field in REQUIRED_PACKAGE_IDENTITY_FIELDS:
+        _require_field(manifest, f"package_identity.{field}")
+
+    if manifest["package_identity"].get("package_status") != "preview":
+        raise _schema_error("package_identity.package_status must be preview")
+
+    if manifest["package_identity"].get("package_type") != "dry-run-preview":
+        raise _schema_error("package_identity.package_type must be dry-run-preview")
+
+    for field in REQUIRED_SOURCE_IDENTITY_FIELDS:
+        _require_field(manifest, f"source_identity.{field}")
+
+    if not isinstance(manifest["source_identity"].get("working_tree_clean"), bool):
+        raise _schema_error("source_identity.working_tree_clean must be boolean")
+
+    for field in REQUIRED_EVIDENCE_REFERENCE_FIELDS:
+        field_path = f"evidence_reference.{field}"
+        if field == "evidence_included_in_package":
+            _require_present_field(manifest, field_path)
+        else:
+            _require_field(manifest, field_path)
+
+    if manifest["evidence_reference"].get("evidence_included_in_package") != []:
+        raise _schema_error("evidence_reference.evidence_included_in_package must be empty")
+
+    if set(manifest["non_deployment_boundary"].keys()) != set(
+        EXPECTED_NON_DEPLOYMENT_BOUNDARY_FIELDS
+    ):
+        raise _schema_error("non_deployment_boundary keys must match expected boundary")
+
+    for field in EXPECTED_NON_DEPLOYMENT_BOUNDARY_FIELDS:
+        if manifest["non_deployment_boundary"].get(field) is not False:
+            raise _schema_error(f"non_deployment_boundary.{field} must be false")
+
+    try:
+        json.dumps(manifest, sort_keys=True)
+    except TypeError as exc:
+        raise _schema_error(f"manifest must be JSON serializable: {exc}") from exc
+
+
 def write_manifest_preview(manifest: dict[str, Any], output_path: Path) -> Path:
+    validate_manifest_preview(manifest)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n",
@@ -279,6 +405,7 @@ def main() -> int:
     args = parse_args()
     repo_root = Path(args.repo_root).resolve()
     manifest = build_manifest_preview(repo_root)
+    validate_manifest_preview(manifest)
 
     if args.write_preview:
         output_path = write_manifest_preview(manifest, repo_root / args.output)

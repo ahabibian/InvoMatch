@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import importlib.util
 import json
 from pathlib import Path
@@ -153,3 +154,119 @@ def test_write_manifest_preview_writes_json_to_requested_local_path(tmp_path: Pa
     assert '"package_identity"' in written_text
     assert '"included_components"' in written_text
     assert '"excluded_components"' in written_text
+
+
+def test_manifest_schema_validator_accepts_current_preview() -> None:
+    manifest = _manifest()
+
+    release_manifest_dry_run.validate_manifest_preview(manifest)
+
+
+def test_manifest_schema_validator_rejects_missing_top_level_section() -> None:
+    manifest = copy.deepcopy(_manifest())
+    del manifest["package_identity"]
+
+    try:
+        release_manifest_dry_run.validate_manifest_preview(manifest)
+    except release_manifest_dry_run.ReleaseManifestDryRunError as exc:
+        assert str(exc) == (
+            "manifest schema invalid: missing required field package_identity"
+        )
+    else:
+        raise AssertionError("Expected manifest schema validation to fail")
+
+
+def test_manifest_schema_validator_rejects_missing_nested_package_identity_field() -> None:
+    manifest = copy.deepcopy(_manifest())
+    del manifest["package_identity"]["package_type"]
+
+    try:
+        release_manifest_dry_run.validate_manifest_preview(manifest)
+    except release_manifest_dry_run.ReleaseManifestDryRunError as exc:
+        assert str(exc) == (
+            "manifest schema invalid: missing required field package_identity.package_type"
+        )
+    else:
+        raise AssertionError("Expected manifest schema validation to fail")
+
+
+def test_manifest_schema_validator_rejects_missing_source_identity_field() -> None:
+    manifest = copy.deepcopy(_manifest())
+    del manifest["source_identity"]["commit_sha"]
+
+    try:
+        release_manifest_dry_run.validate_manifest_preview(manifest)
+    except release_manifest_dry_run.ReleaseManifestDryRunError as exc:
+        assert str(exc) == (
+            "manifest schema invalid: missing required field source_identity.commit_sha"
+        )
+    else:
+        raise AssertionError("Expected manifest schema validation to fail")
+
+
+def test_manifest_schema_validator_rejects_missing_evidence_reference_field() -> None:
+    manifest = copy.deepcopy(_manifest())
+    del manifest["evidence_reference"]["validation_status"]
+
+    try:
+        release_manifest_dry_run.validate_manifest_preview(manifest)
+    except release_manifest_dry_run.ReleaseManifestDryRunError as exc:
+        assert str(exc) == (
+            "manifest schema invalid: missing required field "
+            "evidence_reference.validation_status"
+        )
+    else:
+        raise AssertionError("Expected manifest schema validation to fail")
+
+
+def test_manifest_schema_validator_rejects_unsafe_non_deployment_boundary_flag() -> None:
+    manifest = copy.deepcopy(_manifest())
+    manifest["non_deployment_boundary"]["creates_package_archive"] = True
+
+    try:
+        release_manifest_dry_run.validate_manifest_preview(manifest)
+    except release_manifest_dry_run.ReleaseManifestDryRunError as exc:
+        assert str(exc) == (
+            "manifest schema invalid: "
+            "non_deployment_boundary.creates_package_archive must be false"
+        )
+    else:
+        raise AssertionError("Expected manifest schema validation to fail")
+
+
+def test_manifest_schema_validator_rejects_wrong_dry_run_value() -> None:
+    manifest = copy.deepcopy(_manifest())
+    manifest["dry_run"] = False
+
+    try:
+        release_manifest_dry_run.validate_manifest_preview(manifest)
+    except release_manifest_dry_run.ReleaseManifestDryRunError as exc:
+        assert str(exc) == "manifest schema invalid: dry_run must be true"
+    else:
+        raise AssertionError("Expected manifest schema validation to fail")
+
+
+def test_manifest_schema_validator_rejects_wrong_package_status() -> None:
+    manifest = copy.deepcopy(_manifest())
+    manifest["package_status"] = "created"
+
+    try:
+        release_manifest_dry_run.validate_manifest_preview(manifest)
+    except release_manifest_dry_run.ReleaseManifestDryRunError as exc:
+        assert str(exc) == "manifest schema invalid: package_status must be preview"
+    else:
+        raise AssertionError("Expected manifest schema validation to fail")
+
+
+def test_manifest_schema_validator_rejects_non_json_serializable_manifest() -> None:
+    manifest = _manifest()
+    manifest["not_json"] = object()
+
+    try:
+        release_manifest_dry_run.validate_manifest_preview(manifest)
+    except release_manifest_dry_run.ReleaseManifestDryRunError as exc:
+        assert str(exc).startswith(
+            "manifest schema invalid: manifest must be JSON serializable:"
+        )
+    else:
+        raise AssertionError("Expected manifest schema validation to fail")
