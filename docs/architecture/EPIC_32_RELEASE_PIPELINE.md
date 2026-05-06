@@ -459,3 +459,105 @@ Release-related EPIC closure must capture:
 If local validation passes but CI fails, CI is treated as the release-gate source of truth for closure.
 
 The drift must be investigated, repaired, committed, pushed, and validated by a final passing GitHub Actions run before release-related closure.
+
+---
+
+## Release Candidate Validation Pack
+
+A commit may be considered **release-candidate-ready** only after both local validation and GitHub Actions validation evidence have been reviewed and recorded.
+
+Release-candidate-ready does not mean deployed, packaged, tagged, published, promoted to staging, or promoted to production. It only means the commit has passed the agreed validation gate and is eligible for a later release/deployment process.
+
+### Required Local Validation Pack
+
+The local validation pack must be run from a clean working tree unless the operator is explicitly validating uncommitted documentation changes before commit.
+
+Required commands:
+
+    cd C:\dev\InvoMatch
+    $env:PYTHONPATH = "src"
+    pytest -q --basetemp=.pytest_tmp
+
+    cd C:\dev\InvoMatch
+    $env:PYTHONPATH = "src"
+    pytest -q tests\api tests\contract --basetemp=.pytest_tmp
+
+    cd C:\dev\InvoMatch
+    $env:PYTHONPATH = "src"
+    pytest -q tests\operational --basetemp=.pytest_tmp
+
+    cd C:\dev\InvoMatch
+    $env:PYTHONPATH = "src"
+    pytest -q tests\system\test_happy_path_full_flow.py tests\system\test_review_resolution_flow.py tests\system\test_runtime_failure_terminalization.py tests\system\test_startup_repair_visibility_recovery_alignment.py --basetemp=.pytest_tmp
+
+    cd C:\dev\InvoMatch\ui\invomatch-ui
+    npm run lint
+    npm run build
+
+If a listed test directory does not exist in the current repository state, the operator must record that fact explicitly instead of silently skipping the validation category.
+
+### Required Local Evidence
+
+For each local validation command, the release candidate evidence must include:
+
+- command
+- result
+- pass/fail status
+- test count or build/lint result when available
+- failure summary if failed
+- repair commit if a repair was needed
+- final passing command result after repair
+
+### Required GitHub Actions Evidence
+
+The GitHub Actions validation evidence must include:
+
+- workflow name
+- run number
+- commit SHA
+- branch
+- status
+- failed step, if any
+- repair commit, if any
+- final passing run number
+- final passing commit SHA
+
+A red GitHub Actions run blocks release-candidate readiness. A later local pass does not override a red CI run. The defect or drift must be repaired, pushed, and validated again by GitHub Actions.
+
+### Manual Release Candidate Checklist
+
+Before declaring a commit release-candidate-ready, the operator must confirm:
+
+| Check | Required Evidence |
+|---|---|
+| Working tree clean before final validation | `git status` output |
+| Branch aligned with origin | `git status` output |
+| Backend full test baseline passed | `pytest -q --basetemp=.pytest_tmp` result |
+| Contract/API validation passed or absence recorded | command result |
+| Operational validation passed | `pytest -q tests\operational --basetemp=.pytest_tmp` result |
+| Scenario regression pack passed | listed system test command result |
+| Frontend lint passed | `npm run lint` result |
+| Frontend build passed | `npm run build` result |
+| GitHub Actions run reviewed | workflow name, run number, commit SHA, branch, status |
+| Any red CI run repaired | repair commit and final passing run |
+| Release-candidate-ready is not described as deployed/released | documentation wording review |
+| Closure document created | Mini-EPIC closure file path |
+| Documentation committed | commit SHA |
+| Documentation pushed | `git push origin main` result |
+
+### Release Candidate Boundary
+
+The following states are explicitly outside release-candidate validation:
+
+- deployed
+- packaged
+- Dockerized
+- tagged
+- published
+- promoted to staging
+- promoted to production
+- rollback-ready
+- changelog-published
+
+Those activities require later EPIC 32 mini-epics or a dedicated release/deployment epic.
+
