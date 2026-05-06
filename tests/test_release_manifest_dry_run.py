@@ -270,3 +270,94 @@ def test_manifest_schema_validator_rejects_non_json_serializable_manifest() -> N
         )
     else:
         raise AssertionError("Expected manifest schema validation to fail")
+
+def test_cli_schema_failure_returns_non_zero_and_writes_stderr_only(
+    monkeypatch,
+    capsys,
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "should_not_exist.json"
+    original_build_manifest_preview = release_manifest_dry_run.build_manifest_preview
+
+    def invalid_manifest(repo_root: Path) -> dict:
+        manifest = original_build_manifest_preview(
+            repo_root,
+            source_identity={
+                "branch": "main",
+                "commit_sha": "abc123",
+                "working_tree_clean": True,
+            },
+        )
+        manifest["dry_run"] = False
+        return manifest
+
+    monkeypatch.setattr(
+        release_manifest_dry_run,
+        "build_manifest_preview",
+        invalid_manifest,
+    )
+
+    exit_code = release_manifest_dry_run.main(
+        [
+            "--repo-root",
+            str(tmp_path),
+            "--write-preview",
+            "--output",
+            str(output_path),
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert captured.out == ""
+    assert captured.err == "manifest schema invalid: dry_run must be true\n"
+    assert not output_path.exists()
+
+
+def test_cli_valid_stdout_preview_remains_json_and_preview_only(
+    capsys,
+    tmp_path: Path,
+) -> None:
+    exit_code = release_manifest_dry_run.main(
+        [
+            "--repo-root",
+            str(tmp_path),
+        ]
+    )
+
+    captured = capsys.readouterr()
+    manifest = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert captured.err == ""
+    assert manifest["dry_run"] is True
+    assert manifest["package_status"] == "preview"
+
+
+def test_cli_valid_write_preview_writes_only_requested_local_file(
+    capsys,
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "local_preview" / "package_manifest_preview.json"
+
+    exit_code = release_manifest_dry_run.main(
+        [
+            "--repo-root",
+            str(tmp_path),
+            "--write-preview",
+            "--output",
+            str(output_path),
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert captured.err == ""
+    assert "Wrote dry-run package manifest preview to" in captured.out
+    assert output_path.exists()
+
+    manifest = json.loads(output_path.read_text(encoding="utf-8"))
+    assert manifest["dry_run"] is True
+    assert manifest["package_status"] == "preview"

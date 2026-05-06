@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -372,7 +373,7 @@ def write_manifest_preview(manifest: dict[str, Any], output_path: Path) -> Path:
     return output_path
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Generate a local-only dry-run package manifest preview. "
@@ -398,11 +399,11 @@ def parse_args() -> argparse.Namespace:
         default=str(DEFAULT_OUTPUT_PATH),
         help="Local preview output path used with --write-preview.",
     )
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
-def main() -> int:
-    args = parse_args()
+def _run_cli(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
     repo_root = Path(args.repo_root).resolve()
     manifest = build_manifest_preview(repo_root)
     validate_manifest_preview(manifest)
@@ -414,6 +415,14 @@ def main() -> int:
         print(json.dumps(manifest, indent=2, sort_keys=True))
 
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    try:
+        return _run_cli(argv)
+    except ReleaseManifestDryRunError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

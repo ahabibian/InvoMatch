@@ -2,7 +2,7 @@
 
 ## Status
 
-Updated for Mini-EPIC 32.12.
+Updated for Mini-EPIC 32.13.
 
 This document defines the safe dry-run boundary for generating an InvoMatch release package manifest preview.
 
@@ -351,3 +351,37 @@ manifest schema invalid: package_status must be preview
 
 This validation layer does not create a real package, archive, tag, GitHub Release, Docker image, deployment, CI workflow change, runtime release registry, database record, or environment promotion.
 
+## CLI Failure Contract
+
+Mini-EPIC 32.13 defines the command-line failure boundary for local schema validation failures.
+
+The CLI must validate the manifest preview before writing anything to stdout and before writing any preview file.
+
+If schema validation fails at the CLI boundary, the generator must:
+
+- return a non-zero exit code
+- write the deterministic validation error to stderr
+- write no manifest JSON to stdout
+- write no local preview output file
+- keep the failure local-only
+- avoid creating any package, archive, tag, GitHub Release, Docker image, deployment, CI workflow change, runtime release registry entry, database record, published artifact, rollback state, or environment promotion
+
+The stderr message must preserve the deterministic schema validation prefix:
+
+~~~text
+manifest schema invalid:
+~~~
+
+Example CLI stderr output:
+
+~~~text
+manifest schema invalid: dry_run must be true
+~~~
+
+A schema failure must not leak a partial manifest preview to stdout because stdout is the success channel for valid JSON preview output.
+
+A schema failure must not write the requested `--write-preview` output path because a failed validation is not a preview artifact, even under the local dry-run boundary.
+
+The CLI error boundary is intentionally limited to `ReleaseManifestDryRunError`. It converts known dry-run safety failures into deterministic command-line behavior without hiding unrelated programming errors during development.
+
+Mini-EPIC 32.13 remains local-only. It does not create real packages, archives, tags, releases, deployments, CI changes, runtime release registries, database persistence, rollback behavior, frontend UI changes, or environment promotion.

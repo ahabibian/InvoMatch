@@ -1036,3 +1036,47 @@ Targeted tests cover:
 
 Mini-EPIC 32.12 remains local-only. It does not create packages, ZIP/tar archives, Docker images, semantic version tags, GitHub Releases, deployments, CI workflow changes, runtime release registry entries, database persistence, artifact publishing, rollback behavior, or environment promotion.
 
+## Mini-EPIC 32.13 - Release Package Manifest Preview CLI Failure Contract
+
+Mini-EPIC 32.13 defines and validates the command-line failure contract for the release package manifest dry-run generator.
+
+### CLI Failure Boundary Decision
+
+The dry-run generator now has a controlled CLI error boundary for known dry-run safety failures.
+
+Schema validation still happens before stdout output and before optional local preview writing.
+
+If validation fails, the CLI must:
+
+- return a non-zero exit code
+- write the deterministic validation error to stderr
+- avoid printing partial manifest JSON to stdout
+- avoid writing the requested preview output file
+- remain local-only
+
+This prevents invalid manifest previews from being mistaken for valid JSON output or local preview files.
+
+### Implementation Boundary
+
+The CLI execution path is separated into a small internal runner and a public `main()` boundary.
+
+The runner performs argument parsing, manifest construction, schema validation, and success output.
+
+The public `main()` catches `ReleaseManifestDryRunError`, writes the deterministic error to stderr, and returns exit code `1`.
+
+This keeps known dry-run validation failures deterministic without converting unrelated programming errors into silent release behavior.
+
+### Validation
+
+Targeted tests cover:
+
+- schema failure returns non-zero exit code
+- schema failure writes deterministic stderr
+- schema failure writes no stdout JSON
+- schema failure writes no preview file
+- valid stdout preview remains JSON
+- valid preview keeps `dry_run: true`
+- valid preview keeps `package_status: preview`
+- valid `--write-preview` writes only the requested local preview file
+
+Mini-EPIC 32.13 remains local-only. It does not create packages, ZIP/tar archives, Docker images, semantic version tags, GitHub Releases, deployments, CI workflow changes, runtime release registry entries, database persistence, artifact publishing, rollback behavior, frontend UI changes, or environment promotion.
