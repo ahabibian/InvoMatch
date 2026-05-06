@@ -2,7 +2,7 @@
 
 ## Status
 
-Closed pending commit and push.
+Closed.
 
 ## Context
 
@@ -279,11 +279,74 @@ The dry-run preview remains a local-only contract validation output.
 | EPIC 32 documentation updated | Met |
 | Mini-EPIC 32.11 closure document created | Met |
 | Added/updated tests pass | Met |
-| Working tree clean | Pending final commit/push verification |
-| Changes committed and pushed | Pending |
+| Working tree clean | Met |
+| Changes committed and pushed | Met |
 
 ## Closure Assessment
 
 Mini-EPIC 32.11 successfully defines and validates the deterministic content contract for the release package manifest dry-run preview.
 
 The project now has a stricter preview contract for future release packaging without crossing into package generation, artifact publishing, deployment, release tagging, or CI workflow modification.
+
+## Final Clean-State Verification After Commit and Push
+
+Command:
+
+~~~powershell
+cd C:\dev\InvoMatch
+git status --short
+$head = git rev-parse HEAD
+$env:PYTHONPATH = "src"
+pytest -q tests\test_release_manifest_dry_run.py --basetemp=.pytest_tmp
+$previewJson = python scripts\release_manifest_dry_run.py
+$preview = $previewJson | ConvertFrom-Json
+~~~
+
+Result:
+
+~~~text
+HEAD=116ca34918215b53b35adfa6648cfa196c4606ab
+9 passed in 0.14s
+~~~
+
+Clean-state preview assertions:
+
+~~~text
+dry_run=True
+package_status=preview
+package_identity.package_status=preview
+package_identity.package_type=dry-run-preview
+source_identity.branch=main
+source_identity.commit_sha=116ca34918215b53b35adfa6648cfa196c4606ab
+source_identity.working_tree_clean=True
+head_matches_preview=True
+~~~
+
+Non-deployment boundary flags:
+
+~~~text
+creates_docker_image=False
+creates_git_tag=False
+creates_github_release=False
+creates_package_archive=False
+deploys=False
+modifies_ci=False
+promotes_environment=False
+publishes_artifacts=False
+writes_release_state_to_database=False
+~~~
+
+Final repository status after clean-state verification:
+
+~~~text
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+~~~
+
+Commit pushed:
+
+~~~text
+116ca34 test: define deterministic package manifest content contract
+~~~
