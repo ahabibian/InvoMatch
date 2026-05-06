@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import argparse
 import json
@@ -39,6 +39,144 @@ NON_DEPLOYMENT_BOUNDARY = {
     "modifies_ci": False,
     "writes_release_state_to_database": False,
     "promotes_environment": False,
+}
+
+PACKAGE_IDENTITY_PREVIEW = {
+    "package_id": "preview-not-created",
+    "package_name": "InvoMatch Release Package Manifest Preview",
+    "package_type": "dry-run-preview",
+    "package_manifest_version": 1,
+    "package_created_at": "not-created-in-dry-run",
+    "release_candidate_id": "preview-only",
+    "release_identity": {
+        "release_name": "preview-only",
+        "release_channel": "local-dry-run",
+        "release_version": "not-assigned-in-dry-run",
+    },
+    "package_status": "preview",
+}
+
+EVIDENCE_REFERENCE_PREVIEW = {
+    "evidence_index_path": DOCUMENTATION_REFERENCES["evidence_index"],
+    "evidence_index_version": 1,
+    "validation_status": "not-executed-by-dry-run",
+    "validation_summary_reference": "not-created-by-dry-run",
+    "validation_executed_at": "not-executed-by-dry-run",
+    "validation_scope": [
+        "manifest-content-contract-preview",
+    ],
+    "evidence_included_in_package": [],
+    "evidence_referenced_only": [
+        DOCUMENTATION_REFERENCES["evidence_index"],
+    ],
+}
+
+INCLUDED_COMPONENTS_PREVIEW = {
+    "backend_source": {
+        "included": True,
+        "path": "src/",
+        "preview_only": True,
+    },
+    "backend_tests": {
+        "included": True,
+        "path": "tests/",
+        "preview_only": True,
+    },
+    "frontend_source": {
+        "included": True,
+        "path": "ui/invomatch-ui/src/",
+        "preview_only": True,
+    },
+    "architecture_documentation": {
+        "included": True,
+        "path": "docs/architecture/",
+        "preview_only": True,
+    },
+    "release_evidence_index": {
+        "included": True,
+        "path": DOCUMENTATION_REFERENCES["evidence_index"],
+        "preview_only": True,
+    },
+    "package_manifest_contract": {
+        "included": True,
+        "path": DOCUMENTATION_REFERENCES["package_manifest_contract"],
+        "preview_only": True,
+    },
+}
+
+EXCLUDED_COMPONENTS_PREVIEW = {
+    "local_runtime_databases": {
+        "excluded": True,
+        "examples": [
+            "output/local/reconciliation_runs.sqlite3",
+            "output/local/review_store.sqlite3",
+            "output/local/exports/export_artifacts.sqlite3",
+        ],
+    },
+    "local_preview_outputs": {
+        "excluded": True,
+        "examples": [
+            DEFAULT_OUTPUT_PATH.as_posix(),
+        ],
+    },
+    "dependency_caches": {
+        "excluded": True,
+        "examples": [
+            ".venv/",
+            "node_modules/",
+            ".pytest_tmp/",
+        ],
+    },
+    "deployment_artifacts": {
+        "excluded": True,
+        "examples": [
+            "Docker images",
+            "environment promotion records",
+            "deployment credentials",
+        ],
+    },
+    "public_release_objects": {
+        "excluded": True,
+        "examples": [
+            "GitHub Releases",
+            "semantic version tags",
+        ],
+    },
+}
+
+BUILD_ENVIRONMENT_ASSUMPTIONS_PREVIEW = {
+    "operating_system_family": "Windows-compatible",
+    "shell": "PowerShell",
+    "python_version": "repo-local-validation-runtime",
+    "node_version": "repo-local-validation-runtime",
+    "npm_version": "repo-local-validation-runtime",
+    "package_manager_assumptions": {
+        "python": "pip",
+        "frontend": "npm",
+    },
+    "environment_variables_required": [
+        "PYTHONPATH=src",
+    ],
+    "external_services_required": [],
+    "database_assumptions": {
+        "runtime_database_creation": "local-only",
+        "packaged_database_state": "excluded",
+    },
+}
+
+REPRODUCIBILITY_NOTES_PREVIEW = {
+    "reproducible_from_commit": True,
+    "validation_reproducibility": "command-based",
+    "generated_artifact_reproducibility": "not-applicable-in-dry-run",
+    "local_machine_dependency_notes": [
+        "Dry-run preview records source identity but does not create a release package.",
+        "Local runtime databases and generated outputs are excluded from the package boundary preview.",
+    ],
+    "known_non_reproducible_items": [
+        "local absolute paths",
+        "machine-specific caches",
+        "execution timestamps outside this deterministic preview",
+    ],
 }
 
 
@@ -86,7 +224,13 @@ def build_manifest_preview(
         "schema_version": "invomatch.package_manifest_dry_run.v1",
         "dry_run": True,
         "package_status": "preview",
+        "package_identity": PACKAGE_IDENTITY_PREVIEW,
         "source_identity": identity,
+        "evidence_reference": EVIDENCE_REFERENCE_PREVIEW,
+        "included_components": INCLUDED_COMPONENTS_PREVIEW,
+        "excluded_components": EXCLUDED_COMPONENTS_PREVIEW,
+        "build_environment_assumptions": BUILD_ENVIRONMENT_ASSUMPTIONS_PREVIEW,
+        "reproducibility_notes": REPRODUCIBILITY_NOTES_PREVIEW,
         "documentation_references": DOCUMENTATION_REFERENCES,
         "expected_manifest_fields": EXPECTED_MANIFEST_FIELDS,
         "non_deployment_boundary": NON_DEPLOYMENT_BOUNDARY,

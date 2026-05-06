@@ -908,3 +908,78 @@ This rule aligns dry-run evidence with repository state after commit/push and pr
 
 The clean-state verification is intentionally documented as evidence behavior rather than converted into a live repository cleanliness test. Repository cleanliness is an execution-state property and should not be hard-coded into deterministic tests unless isolated through a temporary git fixture.
 
+## Mini-EPIC 32.11 - Release Package Manifest Deterministic Content Contract
+
+Mini-EPIC 32.11 defines and validates the deterministic content contract for the future release package manifest preview.
+
+This Mini-EPIC upgrades the dry-run output from a field-list preview into a structured content preview with required top-level sections.
+
+The dry-run preview now declares:
+
+- `package_identity`
+- `source_identity`
+- `evidence_reference`
+- `included_components`
+- `excluded_components`
+- `build_environment_assumptions`
+- `reproducibility_notes`
+- `non_deployment_boundary`
+
+### Content Contract Decision
+
+The current dry-run generator should emit structured placeholder content for the required package manifest sections.
+
+This is necessary because a field list alone does not validate the shape of the future package manifest.
+
+The structured content remains deterministic and preview-only.
+
+The dry-run generator must not invent:
+- real package IDs
+- real release candidate IDs
+- creation timestamps
+- semantic versions
+- package archives
+- deployment records
+- release publication state
+
+### Deterministic Preview Rules
+
+The dry-run preview must keep these invariants:
+
+- `dry_run: true`
+- `package_status: preview`
+- `package_identity.package_status: preview`
+- `package_identity.package_type: dry-run-preview`
+- all `non_deployment_boundary` flags are `false`
+- evidence included in package is empty because no package exists
+- validation execution timestamp is not invented
+- local runtime databases are excluded
+- local preview output is excluded
+- dependency caches are excluded
+- deployment artifacts are excluded
+- GitHub Releases and semantic version tags are excluded
+
+### Relationship To Future Packaging
+
+Mini-EPIC 32.11 does not create a release package.
+
+The future package manifest remains a separate release artifact concept defined in:
+
+- `docs/architecture/RELEASE_ARTIFACT_PACKAGE_MANIFEST.md`
+
+The dry-run preview remains a local JSON validation output. It is not the future package manifest artifact and must not be published as a release package.
+
+### Validation
+
+Targeted tests validate:
+
+- required top-level section presence
+- expected field model alignment
+- deterministic placeholder stability
+- JSON serializability
+- dry-run and preview invariants
+- non-deployment boundary invariants
+- included/excluded component declaration
+- local-only output path behavior
+
+Mini-EPIC 32.11 remains contract/test-only and does not modify CI, create packages, publish artifacts, tag releases, create GitHub Releases, deploy, promote environments, or persist release state.
