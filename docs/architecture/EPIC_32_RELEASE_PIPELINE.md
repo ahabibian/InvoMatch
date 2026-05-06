@@ -310,6 +310,114 @@ Every release must be traceable to:
 
 This model must align with the existing audit and operational visibility direction.
 
+
+---
+
+## Release Identity and Version Metadata Foundation
+
+Mini-EPIC 32.5 introduces the first minimal release identity foundation for InvoMatch.
+
+This foundation does not create a public release, deployment, tag, package, artifact, staging promotion, production promotion, changelog, or rollback implementation.
+
+Its purpose is narrower and stricter:
+
+- every future validated release candidate must be traceable to a stable runtime identity;
+- runtime identity must be product-safe and operationally visible;
+- missing release metadata must be explicit instead of silently fabricated;
+- release validation status must not be claimed by runtime unless release tooling explicitly provides it.
+
+### Release Identity Model
+
+The release identity model contains the following fields:
+
+| Field | Meaning |
+|---|---|
+| `application_name` | Stable application identifier. Current default: `invomatch`. |
+| `application_version` | Application/internal release version. Current default: `0.1.0` from the backend project baseline. |
+| `git_commit_sha` | Commit SHA associated with the runtime when provided by release/build tooling. Falls back to `unknown`. |
+| `git_branch` | Branch or ref associated with the runtime when provided by release/build tooling. Falls back to `unknown`. |
+| `build_timestamp_utc` | UTC build timestamp when provided by release/build tooling. Falls back to `null`. |
+| `environment` | Configured InvoMatch runtime environment. |
+| `validation_status` | Explicit validation status from release tooling. Falls back to `not_declared`. |
+| `metadata_available` | `true` only when concrete commit and branch metadata are both available. |
+
+### Runtime Boundary
+
+Release identity is exposed as operational metadata through:
+
+    GET /api/operations/release-identity
+
+This endpoint is protected by the existing operational permission boundary:
+
+    operations.view_metrics
+
+The endpoint is intentionally placed under `/api/operations` instead of `/health` or `/readiness`.
+
+Health and readiness endpoints must remain runtime state checks. They must not become release audit surfaces.
+
+### Environment Variable Boundary
+
+The release identity service reads only the following allow-listed environment variables:
+
+| Environment Variable | Purpose |
+|---|---|
+| `INVOMATCH_APPLICATION_NAME` | Optional application name override. |
+| `INVOMATCH_APPLICATION_VERSION` | Optional application version override. |
+| `INVOMATCH_RELEASE_COMMIT_SHA` | Optional release/build commit SHA. |
+| `INVOMATCH_RELEASE_BRANCH` | Optional release/build branch or ref. |
+| `INVOMATCH_RELEASE_BUILD_TIMESTAMP_UTC` | Optional UTC build timestamp. |
+| `INVOMATCH_RELEASE_VALIDATION_STATUS` | Optional validation status explicitly injected by release tooling. |
+
+No arbitrary environment variables are exposed.
+
+Secrets, token configuration, persistence paths, storage paths, seed token JSON, and CI internals must not appear in release identity output.
+
+### Validation Status Boundary
+
+`validation_status` is not proof that CI passed unless release tooling explicitly injects a value after validation.
+
+The default value is:
+
+    not_declared
+
+This is intentional.
+
+Runtime must not infer release-candidate readiness merely because the application starts, health passes, readiness passes, or local tests previously passed.
+
+A release-candidate-ready decision still requires the release validation pack and GitHub Actions evidence defined elsewhere in this document.
+
+### Missing Metadata Behavior
+
+When release metadata is absent, the service must fall back safely:
+
+| Missing Input | Runtime Output |
+|---|---|
+| missing commit SHA | `git_commit_sha = "unknown"` |
+| missing branch/ref | `git_branch = "unknown"` |
+| missing build timestamp | `build_timestamp_utc = null` |
+| missing validation status | `validation_status = "not_declared"` |
+| missing commit or branch | `metadata_available = false` |
+
+This prevents the system from lying about release traceability.
+
+### Non-Goals
+
+Mini-EPIC 32.5 does not introduce:
+
+- Docker packaging
+- deployment
+- staging environment
+- production environment
+- semantic version tag creation
+- GitHub Release creation
+- changelog generation
+- artifact publishing
+- rollback implementation
+- environment promotion automation
+- CI matrix expansion
+- frontend UI changes
+- release validation gate changes
+
 ## Build and Packaging Rules
 
 Release packaging must eventually ensure:

@@ -55,6 +55,7 @@ from invomatch.services.orchestration.export_readiness_evaluator import (
     ExportReadinessEvaluator,
 )
 from invomatch.services.reconciliation import reconcile_and_save
+from invomatch.services.release_identity_service import ReleaseIdentityService
 from invomatch.services.restart_consistency_repair_service import (
     RestartConsistencyRepairService,
 )
@@ -182,6 +183,9 @@ def create_app(
     app.state.security_audit_service = security_audit_service
     app.state.operational_audit_service = operational_audit_service
     app.state.startup_validation_result = startup_validation_result
+    app.state.release_identity_service = ReleaseIdentityService(
+        environment=settings.environment.value,
+    )
     app.state.persistence_dependencies = persistence_dependencies
     app.state.storage_dependencies = storage_dependencies
     app.state.runtime_dependencies = runtime_dependencies

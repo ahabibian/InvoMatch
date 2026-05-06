@@ -86,3 +86,29 @@ class OperationalAlertsResponse(BaseModel):
     alerts: list[OperationalAlertResponse] = Field(
         description="Stable ordered list of machine-readable operational alerts."
     )
+
+class OperationalReleaseIdentityResponse(BaseModel):
+    application_name: str = Field(
+        description="Stable application identifier."
+    )
+    application_version: str = Field(
+        description="Application version or internal release version."
+    )
+    git_commit_sha: str = Field(
+        description="Git commit SHA associated with this runtime, or unknown when not provided."
+    )
+    git_branch: str = Field(
+        description="Git branch or ref associated with this runtime, or unknown when not provided."
+    )
+    build_timestamp_utc: str | None = Field(
+        description="UTC build timestamp when explicitly provided by release tooling."
+    )
+    environment: str = Field(
+        description="Configured InvoMatch runtime environment name."
+    )
+    validation_status: str = Field(
+        description="Release validation status explicitly provided by release tooling, or not_declared."
+    )
+    metadata_available: bool = Field(
+        description="Whether concrete commit and branch metadata were explicitly provided."
+    )

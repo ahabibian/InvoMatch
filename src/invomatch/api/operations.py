@@ -7,6 +7,7 @@ from invomatch.api.operations_models import (
     OperationalAlertsResponse,
     OperationalHealthSummaryResponse,
     OperationalMetricsResponse,
+    OperationalReleaseIdentityResponse,
 )
 from invomatch.domain.security import Permission
 from invomatch.services.operational.alert_policy import OperationalAlertPolicy
@@ -106,4 +107,28 @@ def get_operational_alerts(request: Request) -> OperationalAlertsResponse:
             }
             for alert in alert_snapshot.alerts
         ],
+    }
+
+@router.get("/release-identity", response_model=OperationalReleaseIdentityResponse)
+def get_operational_release_identity(request: Request) -> OperationalReleaseIdentityResponse:
+    require_permission(request, permission=Permission.OPERATIONS_VIEW_METRICS)
+
+    release_identity_service = getattr(request.app.state, "release_identity_service", None)
+    if release_identity_service is None:
+        raise HTTPException(
+            status_code=500,
+            detail="release identity service is not configured",
+        )
+
+    identity = release_identity_service.get_release_identity()
+
+    return {
+        "application_name": identity.application_name,
+        "application_version": identity.application_version,
+        "git_commit_sha": identity.git_commit_sha,
+        "git_branch": identity.git_branch,
+        "build_timestamp_utc": identity.build_timestamp_utc,
+        "environment": identity.environment,
+        "validation_status": identity.validation_status,
+        "metadata_available": identity.metadata_available,
     }
