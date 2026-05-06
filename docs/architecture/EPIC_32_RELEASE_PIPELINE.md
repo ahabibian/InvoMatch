@@ -480,7 +480,7 @@ Required commands:
 
     cd C:\dev\InvoMatch
     $env:PYTHONPATH = "src"
-    pytest -q tests\api tests\contract --basetemp=.pytest_tmp
+    pytest -q tests\contracts --basetemp=.pytest_tmp
 
     cd C:\dev\InvoMatch
     $env:PYTHONPATH = "src"
@@ -494,7 +494,7 @@ Required commands:
     npm run lint
     npm run build
 
-If a listed test directory does not exist in the current repository state, the operator must record that fact explicitly instead of silently skipping the validation category.
+If a listed test directory does not exist in the current repository state, the operator must record that fact explicitly instead of silently skipping the validation category. The current repository contract validation path is tests\contracts.
 
 ### Required Local Evidence
 
