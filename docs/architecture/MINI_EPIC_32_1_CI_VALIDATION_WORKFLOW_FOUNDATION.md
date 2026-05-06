@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented pending corrected local validation and GitHub Actions execution.
+Implemented pending CI re-run after GitHub runner temp-root repair.
 
 ## Context
 
@@ -60,14 +60,15 @@ The CI workflow uses explicit setup and validation steps:
 1. Checkout repository
 2. Set up Python
 3. Install backend dependencies
-4. Run backend full test baseline
-5. Run contract tests
-6. Run operational tests
-7. Run required scenario regression pack
-8. Set up Node
-9. Install frontend dependencies
-10. Run frontend lint
-11. Run frontend build
+4. Prepare pytest temp root
+5. Run backend full test baseline
+6. Run contract tests
+7. Run operational tests
+8. Run required scenario regression pack
+9. Set up Node
+10. Install frontend dependencies
+11. Run frontend lint
+12. Run frontend build
 
 This structure makes failures visible at the correct release validation layer instead of hiding all failures behind one generic command.
 
@@ -167,6 +168,25 @@ Local validation result observed during this mini-epic:
 
 The CI workflow validates that the frontend remains buildable and lint-clean before changes are accepted into the release baseline.
 
+
+## GitHub Actions Drift Repair
+
+The first GitHub Actions run for commit 9ddc8b0 failed during the backend full baseline.
+
+Failure:
+
+- Backend full baseline failed before validating product behavior.
+- The error was FileNotFoundError for .pytest_tmp/backend_full.
+- The GitHub runner starts from a clean workspace where .pytest_tmp does not exist.
+- Local validation had passed because .pytest_tmp already existed locally from previous test runs.
+
+Correction:
+
+- Added an explicit Prepare pytest temp root step before pytest execution.
+- The step runs mkdir -p .pytest_tmp.
+- This preserves the validation contract and only repairs CI workspace preparation.
+
+This is a CI environment preparation fix, not a product code change and not a weakening of the validation baseline.
 ## Failure Clarity
 
 Each release validation layer is represented as a separate GitHub Actions step:
@@ -253,7 +273,7 @@ The contract layer was corrected to exclude direct execution of the abstract Run
 | Workflow is documented | Complete |
 | Local validation remains green | Pending corrected contract validation |
 | CI configuration is committed and pushed | Pending commit/push |
-| GitHub Actions execution result checked | Pending after push |
+| GitHub Actions execution result checked | First run failed on missing pytest temp root; re-run pending after repair |
 
 ## Implementation Files
 

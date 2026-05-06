@@ -31,6 +31,10 @@ jobs:
           python -m pip install -e .
           python -m pip install pytest httpx python-multipart
 
+      - name: Prepare pytest temp root
+        run: |
+          mkdir -p .pytest_tmp
+
       - name: Backend full test baseline
         run: |
           pytest -q tests --basetemp=.pytest_tmp/backend_full
