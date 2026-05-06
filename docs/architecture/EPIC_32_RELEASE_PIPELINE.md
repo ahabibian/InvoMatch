@@ -1,4 +1,4 @@
-﻿# EPIC 32 - DevOps & Release Pipeline
+# EPIC 32 - DevOps & Release Pipeline
 
 ## Status
 
@@ -878,4 +878,33 @@ The tests validate:
 Mini-EPIC 32.8 documented the release artifact/package boundary and package manifest design.
 
 Mini-EPIC 32.9 does not create that package. It only defines and validates a safe preview contract for the future package manifest.
+
+## Mini-EPIC 32.10 - Clean-State Package Manifest Dry-Run Evidence
+
+Mini-EPIC 32.10 verifies the expected post-commit behavior of the package manifest dry-run generator after the Mini-EPIC 32.9 implementation has been committed and pushed.
+
+The dry-run manifest generator remains a local-only evidence and preview tool. It does not create release packages, deployment artifacts, semantic version tags, GitHub Releases, Docker images, environment promotions, or published artifacts.
+
+Clean-state verification rule:
+
+- The dry-run manifest must continue to report `dry_run: true`.
+- The package status must remain `preview`.
+- The source identity branch must resolve to `main` when executed from the main branch.
+- The source identity commit SHA must match repository `HEAD`.
+- The source identity working-tree flag must report `working_tree_clean: true` when executed from a clean repository state.
+- All non-deployment boundary flags must remain `false`.
+
+Verified clean-state evidence from Mini-EPIC 32.10:
+
+- `HEAD`: `e177e7fe4bcb9fe394dd2828f0098f5ddeef9dbf`
+- `source_identity.commit_sha`: `e177e7fe4bcb9fe394dd2828f0098f5ddeef9dbf`
+- `source_identity.branch`: `main`
+- `source_identity.working_tree_clean`: `true`
+- `dry_run`: `true`
+- `package_status`: `preview`
+- targeted validation: `5 passed in 0.12s`
+
+This rule aligns dry-run evidence with repository state after commit/push and prevents the preview manifest from being misrepresented as a real release package or deployment artifact.
+
+The clean-state verification is intentionally documented as evidence behavior rather than converted into a live repository cleanliness test. Repository cleanliness is an execution-state property and should not be hard-coded into deterministic tests unless isolated through a temporary git fixture.
 
