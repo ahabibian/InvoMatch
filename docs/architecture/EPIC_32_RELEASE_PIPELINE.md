@@ -1,4 +1,4 @@
-# EPIC 32 - DevOps & Release Pipeline
+﻿# EPIC 32 - DevOps & Release Pipeline
 
 ## Status
 
@@ -819,3 +819,63 @@ The architecture definition is documented in:
 - `docs/architecture/RELEASE_ARTIFACT_PACKAGE_MANIFEST.md`
 
 Mini-EPIC 32.8 intentionally keeps package generation out of scope. Future packaging work may implement manifest generation and validation only after this boundary is stable.
+
+## Mini-EPIC 32.9 - Package Manifest Generator Dry-Run Contract
+
+### Architecture Decision
+
+Mini-EPIC 32.9 defines the package manifest dry-run boundary and introduces a minimal local-only generator script.
+
+The dry-run generator exists only to produce a manifest preview. It is not a release package builder and does not publish, tag, deploy, promote, or persist release state.
+
+### Dry-Run Generator Boundary
+
+The generator may:
+- read local git metadata
+- reference documented package manifest expectations
+- build a preview JSON structure
+- print the preview to stdout
+- optionally write the preview to output/local/release_manifest_dry_run/package_manifest_preview.json
+
+The generator must mark every preview with:
+
+{
+  "dry_run": true,
+  "package_status": "preview"
+}
+
+### Non-Release Boundary
+
+The dry-run generator must not:
+- create a package archive
+- create a ZIP or tar file
+- publish artifacts
+- create Docker images
+- create semantic version tags
+- create GitHub Releases
+- deploy anything
+- modify CI
+- write release state to a database
+- promote environments
+- generate changelogs
+- implement rollback
+- create a runtime release registry
+
+### Validation Boundary
+
+Because Mini-EPIC 32.9 introduces implementation, targeted tests are required.
+
+The tests validate:
+- dry-run status
+- preview package status
+- expected manifest field list
+- non-deployment flags
+- local-only default output path
+- JSON preview writing to an explicitly requested local path
+
+### Relationship To Mini-EPIC 32.8
+
+Mini-EPIC 32.8 documented the release artifact/package boundary and package manifest design.
+
+Mini-EPIC 32.9 does not create that package. It only defines and validates a safe preview contract for the future package manifest.
+
