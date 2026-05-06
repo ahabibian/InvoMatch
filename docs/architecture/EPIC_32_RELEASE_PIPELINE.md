@@ -717,3 +717,74 @@ Mini-EPIC 32.6 does not create or modify:
 - changelog generation;
 - rollback automation;
 - frontend release UI.
+
+## Mini-EPIC 32.7 - Release Candidate Evidence Index & Validation Run Traceability
+
+Mini-EPIC 32.7 defines a documentation-first release candidate evidence index boundary.
+
+The purpose is to record which validation evidence belongs to a given release candidate validation run without creating a package, deployment, semantic version tag, GitHub Release, public artifact, promotion event, rollback point, changelog, or runtime release registry.
+
+### Architecture Decision
+
+Release candidate validation evidence is represented as a documentation artifact.
+
+The evidence index records:
+
+- commit SHA
+- branch/ref
+- validation date/time as documented evidence
+- validation source (`local`, `ci`, `mixed`, or `documented`)
+- validation command groups
+- result summaries
+- related closure documents
+- related evidence files or logs
+
+The validation date/time is not runtime truth.
+
+It is not a build timestamp unless a future build process explicitly produces it.
+
+The evidence index does not claim production release readiness.
+
+### Evidence Index Boundary
+
+The format is defined in:
+
+    docs/architecture/RELEASE_CANDIDATE_EVIDENCE_INDEX.md
+
+Recommended future index location:
+
+    docs/architecture/evidence/release_candidates/
+
+Recommended future naming pattern:
+
+    RC_EVIDENCE_INDEX_<YYYYMMDD>_<short_commit_sha>.md
+
+### Non-Release Boundary
+
+Mini-EPIC 32.7 intentionally does not introduce:
+
+- Docker packaging
+- deployment
+- staging environment
+- production environment
+- semantic version tag creation
+- GitHub Release creation
+- changelog generation
+- artifact publishing
+- rollback implementation
+- environment promotion automation
+- frontend UI changes
+- runtime release registry
+- database persistence for release evidence
+
+### Relationship To Prior Mini-EPICs
+
+Mini-EPIC 32.5 introduced bounded runtime release identity metadata.
+
+Mini-EPIC 32.6 allowed CI validation jobs to inject safe release identity metadata.
+
+Mini-EPIC 32.7 keeps validation evidence traceability separate from runtime identity and release publication.
+
+This preserves a clean boundary:
+
+    runtime release identity != validation evidence index != release publication
