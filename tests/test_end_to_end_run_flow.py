@@ -18,7 +18,7 @@ from invomatch.services.run_store import InMemoryRunStore
 
 class FakeProjectionStore:
     def __init__(self):
-        self._existing: set[tuple[str, str]] = set()
+        self._results: dict[tuple[str, str], list] = {}
 
     def save_results(
         self,
@@ -30,13 +30,13 @@ class FakeProjectionStore:
         source_fingerprint: str | None = None,
         created_by_system: str = "unknown",
     ) -> None:
-        self._existing.add((tenant_id, run_id))
+        self._results[(tenant_id, run_id)] = list(results)
 
     def get_results(self, *, tenant_id: str, run_id: str):
-        return [] if (tenant_id, run_id) in self._existing else None
+        return self._results.get((tenant_id, run_id))
 
     def exists(self, *, tenant_id: str, run_id: str) -> bool:
-        return (tenant_id, run_id) in self._existing
+        return (tenant_id, run_id) in self._results
 
 
 def _exportable_report() -> ReconciliationReport:

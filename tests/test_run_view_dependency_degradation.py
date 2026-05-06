@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from types import SimpleNamespace
 from datetime import UTC, datetime
 
 from invomatch.services.run_view_query_service import RunViewQueryService
@@ -9,6 +10,7 @@ from invomatch.services.run_view_query_service import RunViewQueryService
 @dataclass
 class FakeRun:
     run_id: str
+    tenant_id: str
     status: str
     created_at: datetime
     updated_at: datetime
@@ -24,6 +26,16 @@ class FakeRunStore:
             return None
         return self._run
 
+
+
+class FakeProjectionStore:
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return [
+            SimpleNamespace(
+                invoice_id="INV-123",
+                match_result=SimpleNamespace(status="matched"),
+            )
+        ]
 
 class ExplodingArtifactQueryService:
     def list_artifacts_for_run(self, run_id: str):
@@ -46,6 +58,7 @@ class FakeExportReadinessEvaluator:
 def test_run_view_degrades_safely_when_artifact_backend_fails():
     run = FakeRun(
         run_id="run_123",
+        tenant_id="tenant-test",
         status="completed",
         created_at=datetime(2026, 4, 3, 12, 0, 0, tzinfo=UTC),
         updated_at=datetime(2026, 4, 3, 12, 5, 0, tzinfo=UTC),
@@ -54,6 +67,7 @@ def test_run_view_degrades_safely_when_artifact_backend_fails():
         run_store=FakeRunStore(run),
         artifact_query_service=ExplodingArtifactQueryService(),
         export_readiness_evaluator=FakeExportReadinessEvaluator(is_export_ready=True),
+        projection_store=FakeProjectionStore(),
     )
 
     result = service.get_run_view("run_123")

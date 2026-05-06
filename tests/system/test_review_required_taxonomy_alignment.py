@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from invomatch.services.export.finalized_projection_store import SqliteFinalizedProjectionStore
 from invomatch.services.input_boundary.file_input_service import FileInputService
 from invomatch.services.input_boundary.input_processing_service import InputProcessingService
 from invomatch.services.input_boundary.json_input_service import JsonInputService
@@ -32,10 +33,12 @@ def scenario_context(tmp_path: Path) -> ScenarioContext:
     run_store = SqliteRunStore(tmp_path / "runs.sqlite3")
     review_store = InMemoryReviewStore()
     review_service = ReviewService()
+    projection_store = SqliteFinalizedProjectionStore(tmp_path / "finalized_projections.sqlite3")
 
     reconcile_and_save_bound = partial(
         reconcile_and_save,
         run_store=run_store,
+        projection_store=projection_store,
     )
 
     runtime_adapter = IngestionRunRuntimeAdapter(
@@ -64,6 +67,7 @@ def scenario_context(tmp_path: Path) -> ScenarioContext:
     orchestration_service = RunOrchestrationService(
         review_store=review_store,
         review_service=review_service,
+        projection_store=projection_store,
     )
 
     return ScenarioContext(

@@ -63,6 +63,16 @@ def _completed_run(run_id: str) -> ReconciliationRun:
     )
 
 
+
+class FakeProjectionStore:
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return [
+            {
+                "invoice_id": "INV-001",
+                "status": "unmatched",
+            }
+        ]
+
 class EmptyArtifactQueryService:
     def list_artifacts_for_run(self, run_id: str):
         return []
@@ -134,6 +144,8 @@ def test_app_restart_preserves_review_truth_in_run_view(tmp_path: Path):
     if decision_result.eligibility_record is not None:
         review_store_1.save_eligibility_record(decision_result.eligibility_record)
 
+    projection_store = FakeProjectionStore()
+
     app2 = create_app(
         run_store=JsonRunStore(tmp_path / "runs.json"),
         review_store_backend="sqlite",
@@ -146,6 +158,7 @@ def test_app_restart_preserves_review_truth_in_run_view(tmp_path: Path):
         review_store=app2.state.review_store,
         artifact_query_service=EmptyArtifactQueryService(),
         export_readiness_evaluator=ExportReadyEvaluator(),
+        projection_store=projection_store,
     )
 
     run_view = query_service.get_run_view(run.run_id)

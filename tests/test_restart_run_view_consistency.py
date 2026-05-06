@@ -63,6 +63,16 @@ def _completed_run(run_id: str) -> ReconciliationRun:
     )
 
 
+
+class FakeProjectionStore:
+    def get_results(self, *, tenant_id: str, run_id: str):
+        return [
+            {
+                "invoice_id": "INV-001",
+                "status": "unmatched",
+            }
+        ]
+
 class EmptyArtifactQueryService:
     def list_artifacts_for_run(self, run_id: str):
         return []
@@ -125,6 +135,8 @@ def test_run_view_after_reload_preserves_completed_review_and_ready_export_state
     if decision_result.eligibility_record is not None:
         review_store.save_eligibility_record(decision_result.eligibility_record)
 
+    projection_store = FakeProjectionStore()
+
     reloaded_run_store = JsonRunStore(tmp_path / "runs.json")
 
     query_service = RunViewQueryService(
@@ -132,6 +144,7 @@ def test_run_view_after_reload_preserves_completed_review_and_ready_export_state
         review_store=review_store,
         artifact_query_service=EmptyArtifactQueryService(),
         export_readiness_evaluator=ExportReadyEvaluator(),
+        projection_store=projection_store,
     )
 
     run_view = query_service.get_run_view(run.run_id)
@@ -148,5 +161,5 @@ def test_run_view_after_reload_preserves_completed_review_and_ready_export_state
     assert run_view.export_summary.status == "ready"
     assert run_view.export_summary.artifact_count == 0
 
-    assert run_view.match_summary.total_items == 0
-    assert run_view.match_summary.unmatched_items == 0
+    assert run_view.match_summary.total_items == 1
+    assert run_view.match_summary.ambiguous_items == 1
