@@ -1,4 +1,4 @@
-﻿from invomatch.services.release_identity_service import ReleaseIdentityService
+from invomatch.services.release_identity_service import ReleaseIdentityService
 
 
 def test_release_identity_falls_back_safely_when_metadata_missing(monkeypatch):
@@ -67,4 +67,22 @@ def test_release_identity_constructor_values_override_environment(monkeypatch):
     assert identity.build_timestamp_utc == "2026-05-06T09:00:00Z"
     assert identity.environment == "test"
     assert identity.validation_status == "manual-status"
+    assert identity.metadata_available is True
+
+def test_release_identity_reads_ci_validation_metadata_without_release_ready_claim(monkeypatch):
+    monkeypatch.setenv(
+        "INVOMATCH_RELEASE_COMMIT_SHA",
+        "c5120741111111111111111111111111111111111",
+    )
+    monkeypatch.setenv("INVOMATCH_RELEASE_BRANCH", "main")
+    monkeypatch.delenv("INVOMATCH_RELEASE_BUILD_TIMESTAMP_UTC", raising=False)
+    monkeypatch.setenv("INVOMATCH_RELEASE_VALIDATION_STATUS", "not_declared")
+
+    identity = ReleaseIdentityService(environment="ci").get_release_identity()
+
+    assert identity.git_commit_sha == "c5120741111111111111111111111111111111111"
+    assert identity.git_branch == "main"
+    assert identity.build_timestamp_utc is None
+    assert identity.environment == "ci"
+    assert identity.validation_status == "not_declared"
     assert identity.metadata_available is True

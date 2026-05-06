@@ -15,6 +15,9 @@ jobs:
 
     env:
       PYTHONPATH: src
+      INVOMATCH_RELEASE_COMMIT_SHA: ${{ github.sha }}
+      INVOMATCH_RELEASE_BRANCH: ${{ github.ref_name }}
+      INVOMATCH_RELEASE_VALIDATION_STATUS: not_declared
 
     steps:
       - name: Checkout repository

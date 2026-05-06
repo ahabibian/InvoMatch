@@ -669,3 +669,51 @@ The following states are explicitly outside release-candidate validation:
 
 Those activities require later EPIC 32 mini-epics or a dedicated release/deployment epic.
 
+## Mini-EPIC 32.6 - CI Release Metadata Injection Boundary
+
+Mini-EPIC 32.6 connects the release identity metadata foundation to the CI validation workflow without creating a release, tag, package, deployment, or promotion mechanism.
+
+### CI Metadata Injection
+
+The CI validation workflow may inject only bounded, product-safe release identity metadata:
+
+| Environment variable | CI value | Purpose |
+|---|---|---|
+| `INVOMATCH_RELEASE_COMMIT_SHA` | `${{ github.sha }}` | Identifies the exact commit being validated. |
+| `INVOMATCH_RELEASE_BRANCH` | `${{ github.ref_name }}` | Identifies the branch or ref name under validation. |
+| `INVOMATCH_RELEASE_VALIDATION_STATUS` | `not_declared` | Prevents runtime from claiming release readiness. |
+
+### Intentionally Not Injected
+
+`INVOMATCH_RELEASE_BUILD_TIMESTAMP_UTC` is intentionally not injected by the current CI workflow.
+
+The current workflow does not provide a deterministic UTC build timestamp value that should be treated as release identity. A future release packaging or artifact creation step may inject a real build timestamp when packaging exists.
+
+### Validation Status Boundary
+
+Runtime release identity must not claim that a build is release-candidate-ready merely because CI is currently running.
+
+`validation_status` remains `not_declared` during CI validation. The actual release gate remains the external CI evidence:
+
+- backend full validation;
+- contract/API validation;
+- operational validation;
+- required scenario regression pack;
+- frontend lint;
+- frontend build.
+
+A future release promotion step may set a stronger validation status only after validation evidence has completed and been captured. Mini-EPIC 32.6 does not add that promotion step.
+
+### Non-Release Boundary
+
+Mini-EPIC 32.6 does not create or modify:
+
+- semantic version tags;
+- GitHub Releases;
+- Docker images;
+- release packages;
+- deployment environments;
+- staging or production promotion;
+- changelog generation;
+- rollback automation;
+- frontend release UI.
