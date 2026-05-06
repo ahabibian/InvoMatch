@@ -315,10 +315,22 @@ def test_cli_schema_failure_returns_non_zero_and_writes_stderr_only(
     assert not output_path.exists()
 
 
-def test_cli_valid_stdout_preview_remains_json_and_preview_only(
+def test_cli_success_stdout_preview_returns_json_stdout_only(
+    monkeypatch,
     capsys,
     tmp_path: Path,
 ) -> None:
+    manifest_preview = _manifest()
+
+    def deterministic_manifest(repo_root: Path) -> dict:
+        return copy.deepcopy(manifest_preview)
+
+    monkeypatch.setattr(
+        release_manifest_dry_run,
+        "build_manifest_preview",
+        deterministic_manifest,
+    )
+
     exit_code = release_manifest_dry_run.main(
         [
             "--repo-root",
@@ -331,15 +343,60 @@ def test_cli_valid_stdout_preview_remains_json_and_preview_only(
 
     assert exit_code == 0
     assert captured.err == ""
+    assert captured.out.lstrip().startswith("{")
     assert manifest["dry_run"] is True
     assert manifest["package_status"] == "preview"
+    assert not (tmp_path / release_manifest_dry_run.DEFAULT_OUTPUT_PATH).exists()
 
 
-def test_cli_valid_write_preview_writes_only_requested_local_file(
+def test_cli_success_stdout_preview_does_not_write_preview_files(
+    monkeypatch,
+    capsys,
+    tmp_path: Path,
+) -> None:
+    manifest_preview = _manifest()
+
+    def deterministic_manifest(repo_root: Path) -> dict:
+        return copy.deepcopy(manifest_preview)
+
+    monkeypatch.setattr(
+        release_manifest_dry_run,
+        "build_manifest_preview",
+        deterministic_manifest,
+    )
+
+    exit_code = release_manifest_dry_run.main(
+        [
+            "--repo-root",
+            str(tmp_path),
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert captured.err == ""
+    assert json.loads(captured.out)["package_status"] == "preview"
+    assert list(tmp_path.rglob("*.json")) == []
+
+
+def test_cli_success_write_preview_writes_requested_file_and_stdout_message_only(
+    monkeypatch,
     capsys,
     tmp_path: Path,
 ) -> None:
     output_path = tmp_path / "local_preview" / "package_manifest_preview.json"
+
+    manifest_preview = _manifest()
+
+    def deterministic_manifest(repo_root: Path) -> dict:
+        return copy.deepcopy(manifest_preview)
+
+    monkeypatch.setattr(
+        release_manifest_dry_run,
+        "build_manifest_preview",
+        deterministic_manifest,
+    )
 
     exit_code = release_manifest_dry_run.main(
         [
@@ -355,9 +412,49 @@ def test_cli_valid_write_preview_writes_only_requested_local_file(
 
     assert exit_code == 0
     assert captured.err == ""
-    assert "Wrote dry-run package manifest preview to" in captured.out
+    assert captured.out == f"Wrote dry-run package manifest preview to {output_path}\n"
+    assert not captured.out.lstrip().startswith("{")
     assert output_path.exists()
 
     manifest = json.loads(output_path.read_text(encoding="utf-8"))
     assert manifest["dry_run"] is True
     assert manifest["package_status"] == "preview"
+    assert list(tmp_path.rglob("*.json")) == [output_path]
+
+
+def test_cli_success_write_preview_does_not_write_default_path_when_custom_output_is_used(
+    monkeypatch,
+    capsys,
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "custom" / "requested_preview.json"
+    default_path = tmp_path / release_manifest_dry_run.DEFAULT_OUTPUT_PATH
+
+    manifest_preview = _manifest()
+
+    def deterministic_manifest(repo_root: Path) -> dict:
+        return copy.deepcopy(manifest_preview)
+
+    monkeypatch.setattr(
+        release_manifest_dry_run,
+        "build_manifest_preview",
+        deterministic_manifest,
+    )
+
+    exit_code = release_manifest_dry_run.main(
+        [
+            "--repo-root",
+            str(tmp_path),
+            "--write-preview",
+            "--output",
+            str(output_path),
+        ]
+    )
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert captured.err == ""
+    assert captured.out == f"Wrote dry-run package manifest preview to {output_path}\n"
+    assert output_path.exists()
+    assert not default_path.exists()

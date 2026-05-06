@@ -385,3 +385,82 @@ A schema failure must not write the requested `--write-preview` output path beca
 The CLI error boundary is intentionally limited to `ReleaseManifestDryRunError`. It converts known dry-run safety failures into deterministic command-line behavior without hiding unrelated programming errors during development.
 
 Mini-EPIC 32.13 remains local-only. It does not create real packages, archives, tags, releases, deployments, CI changes, runtime release registries, database persistence, rollback behavior, frontend UI changes, or environment promotion.
+
+## CLI Success Contract
+
+Mini-EPIC 32.14 defines the command-line success boundary for the release package manifest dry-run generator.
+
+The CLI has two successful output modes:
+
+1. stdout JSON preview mode
+2. explicit --write-preview local file mode
+
+Both modes remain local-only and preview-only.
+
+### stdout JSON Preview Mode
+
+When the CLI is executed without --write-preview, it must:
+
+- return exit code 0
+- write the complete manifest preview JSON to stdout
+- write nothing to stderr
+- write no local preview file
+- preserve dry_run: true
+- preserve package_status: preview
+- keep the output machine-readable
+
+The stdout channel is therefore reserved for valid manifest JSON in default success mode.
+
+This allows future automation to safely parse stdout as JSON when no --write-preview flag is used.
+
+### --write-preview Mode
+
+When the CLI is executed with --write-preview, it must:
+
+- return exit code 0
+- write the manifest preview only to the requested local output path
+- write no manifest JSON to stdout
+- write a deterministic human-readable success message to stdout
+- write nothing to stderr
+- preserve dry_run: true
+- preserve package_status: preview
+
+The deterministic success message format is:
+
+Wrote dry-run package manifest preview to <resolved-output-path>
+
+The requested output path is the only preview JSON file that may be written by the command.
+
+A custom --output path must not also create the default preview path.
+
+### Success Channel Discipline
+
+On successful execution:
+
+- stderr is silent
+- stdout is either valid JSON or a deterministic human-readable success message
+- stdout must not mix JSON with explanatory text
+- file-writing mode must not emit manifest JSON to stdout
+- default stdout JSON mode must not create preview files
+
+This separation prevents ambiguity for scripts and future release automation.
+
+### Local-Only Success Boundary
+
+A successful dry-run command still must not:
+
+- create a real release package
+- create ZIP or tar archives
+- create Docker images
+- create semantic version tags
+- create GitHub Releases
+- publish artifacts
+- deploy
+- promote environments
+- modify CI
+- write release state to a database
+- create runtime release registry entries
+- implement rollback behavior
+- change frontend UI behavior
+
+The command remains a local manifest preview generator only.

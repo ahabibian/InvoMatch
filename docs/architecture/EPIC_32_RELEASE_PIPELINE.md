@@ -1080,3 +1080,67 @@ Targeted tests cover:
 - valid `--write-preview` writes only the requested local preview file
 
 Mini-EPIC 32.13 remains local-only. It does not create packages, ZIP/tar archives, Docker images, semantic version tags, GitHub Releases, deployments, CI workflow changes, runtime release registry entries, database persistence, artifact publishing, rollback behavior, frontend UI changes, or environment promotion.
+
+## Mini-EPIC 32.14 - Release Package Manifest CLI Success Contract and Output Channel Discipline
+
+Mini-EPIC 32.14 defines and validates the successful command-line output contract for the release package manifest dry-run generator.
+
+Mini-EPIC 32.13 established the deterministic CLI failure contract. Mini-EPIC 32.14 completes the matching success-side contract so that both valid and invalid CLI outcomes are predictable.
+
+### CLI Success Boundary Decision
+
+The dry-run generator now has two explicit success modes:
+
+- stdout JSON preview mode
+- explicit --write-preview local file mode
+
+When the CLI runs without --write-preview, stdout is reserved for valid manifest JSON only.
+
+When the CLI runs with --write-preview, stdout is reserved for a deterministic human-readable success message only, and the manifest JSON is written only to the requested local output path.
+
+stderr must remain silent for both success modes.
+
+### stdout JSON Preview Mode
+
+The default success mode must:
+
+- return exit code 0
+- emit valid manifest JSON to stdout
+- emit nothing to stderr
+- write no preview files
+- preserve dry_run: true
+- preserve package_status: preview
+
+This keeps default CLI output machine-readable and safe for future automation.
+
+### --write-preview Mode
+
+The file-writing success mode must:
+
+- return exit code 0
+- write the preview only to the requested local output path
+- emit no manifest JSON to stdout
+- emit a deterministic human-readable success message to stdout
+- emit nothing to stderr
+- preserve dry_run: true
+- preserve package_status: preview
+
+A custom output path must not also create the default preview path.
+
+### Test Coverage
+
+Mini-EPIC 32.14 adds targeted tests for:
+
+- stdout JSON success output
+- stderr silence on success
+- default mode avoiding preview file creation
+- --write-preview writing only the requested local file
+- --write-preview avoiding JSON emission to stdout
+- deterministic success message output
+- preservation of dry-run and preview status invariants
+
+### Boundary
+
+Mini-EPIC 32.14 remains local-only.
+
+It does not create packages, ZIP/tar archives, Docker images, semantic version tags, GitHub Releases, deployments, CI workflow changes, runtime release registry entries, database persistence, artifact publishing, rollback behavior, frontend UI changes, or environment promotion.
