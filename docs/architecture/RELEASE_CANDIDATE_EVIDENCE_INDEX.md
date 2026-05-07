@@ -328,3 +328,19 @@ The template separates the following evidence areas:
 - final reviewer/signoff notes
 
 Release manifest dry-run evidence captured through this template remains local-only evidence unless a future release process explicitly promotes a generated output into a defined release artifact. Filling the template must not be treated as package generation or artifact publication.
+
+## Local Dry-Run Evidence Record Instances
+
+### RC-EVIDENCE-LOCAL-DRY-RUN-001
+
+Document:
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LOCAL_DRY_RUN_001.md
+
+Type:
+
+Local dry-run evidence record.
+
+Boundary:
+
+This record is not a release artifact, not a release package, not a deployment record, and not a production-readiness claim.

@@ -1336,3 +1336,13 @@ The template standardizes evidence capture across:
 This template is documentation structure only. It does not create a release candidate, generate a package, publish artifacts, change CLI behavior, add release automation, replace validation execution, or claim release readiness without observed evidence.
 
 The full template is intentionally not duplicated in this EPIC document. The canonical scaffold lives in `RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`.
+
+## Mini-EPIC 32.19 — Release Candidate Evidence Record Dry-Run Instance
+
+Mini-EPIC 32.19 created the first concrete release-candidate evidence record instance from the reusable template introduced in Mini-EPIC 32.18.
+
+Created record:
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LOCAL_DRY_RUN_001.md
+
+This Mini-EPIC remains evidence capture only. It does not create a real release candidate, package, artifact, deployment, tag, GitHub Release, CI change, or production-readiness claim.
