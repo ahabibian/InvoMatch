@@ -300,3 +300,31 @@ It does not introduce:
 - frontend behavior
 - CI workflow behavior
 
+## Release Candidate Evidence Record Template
+
+Mini-EPIC 32.18 adds a reusable release-candidate evidence record template:
+
+- `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`
+
+The template is a documentation scaffold only.
+
+It exists to make future release-candidate validation evidence consistent, reviewable, and copyable.
+
+The template does not create a release candidate, does not create a release package, does not publish artifacts, does not replace validation execution, and does not declare release readiness by itself.
+
+Each future release-candidate evidence record must contain actual observed command results from the validation activity being recorded. Expected results, copied prior outputs, or placeholder values are not valid evidence.
+
+The template separates the following evidence areas:
+
+- source identity
+- branch and commit state
+- repository cleanliness
+- validation command evidence
+- release manifest dry-run evidence
+- success-path references
+- failure-path references
+- local-only evidence boundaries
+- non-deployment boundary
+- final reviewer/signoff notes
+
+Release manifest dry-run evidence captured through this template remains local-only evidence unless a future release process explicitly promotes a generated output into a defined release artifact. Filling the template must not be treated as package generation or artifact publication.

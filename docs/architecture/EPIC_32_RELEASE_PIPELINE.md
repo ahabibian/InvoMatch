@@ -1310,3 +1310,29 @@ This Mini-EPIC does not change source code, tests, CLI semantics, manifest schem
 
 Dry-run previews remain local-only validation evidence and are not release artifacts.
 
+## Mini-EPIC 32.18 - Release Candidate Dry-Run Evidence Record Template
+
+Mini-EPIC 32.18 defines a reusable release-candidate evidence record template:
+
+- `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`
+
+Future release-candidate validation runs should copy this template to create a concrete evidence record and then fill it with actual observed command results.
+
+The template standardizes evidence capture across:
+
+- source identity
+- branch and commit state
+- repository cleanliness
+- local validation command evidence
+- CI validation evidence, when available
+- release identity metadata checks
+- release manifest dry-run stdout JSON mode
+- release manifest dry-run write-preview mode
+- release manifest dry-run failure-path references
+- generated output tracking checks
+- non-deployment boundary confirmation
+- reviewer/signoff notes
+
+This template is documentation structure only. It does not create a release candidate, generate a package, publish artifacts, change CLI behavior, add release automation, replace validation execution, or claim release readiness without observed evidence.
+
+The full template is intentionally not duplicated in this EPIC document. The canonical scaffold lives in `RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`.
