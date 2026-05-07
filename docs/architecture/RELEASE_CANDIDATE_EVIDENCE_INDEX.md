@@ -351,4 +351,25 @@ Release candidate evidence record status must follow the finalization rules defi
 
 - `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_FINALIZATION_GATE.md`
 
-The evidence index remains a traceability index. It must not duplicate the full finalization process.
+The evidence index remains a traceability index. It must not duplicate the full finalization process.rnMini-EPIC 32.22 Evidence Record Finalization Gate Application
+Mini-EPIC 32.22 applied the Mini-EPIC 32.21 evidence record finalization gate to the first concrete local dry-run evidence record.
+Reviewed record:
+
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LOCAL_DRY_RUN_001.md
+
+
+Classification result:
+
+
+finalized-local-dry-run
+
+
+This classification is evidence-status alignment only.
+It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy, modify CLI behavior, modify manifest schema, modify runtime behavior, or claim production readiness.
+Closure record:
+
+
+docs/architecture/MINI_EPIC_32_22_CLOSURE.md
+
+rn
