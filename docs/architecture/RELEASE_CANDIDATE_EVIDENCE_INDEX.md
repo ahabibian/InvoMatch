@@ -373,3 +373,13 @@ Closure record:
 docs/architecture/MINI_EPIC_32_22_CLOSURE.md
 
 rn
+
+## First Finalized Local Dry-Run Baseline Reference
+
+Mini-EPIC 32.23 establishes docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LOCAL_DRY_RUN_001.md as the first finalized local dry-run evidence baseline reference.
+
+This baseline reference is internal evidence traceability only.
+
+It records that the first concrete local dry-run evidence record was reviewed under the Mini-EPIC 32.21 finalization gate and classified in Mini-EPIC 32.22 as finalized-local-dry-run.
+
+This reference does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy anything, modify CLI behavior, modify manifest schema, modify runtime code, change validation behavior, or claim production readiness.

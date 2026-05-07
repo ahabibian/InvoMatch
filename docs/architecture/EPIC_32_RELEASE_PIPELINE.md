@@ -1337,7 +1337,7 @@ This template is documentation structure only. It does not create a release cand
 
 The full template is intentionally not duplicated in this EPIC document. The canonical scaffold lives in `RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`.
 
-## Mini-EPIC 32.19 ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Release Candidate Evidence Record Dry-Run Instance
+## Mini-EPIC 32.19 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Release Candidate Evidence Record Dry-Run Instance
 
 Mini-EPIC 32.19 created the first concrete release-candidate evidence record instance from the reusable template introduced in Mini-EPIC 32.18.
 
@@ -1376,7 +1376,9 @@ The new finalization gate defines required repository identity, clean-state veri
 
 Allowed evidence record states are now defined as `draft`, `internally reviewed`, `finalized-local-dry-run`, `rejected`, and `superseded`.
 
-This update is documentation and policy only. It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy, approve staging or production promotion, or claim production readiness.rnMini-EPIC 32.22 - Evidence Record Finalization Gate Application
+This update is documentation and policy only. It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy, approve staging or production promotion, or claim production readiness.
+
+Mini-EPIC 32.22 - Evidence Record Finalization Gate Application
 Mini-EPIC 32.22 applied the evidence record finalization gate defined in Mini-EPIC 32.21 to the first concrete local dry-run evidence record.
 Reviewed record:
 
@@ -1392,4 +1394,19 @@ finalized-local-dry-run
 
 This confirms the status of the internal local dry-run evidence record only.
 The work remains documentation and evidence-status alignment only.
-It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy, modify CLI behavior, modify manifest schema, modify runtime behavior, or claim production readiness.rn
+It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy, modify CLI behavior, modify manifest schema, modify runtime behavior, or claim production readiness.
+
+
+## First Finalized Local Dry-Run Evidence Baseline Reference
+
+Mini-EPIC 32.23 aligns the first finalized local dry-run evidence record as the stable internal baseline reference for future release candidate evidence work.
+
+The baseline reference is:
+
+- docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LOCAL_DRY_RUN_001.md
+
+This record was reviewed under the Mini-EPIC 32.21 finalization gate and classified in Mini-EPIC 32.22 as finalized-local-dry-run.
+
+The baseline is used only for internal evidence traceability across future evidence records, audits, and dry-run validations.
+
+It does not imply release-candidate readiness, package generation, artifact publication, deployment, release automation, runtime behavior change, manifest schema change, validation behavior change, or production readiness.
