@@ -407,3 +407,31 @@ it does not prove that a future release candidate is ready
 Any future evidence record that references this baseline must preserve the non-release, non-package, non-deployment, non-approval, and non-production-readiness boundary.
 
 The baseline is useful for internal evidence traceability only. It must not be used as a substitute for fresh release-candidate validation, CI evidence, package evidence, deployment verification, or operational readiness evidence.rn
+
+## Release Candidate Evidence Workflow Readiness Checklist
+
+Status: documented pre-flight checklist for future release-candidate evidence workflow execution.
+
+This checklist prepares future release-candidate evidence work only.
+
+It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy anything, create a new evidence record instance, or claim release-candidate or production readiness.
+
+Before any future release-candidate evidence record is created or validated, the following must be confirmed:
+
+- Mini-EPIC 32.23 closure exists and identifies the finalized local dry-run evidence baseline as a reference point only.
+- Mini-EPIC 32.24 closure exists and defines how the finalized baseline may be consumed by future evidence work.
+- The evidence index records that the finalized baseline cannot substitute for fresh validation evidence.
+- EPIC 32 documentation records the finalized baseline and its non-release, non-package, non-deployment boundary.
+- Future evidence records must identify their own execution context, including branch, commit, working tree state, validation commands, validation results, and evidence date.
+- Required validation layers remain future execution requirements and are not satisfied by the baseline reference alone.
+- Baseline references must follow the Mini-EPIC 32.24 consumption rules.
+- Any future release-candidate evidence record must clearly distinguish reference baseline material from newly executed validation evidence.
+
+Checklist outcome:
+
+- If any prerequisite is missing, future release-candidate evidence execution must not proceed.
+- If all prerequisites are present, future work may proceed to define or execute a real release-candidate evidence workflow in a later Mini-EPIC.
+
+Boundary:
+
+Passing this checklist does not mean the system is release-candidate ready, packaged, deployed, automated, or production ready.

@@ -1337,7 +1337,7 @@ This template is documentation structure only. It does not create a release cand
 
 The full template is intentionally not duplicated in this EPIC document. The canonical scaffold lives in `RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`.
 
-## Mini-EPIC 32.19 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Release Candidate Evidence Record Dry-Run Instance
+## Mini-EPIC 32.19 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Release Candidate Evidence Record Dry-Run Instance
 
 Mini-EPIC 32.19 created the first concrete release-candidate evidence record instance from the reusable template introduced in Mini-EPIC 32.18.
 
@@ -1419,3 +1419,15 @@ Future evidence records, audits, and dry-run validations may reference that base
 The baseline does not replace future validation evidence and must not be interpreted as a release candidate, package artifact, deployment artifact, approval gate result, or production-readiness signal.
 
 This Mini-EPIC introduced no release creation, package generation, artifact publishing, release automation, deployment behavior, CLI behavior change, manifest schema change, runtime code change, validation behavior change, or CI behavior change.rn
+
+## Mini-EPIC 32.25 - Release Candidate Evidence Workflow Readiness Checklist
+
+Mini-EPIC 32.25 defines a concise pre-flight checklist for future release-candidate evidence workflow execution.
+
+The checklist confirms that future evidence work must be grounded in the finalized local dry-run baseline from Mini-EPIC 32.23 and must follow the finalized baseline consumption rules from Mini-EPIC 32.24.
+
+It clarifies that baseline evidence remains reference material only and cannot replace fresh validation evidence for any future release-candidate evidence record.
+
+Mini-EPIC 32.25 is documentation and evidence-workflow preparation only.
+
+It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy anything, modify CLI behavior, modify manifest schema, modify runtime code, change validation behavior, change CI behavior, create a new evidence record instance, or claim release-candidate or production readiness.
