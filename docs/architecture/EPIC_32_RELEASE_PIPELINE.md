@@ -1144,3 +1144,119 @@ Mini-EPIC 32.14 adds targeted tests for:
 Mini-EPIC 32.14 remains local-only.
 
 It does not create packages, ZIP/tar archives, Docker images, semantic version tags, GitHub Releases, deployments, CI workflow changes, runtime release registry entries, database persistence, artifact publishing, rollback behavior, frontend UI changes, or environment promotion.
+
+## Mini-EPIC 32.15 - Release Manifest CLI Clean-State Success/Failure Evidence Verification
+
+Status: Closed.
+
+Mini-EPIC 32.15 verified the release package manifest dry-run CLI contract from a clean, pushed repository state using real command-line executions.
+
+This was an evidence hardening step only. It did not introduce new product behavior, package generation, deployment behavior, manifest schema changes, CI workflow changes, frontend changes, runtime release registry behavior, database persistence, release tags, GitHub Releases, or artifact publishing.
+
+### Confirmed Starting State
+
+The repository was verified before evidence capture:
+
+- Branch: main
+- Branch status: up to date with origin/main
+- Working tree: clean
+- Latest commit: 8a94841 test: define release manifest dry-run cli success contract
+
+Recent related commits:
+
+- 8a94841 test: define release manifest dry-run cli success contract
+- 25366b5 docs: finalize mini epic 32.13 clean-state evidence
+- a8a0265 test: define release manifest dry-run cli failure contract
+
+### Real CLI Evidence - stdout JSON Preview Mode
+
+Command executed through the real CLI without --write-preview.
+
+Evidence captured locally under:
+
+    output/local/release_manifest_dry_run/mini_epic_32_15/
+
+Captured files:
+
+- stdout_json_mode.stdout.json
+- stdout_json_mode.stderr.txt
+- stdout_json_mode.exit_code.txt
+
+Observed result:
+
+- Exit code: 0
+- stderr length: 0
+- stdout parsed successfully as JSON
+- dry_run: true
+- package_status: preview
+- default preview file was not written
+
+This confirms that stdout JSON mode emits the manifest JSON to stdout, emits nothing to stderr, returns success, and does not write a preview file unless explicitly requested.
+
+### Real CLI Evidence - Explicit --write-preview Mode
+
+Command executed through the real CLI with:
+
+- --write-preview
+- explicit --output output\local\release_manifest_dry_run\mini_epic_32_15\requested_package_manifest_preview.json
+
+Evidence captured locally under:
+
+    output/local/release_manifest_dry_run/mini_epic_32_15/
+
+Captured files:
+
+- write_preview_mode.stdout.txt
+- write_preview_mode.stderr.txt
+- write_preview_mode.exit_code.txt
+- requested_package_manifest_preview.json
+
+Observed result:
+
+- Exit code: 0
+- stderr length: 0
+- requested preview file exists
+- default preview file was not written
+- stdout contained deterministic human-readable success output
+- stdout did not start with a JSON object
+- stdout did not contain the dry_run manifest key
+- written preview file parsed successfully as JSON
+- written preview file contained dry_run: true
+- written preview file contained package_status: preview
+
+This confirms that explicit write-preview mode writes only the requested local preview file, emits a deterministic human-readable success message, emits no manifest JSON to stdout, and emits nothing to stderr.
+
+### Targeted Validation
+
+Command:
+
+    pytest -q tests\test_release_manifest_dry_run.py --basetemp=.pytest_tmp
+
+Result:
+
+    23 passed in 0.36s
+
+### Boundary Confirmation
+
+Mini-EPIC 32.15 introduced no:
+
+- real package creation
+- ZIP or tar generation
+- Docker packaging
+- deployment
+- staging or production promotion
+- semantic version tags
+- GitHub Release creation
+- changelog generation
+- artifact publishing
+- rollback implementation
+- runtime release registry
+- database persistence
+- CI workflow modification
+- frontend UI changes
+- manifest schema changes
+- release identity semantic changes
+- CLI output behavior changes
+- package publishing behavior
+
+The generated evidence remains local-only under output/local/ and is excluded from release package semantics.
