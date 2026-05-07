@@ -351,7 +351,8 @@ Release candidate evidence record status must follow the finalization rules defi
 
 - `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_FINALIZATION_GATE.md`
 
-The evidence index remains a traceability index. It must not duplicate the full finalization process.rnMini-EPIC 32.22 Evidence Record Finalization Gate Application
+The evidence index remains a traceability index. It must not duplicate the full finalization process.
+Mini-EPIC 32.22 Evidence Record Finalization Gate Application
 Mini-EPIC 32.22 applied the Mini-EPIC 32.21 evidence record finalization gate to the first concrete local dry-run evidence record.
 Reviewed record:
 
@@ -382,7 +383,8 @@ This baseline reference is internal evidence traceability only.
 
 It records that the first concrete local dry-run evidence record was reviewed under the Mini-EPIC 32.21 finalization gate and classified in Mini-EPIC 32.22 as finalized-local-dry-run.
 
-This reference does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy anything, modify CLI behavior, modify manifest schema, modify runtime code, change validation behavior, or claim production readiness.rn
+This reference does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy anything, modify CLI behavior, modify manifest schema, modify runtime code, change validation behavior, or claim production readiness.
+
 Baseline Consumption Rules
 
 The finalized local dry-run evidence baseline established by Mini-EPIC 32.23 may be referenced by future evidence records, audits, and dry-run validations only as an internal traceability reference.
@@ -406,7 +408,7 @@ it does not prove that a future release candidate is ready
 
 Any future evidence record that references this baseline must preserve the non-release, non-package, non-deployment, non-approval, and non-production-readiness boundary.
 
-The baseline is useful for internal evidence traceability only. It must not be used as a substitute for fresh release-candidate validation, CI evidence, package evidence, deployment verification, or operational readiness evidence.rn
+The baseline is useful for internal evidence traceability only. It must not be used as a substitute for fresh release-candidate validation, CI evidence, package evidence, deployment verification, or operational readiness evidence.
 
 ## Release Candidate Evidence Workflow Readiness Checklist
 
@@ -434,7 +436,8 @@ Checklist outcome:
 
 Boundary:
 
-Passing this checklist does not mean the system is release-candidate ready, packaged, deployed, automated, or production ready.rn
+Passing this checklist does not mean the system is release-candidate ready, packaged, deployed, automated, or production ready.
+
 Release Candidate Evidence Execution Record Template
 
 Status: Template only.
@@ -610,4 +613,22 @@ No real release-candidate evidence execution record instance is created by this 
 
 No validation pack is executed by this Mini-EPIC.
 
-No release candidate, package, deployment, automation, or production-readiness claim is introduced.rn
+No release candidate, package, deployment, automation, or production-readiness claim is introduced.
+
+## Future Evidence Record Lifecycle and Naming Rules
+
+Mini-EPIC 32.27 defines lifecycle and naming rules for future release-candidate evidence execution records.
+
+Reference document:
+
+- docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LIFECYCLE_AND_NAMING_RULES.md
+
+Future evidence records must use deterministic record identifiers in the form RCER-YYYYMMDD-NNN and filenames in the form RELEASE_CANDIDATE_EVIDENCE_RECORD_<RECORD_ID>.md.
+
+Future index entries must preserve explicit lifecycle status, including opened, in-progress, blocked, repair-in-progress, superseded, abandoned, closed-passed, closed-failed, or closed-not-executed states.
+
+Superseded, abandoned, failed, blocked, and not-executed records may remain referenced for audit traceability, but must not be represented as successful release-candidate evidence.
+
+Closed records are treated as immutable historical evidence. Later corrections, supersession notes, or index updates must be append-only and must not rewrite the original evidence outcome.
+
+This index update does not create a real release-candidate evidence record instance and does not claim release-candidate readiness, package generation, artifact publication, deployment, automation, or production readiness.
