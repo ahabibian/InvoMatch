@@ -434,4 +434,180 @@ Checklist outcome:
 
 Boundary:
 
-Passing this checklist does not mean the system is release-candidate ready, packaged, deployed, automated, or production ready.
+Passing this checklist does not mean the system is release-candidate ready, packaged, deployed, automated, or production ready.rn
+Release Candidate Evidence Execution Record Template
+
+Status: Template only.
+
+This section defines the expected structure for future release-candidate evidence execution records.
+
+It is based on the readiness checklist established in Mini-EPIC 32.25.
+
+This template does not create a release candidate, does not create a real evidence execution record instance, does not execute validation, does not generate a package, does not publish artifacts, does not introduce automation, does not deploy anything, and does not claim release-candidate or production readiness.
+
+Purpose
+
+Future release-candidate evidence records must be repeatable, auditable, and clearly separated from baseline reference material.
+
+Each future evidence record must distinguish between:
+
+baseline references inherited from prior dry-run or checklist work
+freshly executed validation evidence captured for the specific future release-candidate attempt
+
+Baseline references may support traceability, but they must not be represented as newly executed evidence.
+
+Required Record Metadata
+
+Each future release-candidate evidence execution record must include:
+
+record identifier
+record title
+record status
+record creation date and time
+record owner or executor
+Mini-EPIC or release-candidate context
+repository name
+branch name
+source commit SHA
+working tree state at execution time
+CI run identifier, if CI validation is part of the future execution
+evidence index reference
+readiness checklist reference
+final evidence status
+
+The record identifier must be stable enough to support audit references from later documents.
+
+Required Source Identity Fields
+
+Each future record must capture source identity as freshly observed execution context.
+
+Required source identity fields:
+
+branch
+commit SHA
+working tree clean status
+repository remote, when relevant
+timestamp of source identity capture
+validation environment name or local execution context
+runtime or toolchain versions, when relevant to the validation being executed
+
+A future record must not rely only on older baseline documents for source identity.
+
+Required Baseline-Reference Fields
+
+Each future record must include a baseline-reference section.
+
+Required baseline-reference fields:
+
+referenced baseline document or checklist
+referenced baseline date
+referenced baseline commit, if available
+purpose of the baseline reference
+explicit statement that the baseline reference is not newly executed evidence
+explanation of how the baseline informs the current future execution
+
+Baseline references must be treated as historical traceability material unless the future record explicitly captures a fresh validation run.
+
+Required Validation-Layer Result Sections
+
+Each future release-candidate evidence execution record must include a result section for every required validation layer.
+
+Required validation-layer sections:
+
+Required Scenario Regression Pack
+Operational Validation Pack
+Contract Validation Pack
+Full Backend Validation Pack
+Frontend Lint
+Frontend Build
+Release identity and source traceability verification
+Package manifest or package preview verification, if applicable to the future release-candidate stage
+Evidence completeness review
+
+Each validation-layer section must capture:
+
+validation command or CI job name
+execution location
+execution timestamp or CI run timestamp
+result status
+observed output summary
+failure output reference, if failed
+repair commit reference, if repaired
+re-validation evidence, if repaired
+blocking status
+
+A validation layer that was not executed must be marked as not executed and must not be treated as passed.
+
+Required Failure and Blocker Section
+
+Each future record must include a failure and blocker section.
+
+The section must capture:
+
+failed validation layer
+failure summary
+observed failure output reference
+whether the failure blocks release-candidate evidence closure
+owner of the repair action, if known
+repair commit or change reference, if available
+re-run evidence after repair
+final blocker status
+
+Any failed required validation layer must block release-candidate evidence closure until repaired and re-validated.
+
+Required Non-Release Boundary Section
+
+Each future record must include a non-release boundary section unless the project intentionally moves into a real release execution process through a separately approved Mini-EPIC.
+
+For this current EPIC 32 documentation stage, the required boundary language is:
+
+no release candidate was created
+no package was generated
+no public artifact was published
+no deployment was performed
+no release automation was introduced
+no runtime behavior was changed
+no CI behavior was changed by the evidence record itself
+no production-readiness claim was made
+
+If a future Mini-EPIC intentionally changes this boundary, that change must be documented separately before the evidence record claims any stronger release status.
+
+Required Final Evidence Status Language
+
+Each future record must end with a final evidence status section.
+
+Allowed status language for future records:
+
+Evidence template only
+Evidence capture in progress
+Evidence blocked
+Evidence complete but not release-candidate ready
+Evidence complete and ready for separate release-candidate decision review
+
+The final evidence status must not imply production readiness unless production readiness is explicitly validated and approved in a separate release process.
+
+Minimum Future Record Skeleton
+
+A future release-candidate evidence execution record should use this minimum structure:
+
+Record metadata
+Source identity
+Execution context
+Baseline references
+Required validation-layer results
+Failure and blocker review
+Evidence completeness review
+Non-release or release-boundary statement
+Final evidence status
+
+This skeleton is mandatory for consistency, but future records may add more detailed subsections when needed.
+
+Mini-EPIC 32.26 Outcome
+
+Mini-EPIC 32.26 defines this reusable template only.
+
+No real release-candidate evidence execution record instance is created by this Mini-EPIC.
+
+No validation pack is executed by this Mini-EPIC.
+
+No release candidate, package, deployment, automation, or production-readiness claim is introduced.rn
