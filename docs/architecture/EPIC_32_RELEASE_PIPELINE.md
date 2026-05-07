@@ -1337,7 +1337,7 @@ This template is documentation structure only. It does not create a release cand
 
 The full template is intentionally not duplicated in this EPIC document. The canonical scaffold lives in `RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`.
 
-## Mini-EPIC 32.19 — Release Candidate Evidence Record Dry-Run Instance
+## Mini-EPIC 32.19 â€” Release Candidate Evidence Record Dry-Run Instance
 
 Mini-EPIC 32.19 created the first concrete release-candidate evidence record instance from the reusable template introduced in Mini-EPIC 32.18.
 
@@ -1346,3 +1346,24 @@ Created record:
 docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LOCAL_DRY_RUN_001.md
 
 This Mini-EPIC remains evidence capture only. It does not create a real release candidate, package, artifact, deployment, tag, GitHub Release, CI change, or production-readiness claim.
+
+## Mini-EPIC 32.20 - Release Candidate Evidence Record Consistency Audit
+
+Mini-EPIC 32.20 audited the first concrete local dry-run release candidate evidence record created in Mini-EPIC 32.19:
+
+- `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LOCAL_DRY_RUN_001.md`
+
+The audit confirmed internal consistency across the evidence record, Mini-EPIC 32.19 closure document, release candidate evidence index, and EPIC 32 release pipeline documentation.
+
+The audit preserved the evidence-capture-only boundary:
+
+- no real release candidate was created
+- no release package was created
+- no release artifacts were published
+- no CI release automation was introduced
+- no deployment occurred
+- no production readiness approval was claimed
+
+Closure evidence:
+
+- `docs/architecture/MINI_EPIC_32_20_CLOSURE.md`
