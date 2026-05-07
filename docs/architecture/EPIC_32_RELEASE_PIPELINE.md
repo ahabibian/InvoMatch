@@ -1260,3 +1260,33 @@ Mini-EPIC 32.15 introduced no:
 - package publishing behavior
 
 The generated evidence remains local-only under output/local/ and is excluded from release package semantics.
+
+## Mini-EPIC 32.16 - Release Manifest CLI Real Failure Evidence Verification
+
+Mini-EPIC 32.16 verified the release package manifest dry-run CLI deterministic failure contract through real command-line execution.
+
+The evidence confirmed that an invalid manifest schema condition:
+
+- returns a non-zero exit code
+- emits nothing to stdout
+- emits deterministic validation output to stderr
+- includes the expected validation prefix manifest schema invalid:
+- does not write the requested preview file
+- does not write the default preview file
+
+The verified failure text was:
+
+    manifest schema invalid: dry_run must be true
+
+The evidence was captured through a local-only command-line execution that used the existing test-supported invalid manifest mechanism.
+
+No public CLI flag, schema behavior, package behavior, release behavior, CI workflow, frontend behavior, or runtime behavior was changed.
+
+Targeted validation after evidence capture:
+
+    pytest -q tests\test_release_manifest_dry_run.py --basetemp=.pytest_tmp
+    23 passed in 0.16s
+
+Closure document:
+
+    docs/architecture/MINI_EPIC_32_16_CLOSURE.md
