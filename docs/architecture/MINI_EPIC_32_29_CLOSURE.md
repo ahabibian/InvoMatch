@@ -22,9 +22,8 @@ Confirm that the release-candidate evidence governance documentation layer is co
 
 - `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_INDEX.md`
 - `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`
-- `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LIFECYCLE.md`
+- `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LIFECYCLE_AND_NAMING_RULES.md`
 - `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_FINALIZATION_GATE.md`
-- `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_NAMING_RULES.md`
 - `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LOCAL_DRY_RUN_001.md`
 - `docs/architecture/EPIC_32_RELEASE_PIPELINE.md`
 
@@ -95,10 +94,10 @@ No runtime, CI, CLI, schema, manifest, package, deployment, or automation behavi
 | Criteria | Status |
 |---|---|
 | Governance documentation set reviewed | Passed |
-| Evidence template and lifecycle rules aligned | Passed |
+| Evidence template and lifecycle/naming rules aligned | Passed |
 | Lifecycle states and evidence index governance aligned | Passed |
 | Finalization gate and closed lifecycle states aligned | Passed |
-| Naming rules and future evidence references aligned | Passed |
+| Combined lifecycle/naming rules and future evidence references aligned | Passed |
 | Dry-run baseline reference rules and index governance aligned | Passed |
 | Active versus historical evidence terminology confirmed | Passed |
 | Blocked, failed, abandoned, superseded, and not-executed records remain auditable | Passed |

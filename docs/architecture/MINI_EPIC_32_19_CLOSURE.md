@@ -1,4 +1,4 @@
-# Mini-EPIC 32.19 Closure â€” Release Candidate Evidence Record Dry-Run Instance
+# Mini-EPIC 32.19 Closure - Release Candidate Evidence Record Dry-Run Instance
 
 Status: Closed
 

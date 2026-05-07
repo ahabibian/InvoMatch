@@ -631,7 +631,9 @@ Superseded, abandoned, failed, blocked, and not-executed records may remain refe
 
 Closed records are treated as immutable historical evidence. Later corrections, supersession notes, or index updates must be append-only and must not rewrite the original evidence outcome.
 
-This index update does not create a real release-candidate evidence record instance and does not claim release-candidate readiness, package generation, artifact publication, deployment, automation, or production readiness.rnrn
+This index update does not create a real release-candidate evidence record instance and does not claim release-candidate readiness, package generation, artifact publication, deployment, automation, or production readiness.
+
+
 Mini-EPIC 32.28 - Evidence Index Governance Finalization
 Purpose
 
@@ -839,4 +841,4 @@ No CI behavior is changed.
 
 No deployment is performed.
 
-No production-readiness claim is introduced.rn
+No production-readiness claim is introduced.
