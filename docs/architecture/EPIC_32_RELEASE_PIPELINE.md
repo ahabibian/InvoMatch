@@ -1337,7 +1337,7 @@ This template is documentation structure only. It does not create a release cand
 
 The full template is intentionally not duplicated in this EPIC document. The canonical scaffold lives in `RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`.
 
-## Mini-EPIC 32.19 ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Release Candidate Evidence Record Dry-Run Instance
+## Mini-EPIC 32.19 ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Release Candidate Evidence Record Dry-Run Instance
 
 Mini-EPIC 32.19 created the first concrete release-candidate evidence record instance from the reusable template introduced in Mini-EPIC 32.18.
 
@@ -1409,4 +1409,13 @@ This record was reviewed under the Mini-EPIC 32.21 finalization gate and classif
 
 The baseline is used only for internal evidence traceability across future evidence records, audits, and dry-run validations.
 
-It does not imply release-candidate readiness, package generation, artifact publication, deployment, release automation, runtime behavior change, manifest schema change, validation behavior change, or production readiness.
+It does not imply release-candidate readiness, package generation, artifact publication, deployment, release automation, runtime behavior change, manifest schema change, validation behavior change, or production readiness.rn
+Mini-EPIC 32.24 - Finalized Evidence Baseline Consumption Rules
+
+Mini-EPIC 32.24 defines the documentation-only consumption rules for the finalized local dry-run evidence baseline established in Mini-EPIC 32.23.
+
+Future evidence records, audits, and dry-run validations may reference that baseline only for internal traceability, comparison, audit continuity, and evidence-record consistency.
+
+The baseline does not replace future validation evidence and must not be interpreted as a release candidate, package artifact, deployment artifact, approval gate result, or production-readiness signal.
+
+This Mini-EPIC introduced no release creation, package generation, artifact publishing, release automation, deployment behavior, CLI behavior change, manifest schema change, runtime code change, validation behavior change, or CI behavior change.rn
