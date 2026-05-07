@@ -204,3 +204,99 @@ Future EPICs may introduce:
 - rollback metadata
 
 Those are intentionally outside this boundary.
+
+## Release Manifest Dry-Run Evidence Reference Model
+
+The release manifest dry-run evidence is a release-candidate documentation reference model only.
+
+It exists to make future release-candidate documentation cite a stable evidence structure instead of relying on scattered Mini-EPIC closure notes.
+
+### Evidence Sources
+
+| Evidence Area | Source | Purpose |
+|---|---|---|
+| Success-path dry-run CLI evidence | docs/architecture/MINI_EPIC_32_15_CLOSURE.md | Confirms clean-state dry-run CLI success evidence and successful preview behavior. |
+| Failure-path dry-run CLI evidence | docs/architecture/MINI_EPIC_32_16_CLOSURE.md | Confirms deterministic CLI validation failure behavior from a clean pushed state. |
+| Dry-run contract | docs/architecture/PACKAGE_MANIFEST_DRY_RUN_CONTRACT.md | Defines the expected dry-run CLI and manifest-preview contract. |
+| Artifact boundary | docs/architecture/RELEASE_ARTIFACT_PACKAGE_MANIFEST.md | Defines the boundary between release artifact design and local dry-run preview behavior. |
+
+### Success-Path Evidence Meaning
+
+The success-path evidence from Mini-EPIC 32.15 confirms that the release manifest dry-run CLI can produce valid local preview evidence from a clean repository state.
+
+This evidence may be cited by future release-candidate documentation when showing that the manifest dry-run command can complete successfully under the documented contract.
+
+The success evidence does not imply:
+- a real package was created
+- a release artifact was published
+- a deployment happened
+- a GitHub Release was created
+- a tag was created
+- a release candidate was promoted
+
+### Failure-Path Evidence Meaning
+
+The failure-path evidence from Mini-EPIC 32.16 confirms that the release manifest dry-run CLI rejects invalid manifest preview content deterministically.
+
+The verified failure behavior includes:
+- non-zero exit code
+- empty stdout
+- deterministic stderr output
+- expected validation prefix: manifest schema invalid:
+- no requested preview file written
+- no default preview file written
+
+This failure evidence is validation behavior evidence only.
+
+It is not a product feature, not a release feature, and not a deployment capability.
+
+### Local-Only Evidence Boundary
+
+Release manifest dry-run preview output is local-only evidence.
+
+Dry-run preview files are not package artifacts.
+
+Local preview output must not be treated as:
+- a release artifact
+- a package
+- a deployment bundle
+- a production artifact
+- a staging artifact
+- a published build
+- a GitHub Release asset
+
+Local generated evidence output must not be tracked unless a future Mini-EPIC explicitly changes the evidence storage policy.
+
+### Future Release-Candidate Citation Rule
+
+Future release-candidate documentation should cite this evidence model first, then cite the specific Mini-EPIC closure evidence only when the release-candidate record needs concrete historical verification.
+
+Recommended citation order:
+
+1. docs/architecture/RELEASE_CANDIDATE_EVIDENCE_INDEX.md
+2. docs/architecture/PACKAGE_MANIFEST_DRY_RUN_CONTRACT.md
+3. docs/architecture/MINI_EPIC_32_15_CLOSURE.md for success-path evidence
+4. docs/architecture/MINI_EPIC_32_16_CLOSURE.md for failure-path evidence
+
+This avoids duplicating full closure content in future release-candidate records while preserving traceability.
+
+### Non-Deployment Boundary
+
+Release manifest dry-run evidence capture does not imply release publishing.
+
+It does not introduce:
+- package generation
+- artifact publishing
+- Docker image creation
+- ZIP or tar creation
+- semantic version tagging
+- GitHub Release creation
+- deployment
+- staging promotion
+- production promotion
+- runtime release registry updates
+- database release-state persistence
+- rollback behavior
+- frontend behavior
+- CI workflow behavior
+

@@ -1290,3 +1290,23 @@ Targeted validation after evidence capture:
 Closure document:
 
     docs/architecture/MINI_EPIC_32_16_CLOSURE.md
+
+## Mini-EPIC 32.17 - Release Manifest Evidence Index Final Alignment
+
+Mini-EPIC 32.17 finalizes the release manifest dry-run evidence reference model.
+
+The release candidate evidence index now provides a stable citation point for both dry-run CLI success-path evidence and deterministic failure-path evidence.
+
+Future release-candidate records should cite:
+
+- docs/architecture/RELEASE_CANDIDATE_EVIDENCE_INDEX.md as the primary evidence reference model
+- docs/architecture/PACKAGE_MANIFEST_DRY_RUN_CONTRACT.md for the dry-run CLI and manifest-preview contract
+- docs/architecture/MINI_EPIC_32_15_CLOSURE.md when concrete success-path evidence is needed
+- docs/architecture/MINI_EPIC_32_16_CLOSURE.md when concrete failure-path evidence is needed
+
+This alignment avoids copying full closure evidence into future release-candidate documentation while preserving traceability.
+
+This Mini-EPIC does not change source code, tests, CLI semantics, manifest schema, CI workflow, packaging behavior, artifact publishing, deployment behavior, release identity semantics, frontend behavior, runtime registry behavior, database persistence, rollback behavior, tags, GitHub Releases, or environment promotion.
+
+Dry-run previews remain local-only validation evidence and are not release artifacts.
+
