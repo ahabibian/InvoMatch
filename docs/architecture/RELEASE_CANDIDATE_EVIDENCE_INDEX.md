@@ -382,4 +382,28 @@ This baseline reference is internal evidence traceability only.
 
 It records that the first concrete local dry-run evidence record was reviewed under the Mini-EPIC 32.21 finalization gate and classified in Mini-EPIC 32.22 as finalized-local-dry-run.
 
-This reference does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy anything, modify CLI behavior, modify manifest schema, modify runtime code, change validation behavior, or claim production readiness.
+This reference does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy anything, modify CLI behavior, modify manifest schema, modify runtime code, change validation behavior, or claim production readiness.rn
+Baseline Consumption Rules
+
+The finalized local dry-run evidence baseline established by Mini-EPIC 32.23 may be referenced by future evidence records, audits, and dry-run validations only as an internal traceability reference.
+
+Allowed uses:
+
+comparison against later evidence records
+audit continuity across release-candidate evidence work
+consistency checks for future local dry-run evidence documentation
+historical reference to the first finalized local dry-run evidence baseline
+
+Disallowed interpretations:
+
+it is not a release candidate
+it is not a package artifact
+it is not a deployment artifact
+it is not an approval gate result
+it is not a production-readiness signal
+it does not replace future validation evidence
+it does not prove that a future release candidate is ready
+
+Any future evidence record that references this baseline must preserve the non-release, non-package, non-deployment, non-approval, and non-production-readiness boundary.
+
+The baseline is useful for internal evidence traceability only. It must not be used as a substitute for fresh release-candidate validation, CI evidence, package evidence, deployment verification, or operational readiness evidence.rn
