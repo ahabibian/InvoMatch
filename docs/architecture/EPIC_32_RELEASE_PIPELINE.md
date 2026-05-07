@@ -1337,7 +1337,7 @@ This template is documentation structure only. It does not create a release cand
 
 The full template is intentionally not duplicated in this EPIC document. The canonical scaffold lives in `RELEASE_CANDIDATE_EVIDENCE_RECORD_TEMPLATE.md`.
 
-## Mini-EPIC 32.19 â€” Release Candidate Evidence Record Dry-Run Instance
+## Mini-EPIC 32.19 Ã¢â‚¬â€ Release Candidate Evidence Record Dry-Run Instance
 
 Mini-EPIC 32.19 created the first concrete release-candidate evidence record instance from the reusable template introduced in Mini-EPIC 32.18.
 
@@ -1367,3 +1367,13 @@ The audit preserved the evidence-capture-only boundary:
 Closure evidence:
 
 - `docs/architecture/MINI_EPIC_32_20_CLOSURE.md`
+
+## Mini-EPIC 32.21 - Release Candidate Evidence Record Finalization Gate
+
+Mini-EPIC 32.21 defined the formal policy gate for deciding when a release candidate evidence record may be considered internally finalized.
+
+The new finalization gate defines required repository identity, clean-state verification, validation evidence, generated-output tracking checks, dry-run manifest evidence where applicable, non-deployment boundary confirmation, reviewer signoff notes, and allowed final statuses.
+
+Allowed evidence record states are now defined as `draft`, `internally reviewed`, `finalized-local-dry-run`, `rejected`, and `superseded`.
+
+This update is documentation and policy only. It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy, approve staging or production promotion, or claim production readiness.

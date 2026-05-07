@@ -344,3 +344,11 @@ Local dry-run evidence record.
 Boundary:
 
 This record is not a release artifact, not a release package, not a deployment record, and not a production-readiness claim.
+
+## Governing Policy Reference
+
+Release candidate evidence record status must follow the finalization rules defined in:
+
+- `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_FINALIZATION_GATE.md`
+
+The evidence index remains a traceability index. It must not duplicate the full finalization process.
