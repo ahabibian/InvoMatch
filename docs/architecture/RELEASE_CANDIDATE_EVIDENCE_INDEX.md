@@ -631,4 +631,212 @@ Superseded, abandoned, failed, blocked, and not-executed records may remain refe
 
 Closed records are treated as immutable historical evidence. Later corrections, supersession notes, or index updates must be append-only and must not rewrite the original evidence outcome.
 
-This index update does not create a real release-candidate evidence record instance and does not claim release-candidate readiness, package generation, artifact publication, deployment, automation, or production readiness.
+This index update does not create a real release-candidate evidence record instance and does not claim release-candidate readiness, package generation, artifact publication, deployment, automation, or production readiness.rnrn
+Mini-EPIC 32.28 - Evidence Index Governance Finalization
+Purpose
+
+This section finalizes governance rules for the release candidate evidence index.
+
+The evidence index is an audit and traceability register for release-candidate evidence records. It is not a release approval page, not a deployment log, not a package publication register, and not a production readiness declaration.
+
+The index must allow future evidence records to be referenced consistently, safely, and without ambiguity across their full lifecycle.
+
+Governance Boundary
+
+The evidence index must preserve the following boundaries:
+
+It must not create or imply a real release candidate.
+It must not create or imply a package.
+It must not create or imply artifact publication.
+It must not create or imply deployment.
+It must not create or imply production readiness.
+It must not create or imply automation.
+It must not convert closed-passed evidence into release approval.
+It must not hide failed, blocked, abandoned, superseded, or not-executed records.
+
+A closed-passed evidence record means only that the referenced evidence record reached its own passed closure state under its documented scope. It does not mean the product was released, deployed, approved, packaged, or production-ready.
+
+Evidence Record Lifecycle States
+
+Future evidence index entries must use one of the following lifecycle states:
+
+Lifecycle StateMeaningIndex Treatment
+openedRecord has been created but evidence execution has not startedActive unless superseded or abandoned
+in-progressEvidence work is underwayActive unless superseded or abandoned
+blockedEvidence cannot currently proceedActive or historical depending on whether it remains the current record for the validation purpose
+repair-in-progressA failed or blocked record is being repaired or followed by corrective workActive unless superseded
+supersededRecord has been replaced by a newer record for the same validation purposeHistorical and retained
+abandonedRecord was intentionally stopped before useful closureHistorical and retained
+closed-passedRecord closed with passing evidence under its own stated scopeHistorical unless explicitly designated as the current reference baseline
+closed-failedRecord closed with failing evidenceHistorical and retained
+closed-not-executedRecord closed without executionHistorical and retained
+
+No lifecycle state may be renamed casually. If a future lifecycle state is needed, the index governance rules must be amended before that state is used.
+
+Active Versus Historical Reference Rules
+
+The index must clearly separate active and historical evidence references.
+
+An active evidence reference is a record that is currently expected to guide, complete, repair, or represent the latest known evidence work for a specific validation purpose.
+
+A historical evidence reference is a retained audit entry that must remain visible but must not be treated as the current record for new release-candidate interpretation.
+
+Historical entries include, at minimum:
+
+superseded records
+abandoned records
+closed-failed records
+closed-not-executed records
+closed-passed records that are not explicitly designated as the current baseline
+blocked records that have been replaced by a newer active record
+Active Record Designation Rules
+
+The index must avoid duplicate active records for the same validation purpose.
+
+For any specific validation purpose, there should be no more than one active record unless the index explicitly documents why parallel active records are required.
+
+If an active record is replaced, the older record must be marked superseded, abandoned, closed-failed, closed-not-executed, or otherwise moved out of active status before or at the same time the replacement is added.
+
+The replacement entry must identify the prior record in its supersession chain.
+
+Supersession Chain Rules
+
+When one record replaces another, the index must preserve the chain.
+
+A superseded record must retain:
+
+its original record identifier
+its original lifecycle result
+the reason it was superseded
+the identifier of the replacing record when known
+its original evidence references
+its original scope boundary
+
+A replacing record must identify the record or records it supersedes.
+
+Supersession must not erase failed, blocked, abandoned, or incomplete evidence. It only clarifies which record is currently authoritative for future reference.
+
+Required Fields for Future Evidence Index Entries
+
+Each future evidence record entry in the index must include the following fields:
+
+FieldRequirement
+Record IDStable identifier for the evidence record
+Record titleHuman-readable title
+Validation purposeWhat the record is intended to evidence
+Lifecycle stateOne approved lifecycle state
+Active or historical statusExplicit active/historical classification
+Evidence record pathPath to the evidence record document, if one exists
+Related Mini-EPIC or release workLink or reference to the governing work item
+Source commit or branch referenceCommit, branch, or explicit not-available marker
+CI or local evidence referenceCI run, local command evidence, or explicit not-executed marker
+SupersedesPrior record ID or none
+Superseded byReplacement record ID or none
+Boundary statementExplicit non-release, non-package, non-deployment, non-production-readiness boundary
+Last index amendment dateDate the index entry was last amended
+Amendment reasonWhy the entry was added or changed
+
+If any field is not applicable, the entry must say not applicable or not executed; it must not be left ambiguous.
+
+Grouping and Sorting Expectations
+
+Future index entries should be grouped by validation purpose first, then by active/historical status, then by lifecycle state, then by record identifier or creation order.
+
+The expected grouping order is:
+
+Current active references
+Blocked or repair-in-progress references that remain active
+Closed-passed baseline references
+Failed, not-executed, abandoned, and superseded historical references
+Archived supersession chains
+
+This grouping is intended to make current interpretation clear while preserving full historical traceability.
+
+Index Amendment Rules
+
+Index amendments must be audit-safe.
+
+Permitted amendments include:
+
+adding a new evidence record entry
+updating lifecycle state when the evidence record lifecycle changes
+adding supersession references
+adding missing evidence links
+correcting factual metadata
+clarifying boundary language
+adding amendment reason and date
+
+Amendments must not:
+
+delete failed evidence
+delete abandoned evidence
+delete blocked evidence
+delete superseded evidence
+rewrite historical outcomes to appear more successful
+convert closed-passed evidence into approval, release, deployment, or production readiness
+remove the non-release boundary from historical records
+
+When historical entries require correction, the preferred model is append-only clarification: retain the original meaning and add a correction note or amendment reason.
+
+Historical Entry Immutability Expectations
+
+Historical evidence entries are not expected to be immutable in the strict database sense, but they must be treated as audit records.
+
+Historical entries may be clarified, linked, or corrected, but their core outcome must not be rewritten to change the meaning of the original lifecycle result.
+
+A failed record must remain visibly failed.
+
+A blocked record must remain visibly blocked unless its lifecycle legitimately changes.
+
+An abandoned record must remain visibly abandoned.
+
+A superseded record must remain visible and traceable to its replacement.
+
+A closed-not-executed record must remain visibly not executed.
+
+Prohibited Index Language
+
+The index must not use language that implies release approval or production status unless a future approved release process explicitly introduces such authority.
+
+Prohibited or restricted terms include:
+
+production-ready
+released
+deployed
+approved
+final release
+production validated
+release approved
+deployment completed
+artifact published
+package generated
+customer-ready
+go-live approved
+
+The index may refer to closed-passed only as an evidence lifecycle state. It must not use that state as a synonym for release readiness.
+
+Mini-EPIC 32.28 Result
+
+Mini-EPIC 32.28 finalizes governance rules for the release candidate evidence index.
+
+The result is documentation-only.
+
+No release candidate is created.
+
+No release-candidate evidence record instance is created.
+
+No validation pack is executed.
+
+No package is generated.
+
+No artifact is published.
+
+No release automation is introduced.
+
+No runtime behavior is changed.
+
+No CI behavior is changed.
+
+No deployment is performed.
+
+No production-readiness claim is introduced.rn
