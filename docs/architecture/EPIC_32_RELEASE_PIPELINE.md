@@ -1650,3 +1650,15 @@ The decision outcomes covered by the template are accepted, rejected, blocked, r
 
 The decision record is governance-only. It does not execute a lifecycle transition, mutate evidence state, create a release candidate, create validation evidence, run CI, generate packages, publish artifacts, deploy anything, or claim release-candidate or production readiness.
 <!-- MINI_EPIC_32_38_SUMMARY_END -->
+
+## Mini-EPIC 32.39 - Release Candidate Evidence Lifecycle Transition Decision Record Instance Dry-Run
+
+Mini-EPIC 32.39 creates the first dry-run instance of a release candidate evidence lifecycle transition decision record using the Mini-EPIC 32.38 template.
+
+The dry-run instance validates that lifecycle transition decisions can be documented with explicit decision questions, pre-decision checks, audit notes, and non-mutation assertions.
+
+The created record is documentation-only. It does not execute a lifecycle state mutation, approve a release candidate, finalize evidence, create a package, publish an artifact, tag a commit, promote an environment, or claim release-candidate or production readiness.
+
+Decision record dry-run instance:
+
+- docs/architecture/RELEASE_CANDIDATE_EVIDENCE_LIFECYCLE_TRANSITION_DECISION_RECORD_DRY_RUN_001.md
