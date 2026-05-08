@@ -1556,3 +1556,13 @@ This mini-epic is documentation and governance only. It does not create a releas
 Checklist document:
 
 docs/architecture/RELEASE_CANDIDATE_EVIDENCE_PRE_CREATION_CHECKLIST.mdrn
+
+Mini-EPIC 32.35 - Release Candidate Evidence Record Creation Gate Definition
+
+Mini-EPIC 32.35 defines the formal creation gate for future release-candidate evidence record instances.
+
+This work builds directly on the Mini-EPIC 32.34 pre-creation checklist and turns that checklist into a governance gate. The gate defines when a future evidence record file may be created, what conditions must already be satisfied, what metadata and declarations must be captured at creation time, and which claims remain blocked until real validation evidence exists.
+
+The creation gate is documentation and policy only. It does not create a release candidate, does not create an actual release-candidate evidence record instance, does not execute validation packs, does not run CI, does not generate packages, does not publish artifacts, does not deploy anything, does not change runtime behavior, does not change CLI behavior, does not change CI configuration, and does not claim release-candidate or production readiness.
+
+Creation-time known fields must be separated from allowed pending fields. Validation execution results, CI run metadata, package references, artifact publication state, deployment state, release-candidate readiness, and production readiness remain blocked until later evidence and finalization gates are satisfied.
