@@ -1638,3 +1638,15 @@ It builds on Mini-EPIC 32.35 creation gate rules and Mini-EPIC 32.36 lifecycle t
 The checklist explicitly covers failed, incomplete, repaired, superseded, voided, and finalized record handling. Finalized state review requires real validation evidence and cannot be satisfied by file existence, document existence, or manual checklist completion. Repaired records must not move directly to finalized without revalidation.
 
 This mini-epic is governance-only. It does not create a release candidate, create an evidence record instance, execute validation packs, run CI, capture CI evidence, generate packages, publish artifacts, deploy anything, change runtime behavior, change CLI behavior, change CI configuration, or claim release-candidate or production readiness.
+
+<!-- MINI_EPIC_32_38_SUMMARY_START -->
+### Mini-EPIC 32.38 - Release Candidate Evidence Lifecycle Transition Decision Record Template
+
+Mini-EPIC 32.38 defines the governance template used to record the reviewer decision for a future release-candidate evidence record lifecycle transition review.
+
+The template builds on the Mini-EPIC 32.35 evidence record creation gate, the Mini-EPIC 32.36 lifecycle state transition rules, and the Mini-EPIC 32.37 lifecycle transition review checklist. It requires explicit identity, source state, target state, transition reason, reviewer decision, checklist result, evidence reference, missing/failed/incomplete evidence, repair, supersession, voiding, finalization, rejection, and blocking fields.
+
+The decision outcomes covered by the template are accepted, rejected, blocked, requires evidence, requires repair, requires supersession, requires voiding, and finalized. Finalization decisions explicitly require real validation evidence and cannot be accepted from placeholder, implied, undocumented, stale, or assumed evidence.
+
+The decision record is governance-only. It does not execute a lifecycle transition, mutate evidence state, create a release candidate, create validation evidence, run CI, generate packages, publish artifacts, deploy anything, or claim release-candidate or production readiness.
+<!-- MINI_EPIC_32_38_SUMMARY_END -->
