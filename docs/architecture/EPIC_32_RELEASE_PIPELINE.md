@@ -1543,3 +1543,16 @@ The preparation boundary confirms that future release-candidate evidence work mu
 This mini-epic does not create a release candidate, does not create a release-candidate evidence record instance, does not execute the full validation packs, does not generate packages, does not publish artifacts, does not change CI, does not change runtime behavior, does not change CLI behavior, does not change manifest schema, does not change release identity behavior, and does not claim release-candidate or production readiness.
 
 Only the targeted release manifest dry-run test remains in scope as a non-release preparation baseline.
+## Mini-EPIC 32.34 - Release Candidate Evidence Record Pre-Creation Checklist
+
+Mini-EPIC 32.34 defines a strict pre-creation checklist for the first future release-candidate evidence record.
+
+The checklist builds on the preparation boundary established in Mini-EPIC 32.33 and converts that boundary into practical checks that must be satisfied before any real release-candidate evidence record instance may be created.
+
+The checklist requires branch and commit alignment, clean working tree verification, evidence owner identification, required governance references, validation-pack plan readiness, CI evidence expectations, release identity capture expectations, artifact/package/deployment boundary declarations, and finalization prerequisites.
+
+This mini-epic is documentation and governance only. It does not create a release candidate, does not create a release-candidate evidence record instance, does not execute validation packs, does not run CI, does not generate packages, does not publish artifacts, does not change runtime behavior, does not change CLI behavior, does not change CI configuration, does not deploy anything, and does not claim release-candidate or production readiness.
+
+Checklist document:
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_PRE_CREATION_CHECKLIST.mdrn
