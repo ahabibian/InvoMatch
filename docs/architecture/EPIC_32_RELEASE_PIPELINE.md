@@ -45,7 +45,8 @@ After this EPIC, the system must support:
 
 EPIC 32 does not include:
 
-- Kubernetes orchestration
+- Kube
+etes orchestration
 - autoscaling
 - multi-region deployment
 - infrastructure-as-code platforms
@@ -128,7 +129,8 @@ Current baseline result:
 
 Purpose:
 
-Protect product-facing API response shapes and prevent internal field leakage.
+Protect product-facing API response shapes and prevent inte
+al field leakage.
 
 Command:
 
@@ -238,7 +240,8 @@ The backend dependency model is not fully reproducible yet.
 Current pyproject.toml uses unpinned dependencies:
 
 - fastapi
-- uvicorn
+- uvico
+
 - pydantic
 - pytest
 - python-multipart
@@ -333,7 +336,8 @@ The release identity model contains the following fields:
 | Field | Meaning |
 |---|---|
 | `application_name` | Stable application identifier. Current default: `invomatch`. |
-| `application_version` | Application/internal release version. Current default: `0.1.0` from the backend project baseline. |
+| `application_version` | Application/inte
+al release version. Current default: `0.1.0` from the backend project baseline. |
 | `git_commit_sha` | Commit SHA associated with the runtime when provided by release/build tooling. Falls back to `unknown`. |
 | `git_branch` | Branch or ref associated with the runtime when provided by release/build tooling. Falls back to `unknown`. |
 | `build_timestamp_utc` | UTC build timestamp when provided by release/build tooling. Falls back to `null`. |
@@ -370,7 +374,8 @@ The release identity service reads only the following allow-listed environment v
 
 No arbitrary environment variables are exposed.
 
-Secrets, token configuration, persistence paths, storage paths, seed token JSON, and CI internals must not appear in release identity output.
+Secrets, token configuration, persistence paths, storage paths, seed token JSON, and CI inte
+als must not appear in release identity output.
 
 ### Validation Status Boundary
 
@@ -525,7 +530,8 @@ The following CI steps are release-blocking:
 
 Any failed release-blocking step blocks release closure.
 
-Warnings do not block release closure unless they affect runtime behavior, security, future compatibility, deployment safety, validation reliability, or evidence trustworthiness.
+Wa
+ings do not block release closure unless they affect runtime behavior, security, future compatibility, deployment safety, validation reliability, or evidence trustworthiness.
 
 ### Required CI Evidence For Release-Related EPIC Closure
 
@@ -693,7 +699,8 @@ The current workflow does not provide a deterministic UTC build timestamp value 
 
 Runtime release identity must not claim that a build is release-candidate-ready merely because CI is currently running.
 
-`validation_status` remains `not_declared` during CI validation. The actual release gate remains the external CI evidence:
+`validation_status` remains `not_declared` during CI validation. The actual release gate remains the exte
+al CI evidence:
 
 - backend full validation;
 - contract/API validation;
@@ -755,7 +762,8 @@ Recommended future index location:
 
     docs/architecture/evidence/release_candidates/
 
-Recommended future naming pattern:
+Recommended future naming patte
+:
 
     RC_EVIDENCE_INDEX_<YYYYMMDD>_<short_commit_sha>.md
 
@@ -1048,7 +1056,8 @@ Schema validation still happens before stdout output and before optional local p
 
 If validation fails, the CLI must:
 
-- return a non-zero exit code
+- retu
+ a non-zero exit code
 - write the deterministic validation error to stderr
 - avoid printing partial manifest JSON to stdout
 - avoid writing the requested preview output file
@@ -1058,11 +1067,13 @@ This prevents invalid manifest previews from being mistaken for valid JSON outpu
 
 ### Implementation Boundary
 
-The CLI execution path is separated into a small internal runner and a public `main()` boundary.
+The CLI execution path is separated into a small inte
+al runner and a public `main()` boundary.
 
 The runner performs argument parsing, manifest construction, schema validation, and success output.
 
-The public `main()` catches `ReleaseManifestDryRunError`, writes the deterministic error to stderr, and returns exit code `1`.
+The public `main()` catches `ReleaseManifestDryRunError`, writes the deterministic error to stderr, and retu
+s exit code `1`.
 
 This keeps known dry-run validation failures deterministic without converting unrelated programming errors into silent release behavior.
 
@@ -1070,7 +1081,8 @@ This keeps known dry-run validation failures deterministic without converting un
 
 Targeted tests cover:
 
-- schema failure returns non-zero exit code
+- schema failure retu
+s non-zero exit code
 - schema failure writes deterministic stderr
 - schema failure writes no stdout JSON
 - schema failure writes no preview file
@@ -1104,7 +1116,8 @@ stderr must remain silent for both success modes.
 
 The default success mode must:
 
-- return exit code 0
+- retu
+ exit code 0
 - emit valid manifest JSON to stdout
 - emit nothing to stderr
 - write no preview files
@@ -1117,7 +1130,8 @@ This keeps default CLI output machine-readable and safe for future automation.
 
 The file-writing success mode must:
 
-- return exit code 0
+- retu
+ exit code 0
 - write the preview only to the requested local output path
 - emit no manifest JSON to stdout
 - emit a deterministic human-readable success message to stdout
@@ -1191,7 +1205,8 @@ Observed result:
 - package_status: preview
 - default preview file was not written
 
-This confirms that stdout JSON mode emits the manifest JSON to stdout, emits nothing to stderr, returns success, and does not write a preview file unless explicitly requested.
+This confirms that stdout JSON mode emits the manifest JSON to stdout, emits nothing to stderr, retu
+s success, and does not write a preview file unless explicitly requested.
 
 ### Real CLI Evidence - Explicit --write-preview Mode
 
@@ -1267,7 +1282,8 @@ Mini-EPIC 32.16 verified the release package manifest dry-run CLI deterministic 
 
 The evidence confirmed that an invalid manifest schema condition:
 
-- returns a non-zero exit code
+- retu
+s a non-zero exit code
 - emits nothing to stdout
 - emits deterministic validation output to stderr
 - includes the expected validation prefix manifest schema invalid:
@@ -1353,7 +1369,8 @@ Mini-EPIC 32.20 audited the first concrete local dry-run release candidate evide
 
 - `docs/architecture/RELEASE_CANDIDATE_EVIDENCE_RECORD_LOCAL_DRY_RUN_001.md`
 
-The audit confirmed internal consistency across the evidence record, Mini-EPIC 32.19 closure document, release candidate evidence index, and EPIC 32 release pipeline documentation.
+The audit confirmed inte
+al consistency across the evidence record, Mini-EPIC 32.19 closure document, release candidate evidence index, and EPIC 32 release pipeline documentation.
 
 The audit preserved the evidence-capture-only boundary:
 
@@ -1370,11 +1387,13 @@ Closure evidence:
 
 ## Mini-EPIC 32.21 - Release Candidate Evidence Record Finalization Gate
 
-Mini-EPIC 32.21 defined the formal policy gate for deciding when a release candidate evidence record may be considered internally finalized.
+Mini-EPIC 32.21 defined the formal policy gate for deciding when a release candidate evidence record may be considered inte
+ally finalized.
 
 The new finalization gate defines required repository identity, clean-state verification, validation evidence, generated-output tracking checks, dry-run manifest evidence where applicable, non-deployment boundary confirmation, reviewer signoff notes, and allowed final statuses.
 
-Allowed evidence record states are now defined as `draft`, `internally reviewed`, `finalized-local-dry-run`, `rejected`, and `superseded`.
+Allowed evidence record states are now defined as `draft`, `inte
+ally reviewed`, `finalized-local-dry-run`, `rejected`, and `superseded`.
 
 This update is documentation and policy only. It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy, approve staging or production promotion, or claim production readiness.
 
@@ -1392,13 +1411,15 @@ Classification result:
 finalized-local-dry-run
 
 
-This confirms the status of the internal local dry-run evidence record only.
+This confirms the status of the inte
+al local dry-run evidence record only.
 The work remains documentation and evidence-status alignment only.
 It does not create a release candidate, generate a package, publish artifacts, introduce release automation, deploy, modify CLI behavior, modify manifest schema, modify runtime behavior, or claim production readiness.
 
 ## First Finalized Local Dry-Run Evidence Baseline Reference
 
-Mini-EPIC 32.23 aligns the first finalized local dry-run evidence record as the stable internal baseline reference for future release candidate evidence work.
+Mini-EPIC 32.23 aligns the first finalized local dry-run evidence record as the stable inte
+al baseline reference for future release candidate evidence work.
 
 The baseline reference is:
 
@@ -1406,7 +1427,8 @@ The baseline reference is:
 
 This record was reviewed under the Mini-EPIC 32.21 finalization gate and classified in Mini-EPIC 32.22 as finalized-local-dry-run.
 
-The baseline is used only for internal evidence traceability across future evidence records, audits, and dry-run validations.
+The baseline is used only for inte
+al evidence traceability across future evidence records, audits, and dry-run validations.
 
 It does not imply release-candidate readiness, package generation, artifact publication, deployment, release automation, runtime behavior change, manifest schema change, validation behavior change, or production readiness.
 
@@ -1414,7 +1436,8 @@ Mini-EPIC 32.24 - Finalized Evidence Baseline Consumption Rules
 
 Mini-EPIC 32.24 defines the documentation-only consumption rules for the finalized local dry-run evidence baseline established in Mini-EPIC 32.23.
 
-Future evidence records, audits, and dry-run validations may reference that baseline only for internal traceability, comparison, audit continuity, and evidence-record consistency.
+Future evidence records, audits, and dry-run validations may reference that baseline only for inte
+al traceability, comparison, audit continuity, and evidence-record consistency.
 
 The baseline does not replace future validation evidence and must not be interpreted as a release candidate, package artifact, deployment artifact, approval gate result, or production-readiness signal.
 
@@ -1459,25 +1482,32 @@ Closed evidence records are treated as immutable historical evidence. Later corr
 This Mini-EPIC does not create a real release candidate, does not create a real release-candidate evidence record instance, does not execute validation packs, does not generate a package, does not publish artifacts, does not introduce automation, does not modify runtime or CI behavior, and does not claim release-candidate or production readiness.
 
 
-Mini-EPIC 32.28 - Release Candidate Evidence Index Governance Finalization
+Mini-EPIC 32.28 - Release Candidate Evidence Index Gove
+ance Finalization
 
-Mini-EPIC 32.28 finalized governance rules for the release candidate evidence index.
+Mini-EPIC 32.28 finalized gove
+ance rules for the release candidate evidence index.
 
 The evidence index is now documented as an audit and traceability register, not a release approval page, deployment log, package publication register, or production readiness declaration.
 
-The governance rules define how future evidence records must be classified, referenced, displayed, amended, and preserved across lifecycle states including opened, in-progress, blocked, repair-in-progress, superseded, abandoned, closed-passed, closed-failed, and closed-not-executed.
+The gove
+ance rules define how future evidence records must be classified, referenced, displayed, amended, and preserved across lifecycle states including opened, in-progress, blocked, repair-in-progress, superseded, abandoned, closed-passed, closed-failed, and closed-not-executed.
 
 The update clarifies active versus historical evidence references, active record designation rules, supersession chains, required fields for future index entries, grouping and sorting expectations, index amendment rules, historical entry immutability expectations, and prohibited misleading language.
 
 The result is documentation-only. It does not create a release candidate, create a release-candidate evidence record instance, execute validation packs, generate a package, publish artifacts, introduce automation, modify runtime behavior, modify CI behavior, perform deployment, or claim release-candidate or production readiness.
 
-## Mini-EPIC 32.29 - Release Candidate Evidence Governance Completion Review
+## Mini-EPIC 32.29 - Release Candidate Evidence Gove
+ance Completion Review
 
-Mini-EPIC 32.29 reviewed the release-candidate evidence governance layer as a coherent documentation system.
+Mini-EPIC 32.29 reviewed the release-candidate evidence gove
+ance layer as a coherent documentation system.
 
-The review confirmed alignment across the evidence record template, lifecycle states, finalization gate, naming rules, dry-run baseline references, active and historical reference terminology, and evidence index governance rules.
+The review confirmed alignment across the evidence record template, lifecycle states, finalization gate, naming rules, dry-run baseline references, active and historical reference terminology, and evidence index gove
+ance rules.
 
-The governance layer preserves auditability for blocked, failed, abandoned, superseded, not-executed, and closed records.
+The gove
+ance layer preserves auditability for blocked, failed, abandoned, superseded, not-executed, and closed records.
 
 The closed-passed lifecycle state remains bounded evidence terminology only. It does not imply release approval, package generation, artifact publication, deployment, release-candidate readiness, production readiness, automation, runtime modification, or CI behavior change.
 
@@ -1495,8 +1525,21 @@ Mini-EPIC 32.32 - Release Candidate Evidence Baseline Readiness Review
 
 Mini-EPIC 32.32 completed a documentation-only readiness review after the clean post-repair continuation baseline established in Mini-EPIC 32.31.
 
-The review confirmed that main and origin/main were aligned, Mini-EPIC 32.31 closure evidence was present and readable, the EPIC 32 release pipeline documentation and release candidate evidence index remained available for governance continuity, and the targeted release manifest dry-run test passed as the local readiness baseline.
+The review confirmed that main and origin/main were aligned, Mini-EPIC 32.31 closure evidence was present and readable, the EPIC 32 release pipeline documentation and release candidate evidence index remained available for gove
+ance continuity, and the targeted release manifest dry-run test passed as the local readiness baseline.
 
 The next safe step is a controlled release-candidate evidence preparation step that continues to reference the established evidence lifecycle, naming, finalization, and non-deployment boundaries.
 
 Mini-EPIC 32.32 does not create a release candidate, generate a package, publish artifacts, change CI, change runtime behavior, change CLI behavior, change manifest schema, deploy anything, or claim production readiness.
+
+##
+
+## Mini-EPIC 32.33 - Release Candidate Evidence Preparation Boundary Definition
+
+Mini-EPIC 32.33 defines the preparation boundary for the next controlled release-candidate evidence phase after the Mini-EPIC 32.32 readiness review.
+
+The preparation boundary confirms that future release-candidate evidence work must reference the EPIC 32 release pipeline document, the release candidate evidence index, evidence lifecycle rules, naming rules, ownership expectations, validation-pack expectations, CI evidence requirements, release identity expectations, non-deployment boundaries, and finalization prerequisites before an actual release-candidate evidence record is created.
+
+This mini-epic does not create a release candidate, does not create a release-candidate evidence record instance, does not execute the full validation packs, does not generate packages, does not publish artifacts, does not change CI, does not change runtime behavior, does not change CLI behavior, does not change manifest schema, does not change release identity behavior, and does not claim release-candidate or production readiness.
+
+Only the targeted release manifest dry-run test remains in scope as a non-release preparation baseline.
