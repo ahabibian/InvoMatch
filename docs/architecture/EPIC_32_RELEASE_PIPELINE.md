@@ -1662,3 +1662,11 @@ The created record is documentation-only. It does not execute a lifecycle state 
 Decision record dry-run instance:
 
 - docs/architecture/RELEASE_CANDIDATE_EVIDENCE_LIFECYCLE_TRANSITION_DECISION_RECORD_DRY_RUN_001.md
+
+### Mini-EPIC 32.40 - Release Candidate Evidence Lifecycle Transition Decision Record Consistency Audit
+
+Mini-EPIC 32.40 audits the first lifecycle transition decision record dry-run instance against the Mini-EPIC 32.38 template and EPIC 32 lifecycle governance rules.
+
+The audit confirms structural consistency, dry-run/non-mutation boundaries, and absence of release-candidate readiness, packaging, deployment, publication, or environment-promotion claims.
+
+The outcome is documentation-only. It does not create, finalize, approve, publish, package, deploy, or promote a release candidate.
