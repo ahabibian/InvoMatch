@@ -1670,3 +1670,15 @@ Mini-EPIC 32.40 audits the first lifecycle transition decision record dry-run in
 The audit confirms structural consistency, dry-run/non-mutation boundaries, and absence of release-candidate readiness, packaging, deployment, publication, or environment-promotion claims.
 
 The outcome is documentation-only. It does not create, finalize, approve, publish, package, deploy, or promote a release candidate.
+
+## Mini-EPIC 32.41 - Release Candidate Evidence Lifecycle Transition Audit Chain Review
+
+Mini-EPIC 32.41 reviewed the lifecycle transition governance chain across Mini-EPICs 32.36 through 32.40.
+
+The review confirmed that the state transition rules, transition review checklist, decision record template, dry-run decision instance, and consistency audit remain aligned as a documentation-only governance chain.
+
+This review did not introduce lifecycle state mutation, release-candidate readiness claims, package creation, artifact publication, deployment approval, or environment promotion.
+
+Closure reference:
+
+- docs/architecture/MINI_EPIC_32_41_CLOSURE.md
