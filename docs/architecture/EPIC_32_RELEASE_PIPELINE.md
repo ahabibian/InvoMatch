@@ -1743,3 +1743,16 @@ The template defines the formal structure a future reviewer must use when decidi
 The template preserves a strict distinction between readiness to proceed with evidence finalization and actual evidence finalization. It also explicitly states that the decision record does not approve release-candidate readiness, deployment, package creation, artifact publishing, CI release authorization, or environment promotion.
 
 Mini-EPIC 32.44 does not create a real finalization decision record, does not finalize release candidate evidence, does not mutate lifecycle state, does not create packages, does not publish artifacts, does not approve deployment, does not authorize CI release execution, and does not promote any environment.
+
+Mini-EPIC 32.45 - Release Candidate Evidence Finalization Decision Review Checklist
+
+Mini-EPIC 32.45 added a reusable documentation-only reviewer checklist for future release candidate evidence finalization decision records.
+
+The checklist requires review of decision record identity, reviewed commit and branch, evidence record candidate reference, readiness gate result, required evidence references, CI validation reference completeness, lifecycle state before finalization, reviewer responsibilities, blocking findings, decision validity, decision rationale, post-decision constraints, and non-authorization boundaries.
+
+The checklist explicitly does not finalize evidence, does not claim release-candidate readiness, does not approve deployment, does not create packages, does not publish artifacts, does not authorize CI release activity, and does not promote any environment.
+
+Reference:
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_FINALIZATION_DECISION_REVIEW_CHECKLIST.md
+docs/architecture/MINI_EPIC_32_45_CLOSURE.md
