@@ -1756,3 +1756,18 @@ Reference:
 
 docs/architecture/RELEASE_CANDIDATE_EVIDENCE_FINALIZATION_DECISION_REVIEW_CHECKLIST.md
 docs/architecture/MINI_EPIC_32_45_CLOSURE.md
+
+## Mini-EPIC 32.46 — Release Candidate Evidence Finalization Decision Dry-Run Review
+
+Mini-EPIC 32.46 added a documentation-only dry-run review for the release candidate evidence finalization decision process.
+
+The dry-run proves that the finalization decision record template and reviewer checklist can work together structurally while using placeholder-safe, non-executing references.
+
+The dry-run confirms representability of required decision record sections, checklist coverage, readiness gate references, evidence candidate references, CI validation reference fields, lifecycle state before finalization, blocking findings, decision values, post-decision constraints, and non-authorization boundaries.
+
+This mini-epic does not create a real finalization decision record, does not evaluate a real release candidate, does not finalize evidence, does not mutate lifecycle state, does not claim release-candidate readiness, does not create packages, does not publish artifacts, does not approve deployment, does not trigger CI release authorization, and does not promote any environment.
+
+Reference:
+
+- docs/architecture/RELEASE_CANDIDATE_EVIDENCE_FINALIZATION_DECISION_DRY_RUN_REVIEW.md
+- docs/architecture/MINI_EPIC_32_46_CLOSURE.md
