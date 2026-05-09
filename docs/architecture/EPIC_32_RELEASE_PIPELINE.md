@@ -1549,19 +1549,19 @@ Mini-EPIC 32.34 defines a strict pre-creation checklist for the first future rel
 
 The checklist builds on the preparation boundary established in Mini-EPIC 32.33 and converts that boundary into practical checks that must be satisfied before any real release-candidate evidence record instance may be created.
 
-The checklist requires branch and commit alignment, clean working tree verification, evidence owner identification, required governance references, validation-pack plan readiness, CI evidence expectations, release identity capture expectations, artifact/package/deployment boundary declarations, and finalization prerequisites.
+The checklist requires branch and commit alignment, clean working tree verification, evidence owner identification, required gov.ance references, validation-pack plan readiness, CI evidence expectations, release identity capture expectations, artifact/package/deployment boundary declarations, and finalization prerequisites.
 
-This mini-epic is documentation and governance only. It does not create a release candidate, does not create a release-candidate evidence record instance, does not execute validation packs, does not run CI, does not generate packages, does not publish artifacts, does not change runtime behavior, does not change CLI behavior, does not change CI configuration, does not deploy anything, and does not claim release-candidate or production readiness.
+This mini-epic is documentation and gov.ance only. It does not create a release candidate, does not create a release-candidate evidence record instance, does not execute validation packs, does not run CI, does not generate packages, does not publish artifacts, does not change runtime behavior, does not change CLI behavior, does not change CI configuration, does not deploy anything, and does not claim release-candidate or production readiness.
 
 Checklist document:
 
-docs/architecture/RELEASE_CANDIDATE_EVIDENCE_PRE_CREATION_CHECKLIST.mdrn
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_PRE_CREATION_CHECKLIST.m.
 
 Mini-EPIC 32.35 - Release Candidate Evidence Record Creation Gate Definition
 
 Mini-EPIC 32.35 defines the formal creation gate for future release-candidate evidence record instances.
 
-This work builds directly on the Mini-EPIC 32.34 pre-creation checklist and turns that checklist into a governance gate. The gate defines when a future evidence record file may be created, what conditions must already be satisfied, what metadata and declarations must be captured at creation time, and which claims remain blocked until real validation evidence exists.
+This work builds directly on the Mini-EPIC 32.34 pre-creation checklist and t.s that checklist into a gov.ance gate. The gate defines when a future evidence record file may be created, what conditions must already be satisfied, what metadata and declarations must be captured at creation time, and which claims remain blocked until real validation evidence exists.
 
 The creation gate is documentation and policy only. It does not create a release candidate, does not create an actual release-candidate evidence record instance, does not execute validation packs, does not run CI, does not generate packages, does not publish artifacts, does not deploy anything, does not change runtime behavior, does not change CLI behavior, does not change CI configuration, and does not claim release-candidate or production readiness.
 
@@ -1571,15 +1571,15 @@ Mini-EPIC 32.36 - Release Candidate Evidence Record Lifecycle State Transition R
 Mini-EPIC 32.36 defines the lifecycle state transition rules for future release-candidate evidence records.
 This mini-epic builds directly on the Mini-EPIC 32.35 evidence record creation gate. The creation gate remains the only valid entry point into the evidence record lifecycle. A file, placeholder, draft, or manually created document is not sufficient to treat an evidence record as finalized, release-candidate-ready, package-ready, deployment-ready, or production-ready.
 Lifecycle Boundary
-Evidence record lifecycle state changes are governance events.
+Evidence record lifecycle state changes are gov.ance events.
 They are not release events, package events, artifact publication events, deployment events, environment promotion events, or production-readiness claims.
 A lifecycle state may describe the documentation and evidence status of a future release-candidate evidence record only. It must not imply that a release candidate exists, that validation packs have passed, that CI has approved a release, that a package has been generated, or that anything has been deployed.
 Allowed Lifecycle States
 Future release-candidate evidence records may use the following lifecycle states:
-StateMeaningcreatedThe record passed the Mini-EPIC 32.35 creation gate and exists as a governed evidence-record container. It does not yet prove validation execution.pending_validationThe record is waiting for real validation evidence to be attached or recorded.validation_recordedReal validation evidence has been recorded, including command, scope, result, timestamp or run reference, and pass/fail status.failedOne or more required validation checks failed, or required evidence is missing, inconsistent, or invalid.repair_requiredThe record identifies a failure or gap that requires a repair action before it can proceed.repairedA repair has been completed and the record references the repair evidence, but this state alone does not finalize the record.supersededThe record is no longer the active evidence record because a later governed record replaced it.finalizedThe record has complete real validation evidence and has passed the required evidence finalization checks.voidedThe record is intentionally invalidated because it was created in error or cannot be trusted as evidence.
+StateMeaningcreatedThe record passed the Mini-EPIC 32.35 creation gate and exists as a gov.ed evidence-record container. It does not yet prove validation execution.pending_validationThe record is waiting for real validation evidence to be attached or recorded.validation_recordedReal validation evidence has been recorded, including command, scope, result, timestamp or run reference, and pass/fail status.failedOne or more required validation checks failed, or required evidence is missing, inconsistent, or invalid.repair_requiredThe record identifies a failure or gap that requires a repair action before it can proceed.repairedA repair has been completed and the record references the repair evidence, but this state alone does not finalize the record.supersededThe record is no longer the active evidence record because a later gov.ed record replaced it.finalizedThe record has complete real validation evidence and has passed the required evidence finalization checks.voidedThe record is intentionally invalidated because it was created in error or cannot be trusted as evidence.
 Allowed State Transitions
 Only the following lifecycle transitions are allowed:
-FromToRequired conditioncreatedpending_validationThe record has passed the Mini-EPIC 32.35 creation gate and is awaiting real evidence.createdvoidedThe record was created in error, duplicated, malformed, or otherwise cannot be trusted.pending_validationvalidation_recordedReal validation evidence has been captured with enough detail to audit the result.pending_validationfailedRequired validation evidence is missing, incomplete, inconsistent, or explicitly failed.pending_validationsupersededA later governed record replaces the pending record before validation completion.validation_recordedfinalizedEvidence is complete, internally consistent, and satisfies the finalization gate.validation_recordedfailedRecorded evidence shows failure or contains blocking inconsistencies.failedrepair_requiredThe failure is acknowledged and a repair path is identified.repair_requiredrepairedRepair evidence exists and references the failed condition being repaired.repairedpending_validationThe record must be revalidated after repair before finalization.repairedsupersededA later governed record replaces the repaired record.failedsupersededA later governed record replaces the failed record.finalizedsupersededA later finalized or more authoritative governed record replaces the prior finalized record.
+FromToRequired conditioncreatedpending_validationThe record has passed the Mini-EPIC 32.35 creation gate and is awaiting real evidence.createdvoidedThe record was created in error, duplicated, malformed, or otherwise cannot be trusted.pending_validationvalidation_recordedReal validation evidence has been captured with enough detail to audit the result.pending_validationfailedRequired validation evidence is missing, incomplete, inconsistent, or explicitly failed.pending_validationsupersededA later gov.ed record replaces the pending record before validation completion.validation_recordedfinalizedEvidence is complete, int.ally consistent, and satisfies the finalization gate.validation_recordedfailedRecorded evidence shows failure or contains blocking inconsistencies.failedrepair_requiredThe failure is acknowledged and a repair path is identified.repair_requiredrepairedRepair evidence exists and references the failed condition being repaired.repairedpending_validationThe record must be revalidated after repair before finalization.repairedsupersededA later gov.ed record replaces the repaired record.failedsupersededA later gov.ed record replaces the failed record.finalizedsupersededA later finalized or more authoritative gov.ed record replaces the prior finalized record.
 Blocked State Transitions
 The following transitions are explicitly blocked:
 Blocked transitionReasoncreated -> finalizedA file existing after creation is not real validation evidence.created -> validation_recorded without evidenceValidation cannot be implied from record creation.pending_validation -> finalizedFinalization requires recorded real validation evidence first.failed -> finalizedA failed record cannot be finalized without repair and revalidation.repair_required -> finalizedRepair intent is not evidence of successful validation.repaired -> finalized without revalidationRepair completion does not prove the repaired state passed validation.superseded -> finalizedSuperseded records are no longer active finalization candidates.voided -> any active stateVoided records cannot be restored as trusted evidence.any state -> release readinessLifecycle status is not a release-readiness claim.any state -> production readinessLifecycle status is not a production-readiness claim.
@@ -1621,7 +1621,7 @@ Incomplete records must identify missing evidence and must not be finalized.
 Failed records must preserve the failed evidence and must not be rewritten as if failure did not occur.
 Repair-required records must identify the blocking failure and the expected repair boundary.
 Repaired records must reference repair evidence and must still require revalidation before finalization.
-Superseded records must identify the newer governing record or explain why the current record is no longer active.
+Superseded records must identify the newer gov.ing record or explain why the current record is no longer active.
 Finalized records must contain real validation evidence and must pass the evidence finalization gate.
 Finalization cannot occur merely because a file exists, a template is complete, or a checklist was filled manually.
 Voided records must preserve why the record cannot be trusted and must not be reused as release-candidate evidence.
@@ -1633,22 +1633,22 @@ The only validation performed for this mini-epic is the targeted release manifes
 
 Mini-EPIC 32.37 defines the review checklist required before any future release-candidate evidence record lifecycle state transition may be accepted.
 
-It builds on Mini-EPIC 32.35 creation gate rules and Mini-EPIC 32.36 lifecycle transition rules by turning the policy into a practical checklist for source state verification, target state verification, allowed transition verification, blocked transition detection, and required evidence review.
+It builds on Mini-EPIC 32.35 creation gate rules and Mini-EPIC 32.36 lifecycle transition rules by t.ing the policy into a practical checklist for source state verification, target state verification, allowed transition verification, blocked transition detection, and required evidence review.
 
 The checklist explicitly covers failed, incomplete, repaired, superseded, voided, and finalized record handling. Finalized state review requires real validation evidence and cannot be satisfied by file existence, document existence, or manual checklist completion. Repaired records must not move directly to finalized without revalidation.
 
-This mini-epic is governance-only. It does not create a release candidate, create an evidence record instance, execute validation packs, run CI, capture CI evidence, generate packages, publish artifacts, deploy anything, change runtime behavior, change CLI behavior, change CI configuration, or claim release-candidate or production readiness.
+This mini-epic is gov.ance-only. It does not create a release candidate, create an evidence record instance, execute validation packs, run CI, capture CI evidence, generate packages, publish artifacts, deploy anything, change runtime behavior, change CLI behavior, change CI configuration, or claim release-candidate or production readiness.
 
 <!-- MINI_EPIC_32_38_SUMMARY_START -->
 ### Mini-EPIC 32.38 - Release Candidate Evidence Lifecycle Transition Decision Record Template
 
-Mini-EPIC 32.38 defines the governance template used to record the reviewer decision for a future release-candidate evidence record lifecycle transition review.
+Mini-EPIC 32.38 defines the gov.ance template used to record the reviewer decision for a future release-candidate evidence record lifecycle transition review.
 
 The template builds on the Mini-EPIC 32.35 evidence record creation gate, the Mini-EPIC 32.36 lifecycle state transition rules, and the Mini-EPIC 32.37 lifecycle transition review checklist. It requires explicit identity, source state, target state, transition reason, reviewer decision, checklist result, evidence reference, missing/failed/incomplete evidence, repair, supersession, voiding, finalization, rejection, and blocking fields.
 
 The decision outcomes covered by the template are accepted, rejected, blocked, requires evidence, requires repair, requires supersession, requires voiding, and finalized. Finalization decisions explicitly require real validation evidence and cannot be accepted from placeholder, implied, undocumented, stale, or assumed evidence.
 
-The decision record is governance-only. It does not execute a lifecycle transition, mutate evidence state, create a release candidate, create validation evidence, run CI, generate packages, publish artifacts, deploy anything, or claim release-candidate or production readiness.
+The decision record is gov.ance-only. It does not execute a lifecycle transition, mutate evidence state, create a release candidate, create validation evidence, run CI, generate packages, publish artifacts, deploy anything, or claim release-candidate or production readiness.
 <!-- MINI_EPIC_32_38_SUMMARY_END -->
 
 ## Mini-EPIC 32.39 - Release Candidate Evidence Lifecycle Transition Decision Record Instance Dry-Run
@@ -1665,7 +1665,7 @@ Decision record dry-run instance:
 
 ### Mini-EPIC 32.40 - Release Candidate Evidence Lifecycle Transition Decision Record Consistency Audit
 
-Mini-EPIC 32.40 audits the first lifecycle transition decision record dry-run instance against the Mini-EPIC 32.38 template and EPIC 32 lifecycle governance rules.
+Mini-EPIC 32.40 audits the first lifecycle transition decision record dry-run instance against the Mini-EPIC 32.38 template and EPIC 32 lifecycle gov.ance rules.
 
 The audit confirms structural consistency, dry-run/non-mutation boundaries, and absence of release-candidate readiness, packaging, deployment, publication, or environment-promotion claims.
 
@@ -1673,9 +1673,9 @@ The outcome is documentation-only. It does not create, finalize, approve, publis
 
 ## Mini-EPIC 32.41 - Release Candidate Evidence Lifecycle Transition Audit Chain Review
 
-Mini-EPIC 32.41 reviewed the lifecycle transition governance chain across Mini-EPICs 32.36 through 32.40.
+Mini-EPIC 32.41 reviewed the lifecycle transition gov.ance chain across Mini-EPICs 32.36 through 32.40.
 
-The review confirmed that the state transition rules, transition review checklist, decision record template, dry-run decision instance, and consistency audit remain aligned as a documentation-only governance chain.
+The review confirmed that the state transition rules, transition review checklist, decision record template, dry-run decision instance, and consistency audit remain aligned as a documentation-only gov.ance chain.
 
 This review did not introduce lifecycle state mutation, release-candidate readiness claims, package creation, artifact publication, deployment approval, or environment promotion.
 
@@ -1683,9 +1683,9 @@ Closure reference:
 
 - docs/architecture/MINI_EPIC_32_41_CLOSURE.md
 
-## Mini-EPIC 32.42 - Release Candidate Evidence Governance Pre-Finalization Review
+## Mini-EPIC 32.42 - Release Candidate Evidence Gov.ance Pre-Finalization Review
 
-## Mini-EPIC 32.42 - Release Candidate Evidence Governance Pre-Finalization Review
+## Mini-EPIC 32.42 - Release Candidate Evidence Gov.ance Pre-Finalization Review
 
 The review confirmed that the post-repair baseline, readiness boundary, preparation boundary, pre-creation checklist, creation gate, lifecycle transition rules, review checklist, decision record template, dry-run decision instance, consistency audit, and audit-chain review remain aligned before any later evidence finalization work begins.
 
@@ -1693,3 +1693,41 @@ This review did not create or finalize a release candidate evidence record, did 
 
 
 Mini-EPIC 32.42 is a documentation-only pre-finalization review and does not create or finalize release candidate evidence.
+
+## Mini-EPIC 32.43 - Release Candidate Evidence Finalization Readiness Gate Definition
+
+Mini-EPIC 32.43 defines the final documentation-level readiness gate that must pass before any future release candidate evidence record may be created or finalized.
+
+This gate converts the governance chain from Mini-EPICs 32.31 through 32.42 into a concrete finalization readiness control.
+
+The gate requires reviewers to confirm:
+
+- required governance inputs exist;
+- lifecycle boundaries are documented and consistent;
+- evidence creation and evidence finalization remain separate;
+- required evidence references are explicit;
+- CI validation evidence is referenced by concrete run metadata;
+- blocking conditions are absent;
+- reviewer responsibilities are fulfilled;
+- and go/no-go criteria are unambiguous.
+
+The gate blocks finalization if:
+
+- required documents are missing;
+- lifecycle state boundaries are unclear;
+- evidence creation and finalization are conflated;
+- CI success is implied without run metadata;
+- local validation is treated as release authorization;
+- release-candidate-ready status is claimed prematurely;
+- deployment approval is inferred;
+- package publishing is implied;
+- environment promotion is implied;
+- or reviewer responsibility is unclear.
+
+Passing this gate only allows a future finalization workflow to proceed.
+
+Passing this gate does not mean that a release candidate is ready, approved, packaged, published, deployed, or promoted.
+
+Mini-EPIC 32.43 is documentation-only. It does not create or finalize release candidate evidence, mutate lifecycle state, approve release readiness, trigger CI release authorization, publish artifacts, create packages, approve deployment, or promote any environment.
+
+Reference: docs/architecture/MINI_EPIC_32_43_CLOSURE.md.
