@@ -1731,3 +1731,15 @@ Passing this gate does not mean that a release candidate is ready, approved, pac
 Mini-EPIC 32.43 is documentation-only. It does not create or finalize release candidate evidence, mutate lifecycle state, approve release readiness, trigger CI release authorization, publish artifacts, create packages, approve deployment, or promote any environment.
 
 Reference: docs/architecture/MINI_EPIC_32_43_CLOSURE.md.
+
+Mini-EPIC 32.44 — Release Candidate Evidence Finalization Decision Record Template
+
+Mini-EPIC 32.44 added a reusable documentation-only template for future release candidate evidence finalization decisions:
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_FINALIZATION_DECISION_RECORD_TEMPLATE.md
+
+The template defines the formal structure a future reviewer must use when deciding whether a release candidate evidence record may proceed to finalization. It includes decision identity, reviewed commit and branch, evidence candidate reference, readiness gate result, required evidence references, CI validation reference fields, lifecycle state before finalization, reviewer responsibilities, blocking findings, explicit go/no-go decision, post-decision constraints, and non-authorization boundaries.
+
+The template preserves a strict distinction between readiness to proceed with evidence finalization and actual evidence finalization. It also explicitly states that the decision record does not approve release-candidate readiness, deployment, package creation, artifact publishing, CI release authorization, or environment promotion.
+
+Mini-EPIC 32.44 does not create a real finalization decision record, does not finalize release candidate evidence, does not mutate lifecycle state, does not create packages, does not publish artifacts, does not approve deployment, does not authorize CI release execution, and does not promote any environment.
