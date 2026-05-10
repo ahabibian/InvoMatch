@@ -2251,3 +2251,25 @@ Reference documents:
 
 docs/architecture/RELEASE_CANDIDATE_READINESS_DECISION_RECORD_DRY_RUN_REVIEW.md
 docs/architecture/MINI_EPIC_32_68_CLOSURE.md
+
+Mini-EPIC 32.69 — Release Candidate Readiness Decision Input Audit
+
+Mini-EPIC 32.69 completed the release candidate readiness decision input audit.
+
+The audit verifies whether the required inputs for a future real release-candidate readiness decision record are present, current, traceable, and governance-compatible before the real decision record is created.
+
+Audit document:
+
+docs/architecture/RELEASE_CANDIDATE_READINESS_DECISION_INPUT_AUDIT.md
+
+Closure document:
+
+docs/architecture/MINI_EPIC_32_69_CLOSURE.md
+
+The audit covers required scenario regression evidence, operational validation evidence, contract validation evidence, full backend validation evidence, frontend lint evidence, frontend build evidence, CI run identity and status, commit SHA traceability, branch traceability, release identity traceability, blocker review state, finalized evidence integrity, correction / amendment / supersession policy compliance, compatibility with the release candidate readiness pre-decision boundary, compatibility with the reviewed readiness decision record template, and compatibility with the approved dry-run structure.
+
+Mini-EPIC 32.69 concludes that the repository is ready to proceed to a real release-candidate readiness decision record mini-epic.
+
+That conclusion only authorizes preparation of the real decision record.
+
+It does not approve release-candidate readiness, deployment, packaging, artifact publication, CI release behavior, or environment promotion.
