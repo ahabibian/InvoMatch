@@ -2086,3 +2086,19 @@ Separates evidence finalization from packaging, publishing, CI release behavior,
 
 Boundary:
 Mini-EPIC 32.60 does not execute evidence finalization, does not create a finalization decision record, does not approve release-candidate readiness, does not approve deployment, does not create packages, does not publish artifacts, does not authorize CI release behavior, and does not promote any environment.
+
+Mini-EPIC 32.61 — Release Candidate Evidence Finalization Decision Record
+
+Mini-EPIC 32.61 created the real release candidate evidence finalization decision record:
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_FINALIZATION_DECISION_RECORD.md
+
+The decision outcome is:
+
+Evidence finalization approved.
+
+This approval finalizes evidence governance only.
+
+It does not approve release-candidate readiness, deployment, package creation, artifact publication, CI release behavior, or environment promotion.
+
+The finalized evidence governance record is immutable. Any correction after finalization must be handled through a new correction, amendment, or supersession record rather than silently mutating finalized evidence.
