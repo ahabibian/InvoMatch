@@ -2338,3 +2338,16 @@ This mini-epic prepares the governance conditions required before any future pac
 It defines required inputs, evidence references, expected package identity fields, source identity checks, clean working tree and commit alignment checks, the relationship between finalized evidence and package authorization, the relationship between dry-run package manifest work and real package authorization, the non-deployment boundary, blocked actions, and the future decision record required before package creation can occur.
 
 Mini-EPIC 32.72 does not create packages, publish artifacts, approve deployment, authorize CI release behavior, promote any environment, modify finalized evidence, silently mutate prior evidence, or approve release execution.
+
+Mini-EPIC 32.73 — Package Creation Authorization Decision Record Template
+
+Mini-EPIC 32.73 defines the reusable package creation authorization decision record template.
+
+Output:
+
+docs/architecture/PACKAGE_CREATION_AUTHORIZATION_DECISION_RECORD_TEMPLATE.md
+docs/architecture/MINI_EPIC_32_73_CLOSURE.md
+
+This mini-epic does not create a real package creation authorization decision, approve package creation, create packages, create real release manifests, publish artifacts, approve deployment, authorize CI release behavior, promote any environment, modify finalized evidence, silently mutate prior evidence, or approve release execution.
+
+The template defines the required structure, allowed decision states, package authorization scope, readiness decision references, package preparation boundary references, finalized evidence references, source identity fields, working tree and commit alignment checks, package identity fields, dry-run manifest references, dry-run-to-real-manifest separation, non-deployment boundary, blocked actions, reviewer responsibility statement, final decision statement, and correction, amendment, and supersession rules for a future real package creation authorization decision.
