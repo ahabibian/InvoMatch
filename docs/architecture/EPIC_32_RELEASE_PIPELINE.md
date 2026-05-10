@@ -1880,3 +1880,21 @@ This checklist remains documentation-only.
 It does not evaluate a real release candidate, finalize evidence, create a real continuation readiness decision record, create a real finalization decision record, approve release-candidate readiness, approve deployment, create packages, publish artifacts, authorize CI release behavior, promote any environment, or mutate lifecycle state.
 
 Continuation readiness continues to mean only that future governance work may proceed in a controlled way.
+
+Mini-EPIC 32.53 - Release Candidate Evidence Governance Continuation Readiness Decision Record Template
+
+Mini-EPIC 32.53 defined a documentation-only continuation readiness decision record template for the release candidate evidence governance chain.
+
+Reference:
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_GOVERNANCE_CONTINUATION_READINESS_DECISION_RECORD_TEMPLATE.md
+
+The template defines the required structure for a future continuation readiness decision record, including decision identity, decision scope, reviewer and date placeholders, assessed boundary and checklist references, required prior governance inputs, documentation references, compatibility evidence references, closure evidence references, blocking and deferral condition review, allowed decision values, selected decision value placeholder, rationale placeholder, reviewer responsibility confirmation, documentation-only confirmation, non-authorization boundary confirmation, and explicit separation from finalization, release-candidate approval, deployment approval, package creation, artifact publishing, CI release authorization, environment promotion, and lifecycle mutation.
+
+Allowed future decision values remain limited to:
+
+satisfied
+blocked
+deferred
+
+The template preserves the Mini-EPIC 32.51 and Mini-EPIC 32.52 boundaries: a future satisfied continuation readiness decision may only mean that future governance work may proceed in a controlled way. It must not imply release readiness, evidence finalization, deployment approval, package creation, artifact publication, CI release authorization, lifecycle mutation, environment promotion, or release execution.
