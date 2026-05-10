@@ -2323,3 +2323,18 @@ environment validation and environment promotion
 Mini-EPIC 32.71 does not create packages, publish artifacts, approve deployment, authorize CI release behavior, promote any environment, modify finalized evidence, or silently mutate prior evidence.
 
 Future packaging, publication, CI release behavior, deployment, or environment promotion requires separate explicit authorization.
+
+Mini-EPIC 32.72 — Release Package Authorization Preparation Boundary
+
+Mini-EPIC 32.72 defines the release package authorization preparation boundary after the post-readiness transition boundary.
+
+Reference document:
+
+docs/architecture/RELEASE_PACKAGE_AUTHORIZATION_PREPARATION_BOUNDARY.md
+docs/architecture/MINI_EPIC_32_72_CLOSURE.md
+
+This mini-epic prepares the governance conditions required before any future package creation authorization decision can be considered.
+
+It defines required inputs, evidence references, expected package identity fields, source identity checks, clean working tree and commit alignment checks, the relationship between finalized evidence and package authorization, the relationship between dry-run package manifest work and real package authorization, the non-deployment boundary, blocked actions, and the future decision record required before package creation can occur.
+
+Mini-EPIC 32.72 does not create packages, publish artifacts, approve deployment, authorize CI release behavior, promote any environment, modify finalized evidence, silently mutate prior evidence, or approve release execution.
