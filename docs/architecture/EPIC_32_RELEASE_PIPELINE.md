@@ -2298,3 +2298,28 @@ Boundary preserved:
 - no silent mutation of prior evidence
 - correction, amendment, and supersession remain governed by the documented post-finalization policy
 
+
+Mini-EPIC 32.71 — Release Candidate Post-Readiness Transition Boundary
+
+Mini-EPIC 32.71 defined the controlled governance transition boundary after the real release-candidate readiness decision.
+
+Output:
+
+docs/architecture/RELEASE_CANDIDATE_POST_READINESS_TRANSITION_BOUNDARY.md
+docs/architecture/MINI_EPIC_32_71_CLOSURE.md
+
+This boundary confirms that release-candidate readiness approval allows the governance chain to continue, but does not approve release execution.
+
+It explicitly preserves the separation between:
+
+readiness approval and release execution
+evidence finalization and release execution
+package planning and package creation
+artifact references and artifact publication
+CI validation and CI release automation
+deployment readiness review and deployment approval
+environment validation and environment promotion
+
+Mini-EPIC 32.71 does not create packages, publish artifacts, approve deployment, authorize CI release behavior, promote any environment, modify finalized evidence, or silently mutate prior evidence.
+
+Future packaging, publication, CI release behavior, deployment, or environment promotion requires separate explicit authorization.
