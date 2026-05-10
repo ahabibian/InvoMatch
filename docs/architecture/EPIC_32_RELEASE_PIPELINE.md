@@ -2430,3 +2430,20 @@ Outcome:
 - this authorization does not modify finalized evidence;
 - this authorization does not silently mutate prior evidence;
 - this authorization does not approve release execution.
+
+Mini-EPIC 32.76 — Real Package Creation Procedure Definition
+
+Mini-EPIC 32.76 defined the governed real package creation procedure before any package creation step is executed.
+
+Procedure document:
+
+docs/architecture/REAL_PACKAGE_CREATION_PROCEDURE.md
+
+Closure document:
+
+docs/architecture/MINI_EPIC_32_76_CLOSURE.md
+
+The procedure defines the package creation scope, source identity requirements, clean working tree requirement, package identity fields, manifest requirements, evidence reference requirements, included and excluded components, dry-run-to-real-manifest separation, validation steps, operator responsibility, rollback and non-publication boundaries, and blocked actions.
+
+Mini-EPIC 32.76 does not create packages, does not create real release manifests, does not publish artifacts, does not approve deployment, does not authorize CI release behavior, does not promote any environment, does not modify finalized evidence, does not silently mutate prior evidence, and does not approve release execution.
+
