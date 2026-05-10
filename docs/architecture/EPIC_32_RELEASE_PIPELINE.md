@@ -1771,3 +1771,21 @@ Reference:
 
 - docs/architecture/RELEASE_CANDIDATE_EVIDENCE_FINALIZATION_DECISION_DRY_RUN_REVIEW.md
 - docs/architecture/MINI_EPIC_32_46_CLOSURE.md
+
+Mini-EPIC 32.47 — Release Candidate Evidence Finalization Decision Record Dry-Run Instance
+
+Mini-EPIC 32.47 created a documentation-only dry-run instance of the release candidate evidence finalization decision record.
+
+The dry-run instance proves that the finalization decision record template can be populated end-to-end with placeholder-safe values while preserving all EPIC 32 non-authorization boundaries.
+
+Created document:
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_FINALIZATION_DECISION_RECORD_DRY_RUN_INSTANCE.md
+
+Closure document:
+
+docs/architecture/MINI_EPIC_32_47_CLOSURE.md
+
+The dry-run instance includes placeholder-safe sections for decision identity, reviewed commit and branch, evidence candidate reference, readiness gate reference, reviewer checklist reference, CI validation reference, lifecycle state before finalization, blocking findings, decision value, decision rationale, post-decision constraints, non-authorization boundary, and reviewer attestation.
+
+The document explicitly does not create a real finalization decision record, does not evaluate a real release candidate, does not finalize evidence, does not mutate lifecycle state, does not claim release-candidate readiness, does not approve deployment, does not create packages, does not publish artifacts, does not trigger CI release authorization, and does not promote any environment.
