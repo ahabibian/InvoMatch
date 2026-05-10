@@ -2150,3 +2150,16 @@ Correction, amendment, and supersession records do not automatically approve rel
 This policy gate does not approve release-candidate readiness, deployment, package creation, artifact publication, CI release behavior, or environment promotion.
 
 Mini-EPIC 32.63 prepares the governance chain for a later release-candidate readiness pre-decision boundary, but does not create that readiness decision.
+Mini-EPIC 32.64 — Release Candidate Readiness Pre-Decision Boundary Definition
+Mini-EPIC 32.64 defined the release candidate readiness pre-decision boundary.
+Created artifact:
+
+
+docs/architecture/RELEASE_CANDIDATE_READINESS_PRE_DECISION_BOUNDARY.md
+
+
+This boundary confirms that finalized evidence alone does not equal release-candidate readiness.
+It defines the required inputs, references, checks, and blocker review conditions that must exist before a future release-candidate readiness decision can be created.
+Required review areas include finalized evidence state, post-finalization integrity audit, correction/amendment/supersession status, CI evidence references, required validation packs, blocker status, release identity traceability, non-deployment boundary, and reviewer responsibility.
+Mini-EPIC 32.64 does not approve release-candidate readiness.
+Mini-EPIC 32.64 does not approve deployment, create packages, publish artifacts, authorize CI release behavior, or promote any environment.
