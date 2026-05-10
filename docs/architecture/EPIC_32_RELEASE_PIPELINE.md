@@ -2218,3 +2218,19 @@ readiness approval does not authorize CI release behavior
 readiness approval does not promote any environment
 
 Mini-EPIC 32.66 did not create a readiness decision dry-run, did not create a real readiness decision, and did not approve release-candidate readiness.
+
+Mini-EPIC 32.67 — Release Candidate Readiness Decision Record Dry-Run
+
+Mini-EPIC 32.67 created a non-authoritative release candidate readiness decision record dry-run.
+
+Created document:
+
+docs/architecture/RELEASE_CANDIDATE_READINESS_DECISION_RECORD_DRY_RUN.md
+
+Closure document:
+
+docs/architecture/MINI_EPIC_32_67_CLOSURE.md
+
+The dry-run validates that the reviewed readiness decision record template can represent future approval, rejection, and deferral outcomes without creating a real release-candidate readiness decision.
+
+The dry-run does not approve release-candidate readiness, reject release-candidate readiness, defer release-candidate readiness as a real decision, approve deployment, create packages, publish artifacts, authorize CI release behavior, promote any environment, mutate finalized evidence, or authorize future governance execution automatically.
