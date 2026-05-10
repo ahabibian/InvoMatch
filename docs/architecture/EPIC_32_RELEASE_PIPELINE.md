@@ -2120,3 +2120,33 @@ Any issue found after finalization must use a correction, amendment, or superses
 The audit remains separated from continuation readiness, release-candidate readiness, packaging, publishing, CI release behavior, deployment, and environment promotion.
 
 This Mini-EPIC 32.62 audit does not approve release-candidate readiness, does not approve deployment, does not create packages, does not publish artifacts, does not authorize CI release behavior, and does not promote any environment.
+
+Mini-EPIC 32.63 — Post-Finalization Correction, Amendment, and Supersession Policy Gate
+
+Mini-EPIC 32.63 defined the formal post-finalization correction, amendment, and supersession policy gate after the real Mini-EPIC 32.61 evidence finalization decision and the Mini-EPIC 32.62 post-finalization integrity audit.
+
+Policy record:
+
+docs/architecture/RELEASE_CANDIDATE_EVIDENCE_POST_FINALIZATION_CORRECTION_AMENDMENT_SUPERSESSION_POLICY.md
+
+Closure record:
+
+docs/architecture/MINI_EPIC_32_63_CLOSURE.md
+
+The policy explicitly distinguishes between correction, amendment, and supersession.
+
+A correction is sufficient only for narrow factual, clerical, typographical, formatting-related, or reference-related issues that do not change the meaning of finalized evidence or the Mini-EPIC 32.61 finalization decision outcome.
+
+An amendment is required when finalized evidence remains valid but requires additional explanation, clarification, boundary reinforcement, or supplemental governance context.
+
+A supersession record is required when a discovered issue materially affects the validity, meaning, or authority of finalized evidence or requires changing, withdrawing, or replacing the Mini-EPIC 32.61 finalization decision outcome.
+
+Finalized evidence must not be silently mutated.
+
+The Mini-EPIC 32.61 finalization decision outcome must not be rewritten without a recorded supersession path.
+
+Correction, amendment, and supersession records do not automatically approve release-candidate readiness.
+
+This policy gate does not approve release-candidate readiness, deployment, package creation, artifact publication, CI release behavior, or environment promotion.
+
+Mini-EPIC 32.63 prepares the governance chain for a later release-candidate readiness pre-decision boundary, but does not create that readiness decision.
