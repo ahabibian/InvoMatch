@@ -2273,3 +2273,28 @@ Mini-EPIC 32.69 concludes that the repository is ready to proceed to a real rele
 That conclusion only authorizes preparation of the real decision record.
 
 It does not approve release-candidate readiness, deployment, packaging, artifact publication, CI release behavior, or environment promotion.
+
+## Mini-EPIC 32.70 — Release Candidate Readiness Decision Record
+
+Status: Closed.
+
+Mini-EPIC 32.70 created the real release-candidate readiness decision record:
+
+- docs/architecture/RELEASE_CANDIDATE_READINESS_DECISION_RECORD.md
+- docs/architecture/MINI_EPIC_32_70_CLOSURE.md
+
+Decision:
+
+Release-candidate readiness approved.
+
+Boundary preserved:
+
+- no deployment approval
+- no package creation
+- no artifact publication
+- no CI release authorization beyond documented readiness decision
+- no environment promotion
+- no finalized evidence mutation
+- no silent mutation of prior evidence
+- correction, amendment, and supersession remain governed by the documented post-finalization policy
+
