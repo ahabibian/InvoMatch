@@ -2163,3 +2163,33 @@ It defines the required inputs, references, checks, and blocker review condition
 Required review areas include finalized evidence state, post-finalization integrity audit, correction/amendment/supersession status, CI evidence references, required validation packs, blocker status, release identity traceability, non-deployment boundary, and reviewer responsibility.
 Mini-EPIC 32.64 does not approve release-candidate readiness.
 Mini-EPIC 32.64 does not approve deployment, create packages, publish artifacts, authorize CI release behavior, or promote any environment.
+
+
+Mini-EPIC 32.65 — Release Candidate Readiness Decision Record Template
+
+Mini-EPIC 32.65 defines the future release-candidate readiness decision record template.
+
+Created artifact:
+
+docs/architecture/RELEASE_CANDIDATE_READINESS_DECISION_RECORD_TEMPLATE.md
+
+Closure artifact:
+
+docs/architecture/MINI_EPIC_32_65_CLOSURE.md
+
+The template defines the required structure for a future readiness decision, including decision purpose, required input references, finalized evidence state review, post-finalization integrity audit review, correction / amendment / supersession status review, CI evidence reference review, required validation pack review, blocker status review, release identity traceability review, non-deployment boundary, reviewer responsibility, and possible outcomes.
+
+The possible outcomes are:
+
+Release-candidate readiness approved
+Release-candidate readiness rejected
+Release-candidate readiness deferred
+
+Mini-EPIC 32.65 does not create a real release-candidate readiness decision.
+It does not approve release-candidate readiness.
+It does not approve deployment.
+It does not create packages.
+It does not publish artifacts.
+It does not authorize CI release behavior.
+It does not promote any environment.
+
