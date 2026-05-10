@@ -2234,3 +2234,20 @@ docs/architecture/MINI_EPIC_32_67_CLOSURE.md
 The dry-run validates that the reviewed readiness decision record template can represent future approval, rejection, and deferral outcomes without creating a real release-candidate readiness decision.
 
 The dry-run does not approve release-candidate readiness, reject release-candidate readiness, defer release-candidate readiness as a real decision, approve deployment, create packages, publish artifacts, authorize CI release behavior, promote any environment, mutate finalized evidence, or authorize future governance execution automatically.
+
+Mini-EPIC 32.68 — Release Candidate Readiness Decision Record Dry-Run Review
+
+Mini-EPIC 32.68 reviewed the non-authoritative release candidate readiness decision record dry-run created in Mini-EPIC 32.67.
+
+The review confirmed that the dry-run remains structurally safe, boundary-complete, and compatible with prior EPIC 32 governance records.
+
+The dry-run was approved for future real decision preparation use only.
+
+This approval applies only to the dry-run structure.
+
+This approval does not approve release-candidate readiness, deployment, packaging, artifact publication, CI release behavior, or environment promotion.
+
+Reference documents:
+
+docs/architecture/RELEASE_CANDIDATE_READINESS_DECISION_RECORD_DRY_RUN_REVIEW.md
+docs/architecture/MINI_EPIC_32_68_CLOSURE.md
