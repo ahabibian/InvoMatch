@@ -2405,3 +2405,28 @@ Mini-EPIC 32.74 does not silently mutate prior evidence.
 
 
 Mini-EPIC 32.74 does not approve release execution.
+
+## Mini-EPIC 32.75 — Package Creation Authorization Decision Record
+
+Mini-EPIC 32.75 created the real package creation authorization decision record.
+
+Decision record:
+
+- docs/architecture/PACKAGE_CREATION_AUTHORIZATION_DECISION_RECORD.md
+
+Closure record:
+
+- docs/architecture/MINI_EPIC_32_75_CLOSURE.md
+
+Outcome:
+
+- package creation is authorized as the next governed EPIC 32 release pipeline step;
+- this authorization does not create packages;
+- this authorization does not create real release manifests;
+- this authorization does not publish artifacts;
+- this authorization does not approve deployment;
+- this authorization does not authorize CI release behavior;
+- this authorization does not promote any environment;
+- this authorization does not modify finalized evidence;
+- this authorization does not silently mutate prior evidence;
+- this authorization does not approve release execution.
