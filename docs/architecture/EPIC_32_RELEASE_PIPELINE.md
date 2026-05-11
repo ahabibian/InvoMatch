@@ -2868,3 +2868,21 @@ Recovery execution record: docs/architecture/CORRECTED_PACKAGE_ARTIFACT_RECOVERY
 
 Closure evidence: docs/architecture/MINI_EPIC_32_97_CLOSURE.md
 
+
+Mini-EPIC 32.98 — Corrected Package Recreation Authorization Boundary
+
+Status: Closed
+
+Result: AUTHORIZED_FOR_CONTROLLED_CORRECTED_PACKAGE_RECREATION_EXECUTION_BOUNDARY
+
+Mini-EPIC 32.98 converted the Mini-EPIC 32.97 package recreation blocker into a governed authorization for a later controlled corrected package recreation execution boundary. The authorization preserves the Mini-EPIC 32.93 audit re-run FAIL result and the Mini-EPIC 32.97 BLOCKED_PACKAGE_RECREATION_AUTHORIZATION_REQUIRED result.
+
+The authorization does not execute package recreation, does not create or mutate package artifacts, does not create a manifest, does not execute another audit re-run, does not perform package acceptance, and does not make a release-readiness decision.
+
+Audit re-run remains blocked until a later controlled corrected package recreation execution boundary completes and a separate post-recreation package output sanity boundary confirms explicit corrected archive-manifest targets.
+
+Evidence:
+
+docs/architecture/CORRECTED_PACKAGE_RECREATION_AUTHORIZATION.md
+docs/architecture/MINI_EPIC_32_98_CLOSURE.md
+
