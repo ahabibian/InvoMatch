@@ -2998,3 +2998,10 @@ Review record:
 docs\architecture\MINI_EPIC_32_103_CORRECTED_PACKAGE_AUDIT_FAILURE_FINDINGS_REVIEW.md
 Closure record:
 docs\architecture\MINI_EPIC_32_103_CLOSURE.md
+Mini-EPIC 32.104 — Corrected Audit Target Discovery and Procedure Repair Authorization Boundary
+Mini-EPIC 32.104 authorized a strictly limited future repair boundary for corrected audit target discovery and corrected audit procedure alignment after Mini-EPIC 32.103 classified the Mini-EPIC 32.102 corrected package audit failure as CORRECTED_PACKAGE_AUDIT_FAILURE_CLASSIFIED_AS_MIXED_FAILURE.
+The Mini-EPIC 32.102 failed audit result remains preserved as CORRECTED_PACKAGE_AUDIT_RE_RUN_FAILED.
+Authorization result: AUTHORIZED_FOR_CORRECTED_AUDIT_TARGET_DISCOVERY_AND_PROCEDURE_REPAIR_BOUNDARY.
+The authorized future repair scope is limited to corrected archive path discovery, corrected manifest path discovery, corrected audit expectation alignment with the actual corrected manifest governance structure, clearer failure evidence extraction, and corrected audit procedure documentation updates.
+Mini-EPIC 32.104 did not execute the repair, did not rerun the corrected audit, did not repair the package, did not repair the corrected manifest, did not recreate the archive, did not perform package acceptance, did not make a release-readiness decision, did not deploy, did not publish, did not create or push tags, did not create a public release, did not promote any environment, did not perform a CI release, did not perform byte-for-byte rebuild verification as a release gate, did not perform schema validation as a release gate, and did not approve any customer-facing artifact.
+Package acceptance remains blocked. Release-readiness remains blocked.
