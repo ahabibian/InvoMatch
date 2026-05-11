@@ -1,0 +1,2 @@
+﻿Audit was not executed because the mini-epic failed closed before command execution.
+Failure reason: Corrected audit procedure entry point could not be resolved.
