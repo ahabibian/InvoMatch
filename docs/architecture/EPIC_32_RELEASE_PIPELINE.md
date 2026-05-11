@@ -2597,3 +2597,31 @@ docs/architecture/MINI_EPIC_32_85_CLOSURE.md
 Mini-EPIC 32.85 is a triage-only boundary. It does not approve the package, accept the package, mark the package release-ready, publish the package, create a release, create or push a tag, deploy to staging or production, promote any environment, execute a CI release, mark any artifact as customer-facing, mutate the package archive, repair the manifest, repackage the artifact, re-run the package audit, or convert any previous BLOCKED_OR_PARTIAL, blocked, partial, incomplete, warning, limitation, or unresolved inspection result into a pass.
 
 The triage result is conservative: package acceptance and release-readiness consideration remain blocked until all unresolved Mini-EPIC 32.84 findings, limitations, manifest concerns, package-content concerns, schema-validation concerns, reproducibility concerns, and audit concerns are resolved by separate explicitly authorized follow-up mini-epics.
+
+Mini-EPIC 32.86 — Real Package Remediation Planning Boundary
+
+Mini-EPIC 32.86 converted the Mini-EPIC 32.85 real package inspection findings triage outcome into a bounded remediation planning record.
+
+Planning record:
+
+docs/architecture/REAL_PACKAGE_REMEDIATION_PLANNING_BOUNDARY.md
+
+Closure record:
+
+docs/architecture/MINI_EPIC_32_86_CLOSURE.md
+
+The remediation planning boundary confirms that the current real package remains not approved, not accepted, not release-ready, not customer-facing, not published, not deployed, not promoted, and not release-tagged.
+
+Mini-EPIC 32.86 did not repair the manifest, mutate the package archive, regenerate the package, re-run the package audit, perform release-gate schema validation, perform release-gate reproducibility verification, approve the package, accept the package, declare release-readiness, publish the package, create a release, create or push a tag, deploy to staging or production, promote any environment, execute a CI release, or mark any artifact as customer-facing.
+
+The required follow-up sequence before package acceptance or release-readiness can be considered is:
+
+Mini-EPIC 32.87 — Real Package Manifest Repair Boundary
+Mini-EPIC 32.88 — Real Package Correction or Regeneration Boundary
+Mini-EPIC 32.89 — Repaired Package Schema and Alignment Validation Boundary
+Mini-EPIC 32.90 — Real Package Reproducibility Verification Boundary
+Mini-EPIC 32.91 — Real Package Integrity Audit Re-Run Boundary
+Mini-EPIC 32.92 — Real Package Acceptance Decision Boundary
+Mini-EPIC 32.93 — Post-Acceptance Release-Readiness Decision Boundary
+
+Default next step: Mini-EPIC 32.87 — Real Package Manifest Repair Boundary, unless later evidence proves that package regeneration must occur first.
