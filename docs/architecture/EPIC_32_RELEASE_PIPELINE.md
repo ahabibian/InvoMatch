@@ -2819,3 +2819,18 @@ docs/architecture/MINI_EPIC_32_94_CLOSURE.md
 
 
 Recommended next governed boundary: explicit corrected package target discovery review and authorization before any future audit re-run.
+
+Mini-EPIC 32.95 — Explicit Corrected Package Target Discovery Review and Authorization Boundary
+
+Mini-EPIC 32.95 created a documentary and repository-evidence-only review for explicit corrected package target discovery after the Mini-EPIC 32.93 audit re-run FAIL result and the Mini-EPIC 32.94 failure review. The review records expected corrected archive and corrected manifest target patterns, reviews actual candidate archive and manifest paths, documents unavailable or ambiguous target evidence, and records the likely target-discovery failure category without remediation.
+
+Authorization result: BLOCKED_ARTIFACT_AVAILABILITY_OR_TARGET_DISCOVERY_GAP
+
+Reason: At least one required corrected target class was not discoverable. A separate artifact availability recovery planning boundary is required before another audit re-run.
+
+Package acceptance remains blocked. Release-readiness remains blocked. Customer-facing artifact approval remains blocked. No audit re-execution, package mutation, manifest repair, package regeneration, artifact recovery, schema release-gate validation, byte-for-byte rebuild verification, deployment, publication, public release creation, tag creation, tag push, environment promotion, CI release, audit remediation, or customer-facing artifact approval occurred.
+
+Reference documents:
+
+docs/architecture/EXPLICIT_CORRECTED_PACKAGE_TARGET_DISCOVERY_REVIEW.md
+docs/architecture/MINI_EPIC_32_95_CLOSURE.md
