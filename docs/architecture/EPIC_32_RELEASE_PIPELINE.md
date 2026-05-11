@@ -2518,3 +2518,20 @@ The output of this mini-epic is:
 - docs/architecture/MINI_EPIC_32_80_CLOSURE.md
 
 Mini-EPIC 32.80 preserved the non-deployment, non-publication, CI-release, environment-promotion, public-release, tag-creation, and finalized-evidence immutability boundaries.
+
+
+## Mini-EPIC 32.81 — Real Package Integrity Audit Boundary Definition
+
+Status: Closed by documentation boundary definition.
+
+Mini-EPIC 32.81 defines the real package integrity audit boundary that must be used before any future package acceptance, release approval, publication, deployment, or environment promotion.
+
+The boundary is documented in:
+
+- docs/architecture/REAL_PACKAGE_INTEGRITY_AUDIT_BOUNDARY.md
+
+This mini-epic defines what a future integrity audit must verify, including package hash verification, manifest consistency, included component verification, excluded component verification, forbidden file absence, source commit alignment, working tree and source identity expectations, reproducibility metadata, evidence reference consistency, and non-publication/non-deployment boundary enforcement.
+
+Mini-EPIC 32.81 does not execute the integrity audit, does not approve the package, does not publish the package, does not create a release, does not deploy, and does not promote any environment.
+
+Any future package acceptance decision remains a separate governed mini-epic with explicit evidence and authorization.
