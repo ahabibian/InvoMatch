@@ -2575,3 +2575,9 @@ docs/architecture/MINI_EPIC_32_83_CLOSURE.md
 
 The Mini-EPIC 32.82 audit result remains BLOCKED_OR_PARTIAL. Any future package acceptance or release-readiness consideration requires governed follow-up work first, such as a correction mini-epic, stronger package inspection mini-epic, manifest repair mini-epic, or a re-run of the integrity audit only after required preceding work is complete.
 
+Mini-EPIC 32.84 — Stronger Real Package Inspection Boundary
+Status: Closed
+Mini-EPIC 32.84 defined and executed a stronger real package inspection boundary for the local real package previously created and audited under Mini-EPIC 32.79 through Mini-EPIC 32.83.
+The inspection record is documented in docs/architecture/REAL_PACKAGE_STRONGER_INSPECTION_BOUNDARY.md, with closure evidence in docs/architecture/MINI_EPIC_32_84_CLOSURE.md.
+The mini-epic inspected archive readability, manifest readability, package inventory preview, excluded-file confirmation, evidence-reference presence, unexpected or boundary-sensitive archive entries, manifest signal presence, local-output boundary preservation, and remaining inspection limitations.
+This mini-epic did not approve the package, accept the package, declare release-readiness, publish the package, create a public release, create or push a tag, deploy to staging or production, promote any environment, execute a CI release, or mark any artifact as customer-facing. It also did not convert any prior BLOCKED_OR_PARTIAL package audit result into a pass.
