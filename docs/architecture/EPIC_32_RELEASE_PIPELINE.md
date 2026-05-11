@@ -3030,3 +3030,54 @@ Closure evidence:
 
 docs/architecture/MINI_EPIC_32_105_CORRECTED_AUDIT_PROCEDURE_REPAIR_EXECUTION.md
 docs/architecture/MINI_EPIC_32_105_CLOSURE.md
+Mini-EPIC 32.106 — Corrected Package Audit Re-Run Authorization Boundary
+Mini-EPIC 32.106 authorized a future corrected package audit re-run after Mini-EPIC 32.105 repaired corrected audit target discovery and procedure/evidence extraction logic.
+This mini-epic did not execute the corrected package audit. It preserved the Mini-EPIC 32.102 failed audit result, the Mini-EPIC 32.103 mixed failure classification, and the Mini-EPIC 32.105 repair execution result as historical evidence.
+Authorization result:
+
+
+Corrected package audit re-run is authorized only for a future mini-epic.
+
+
+Future execution may only produce audit evidence.
+
+
+Future execution must not be treated as package acceptance.
+
+
+Future execution must not be treated as release-readiness approval.
+
+
+Expected corrected archive target must be documented or fail closed as unresolved.
+
+
+Expected corrected manifest target must be documented or fail closed as unresolved.
+
+
+Expected audit evidence output must be documented or fail closed as unresolved.
+
+
+Package contents remain unchanged.
+
+
+Corrected manifest contents remain unchanged.
+
+
+Archive contents remain unchanged.
+
+
+Package acceptance remains blocked.
+
+
+Release-readiness remains blocked.
+
+
+Deployment, publication, tag creation, tag push, public release creation, CI release, customer-facing approval, and environment promotion remain blocked.
+
+
+Authorization record:
+
+
+docs/architecture/MINI_EPIC_32_106_CORRECTED_PACKAGE_AUDIT_RE_RUN_AUTHORIZATION.md
+
+
