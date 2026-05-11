@@ -2625,3 +2625,19 @@ Mini-EPIC 32.92 — Real Package Acceptance Decision Boundary
 Mini-EPIC 32.93 — Post-Acceptance Release-Readiness Decision Boundary
 
 Default next step: Mini-EPIC 32.87 — Real Package Manifest Repair Boundary, unless later evidence proves that package regeneration must occur first.
+
+Mini-EPIC 32.88 — Real Package Archive Correction Authorization Boundary
+Mini-EPIC 32.88 completed the authorization and decision boundary required before any future real package archive correction, package regeneration, repackage, or packaged-content mutation may occur.
+The mini-epic produced:
+
+
+docs/architecture/REAL_PACKAGE_ARCHIVE_CORRECTION_AUTHORIZATION_RECORD.md
+
+
+docs/architecture/MINI_EPIC_32_88_CLOSURE.md
+
+
+The authorization record references the Mini-EPIC 32.85 triage findings, the Mini-EPIC 32.86 remediation sequence, and the Mini-EPIC 32.87 manifest repair and deferred-defect classification.
+Decision: future real package archive correction or regeneration is authorized only as a separate bounded future mini-epic.
+Mini-EPIC 32.88 does not itself constitute package mutation, package correction, package regeneration, repackage execution, packaged-content alteration, audit re-run, reproducibility verification, schema release-gate validation, package acceptance, package approval, release-readiness, deployment, publication, public release creation, tag creation, tag push, environment promotion, CI release, or customer-facing artifact approval.
+Authorization planning remains distinct from correction execution.
