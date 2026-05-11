@@ -2581,3 +2581,19 @@ Mini-EPIC 32.84 defined and executed a stronger real package inspection boundary
 The inspection record is documented in docs/architecture/REAL_PACKAGE_STRONGER_INSPECTION_BOUNDARY.md, with closure evidence in docs/architecture/MINI_EPIC_32_84_CLOSURE.md.
 The mini-epic inspected archive readability, manifest readability, package inventory preview, excluded-file confirmation, evidence-reference presence, unexpected or boundary-sensitive archive entries, manifest signal presence, local-output boundary preservation, and remaining inspection limitations.
 This mini-epic did not approve the package, accept the package, declare release-readiness, publish the package, create a public release, create or push a tag, deploy to staging or production, promote any environment, execute a CI release, or mark any artifact as customer-facing. It also did not convert any prior BLOCKED_OR_PARTIAL package audit result into a pass.
+
+Mini-EPIC 32.85 — Real Package Inspection Findings Triage Boundary
+
+Mini-EPIC 32.85 reviewed and triaged the findings, limitations, and risks recorded by the stronger real package inspection in Mini-EPIC 32.84.
+
+The triage record is documented in:
+
+docs/architecture/REAL_PACKAGE_INSPECTION_FINDINGS_TRIAGE.md
+
+The closure record is documented in:
+
+docs/architecture/MINI_EPIC_32_85_CLOSURE.md
+
+Mini-EPIC 32.85 is a triage-only boundary. It does not approve the package, accept the package, mark the package release-ready, publish the package, create a release, create or push a tag, deploy to staging or production, promote any environment, execute a CI release, mark any artifact as customer-facing, mutate the package archive, repair the manifest, repackage the artifact, re-run the package audit, or convert any previous BLOCKED_OR_PARTIAL, blocked, partial, incomplete, warning, limitation, or unresolved inspection result into a pass.
+
+The triage result is conservative: package acceptance and release-readiness consideration remain blocked until all unresolved Mini-EPIC 32.84 findings, limitations, manifest concerns, package-content concerns, schema-validation concerns, reproducibility concerns, and audit concerns are resolved by separate explicitly authorized follow-up mini-epics.
