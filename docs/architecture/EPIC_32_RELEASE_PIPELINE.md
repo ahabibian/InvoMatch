@@ -2834,3 +2834,20 @@ Reference documents:
 
 docs/architecture/EXPLICIT_CORRECTED_PACKAGE_TARGET_DISCOVERY_REVIEW.md
 docs/architecture/MINI_EPIC_32_95_CLOSURE.md
+
+Mini-EPIC 32.96 — Corrected Package Artifact Availability Recovery Planning Boundary
+
+Mini-EPIC 32.96 records a planning-only boundary for corrected package artifact availability recovery after Mini-EPIC 32.95 preserved the BLOCKED_ARTIFACT_AVAILABILITY_OR_TARGET_DISCOVERY_GAP result.
+
+The planning result classifies the active issue as an artifact availability and target discovery gap. The likely causes include missing explicit corrected package archive and corrected manifest availability, ignored local output boundaries, undocumented or stale target paths, naming mismatch risk, or ambiguous candidate target evidence.
+
+Authorization result: AUTHORIZED_FOR_LATER_ARTIFACT_RECOVERY_EXECUTION_BOUNDARY_WITH_NO_MUTATION.
+
+Audit re-run remains blocked. Package acceptance remains blocked. Release-readiness remains blocked.
+
+Mini-EPIC 32.96 did not execute artifact recovery, audit re-execution, package mutation, manifest repair, package regeneration, package rebuild, schema release-gate validation, byte-for-byte rebuild verification, package acceptance, release-readiness decision, deployment, publication, public release creation, tag creation, tag push, environment promotion, CI release, audit remediation, or customer-facing artifact approval.
+
+Evidence:
+
+docs/architecture/CORRECTED_PACKAGE_ARTIFACT_AVAILABILITY_RECOVERY_PLANNING.md
+docs/architecture/MINI_EPIC_32_96_CLOSURE.md
