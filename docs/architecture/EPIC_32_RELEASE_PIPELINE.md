@@ -2771,3 +2771,33 @@ docs/architecture/REAL_PACKAGE_INTEGRITY_AUDIT_RE_RUN_AUTHORIZATION.md
 The authorization identifies the corrected real package archive as the future audit target and explains that the audit re-run addresses the Mini-EPIC 32.91 reproducibility governance gap where the corrected package still requires a governed integrity audit re-run before package acceptance or release-readiness can be considered.
 Mini-EPIC 32.92 did not execute the audit re-run. It did not mutate package contents, regenerate the package, repair the manifest, overwrite historical evidence, perform schema release-gate validation, perform byte-for-byte rebuild verification, accept the package, declare release-readiness, deploy, publish, create a public release, create or push tags, promote environments, execute a CI release, or approve customer-facing artifacts.
 Package acceptance and release-readiness remain blocked until the future audit re-run is executed and documented, any audit findings are resolved under separately scoped governance, and all remaining reproducibility gaps are closed under explicit future mini-epic boundaries.
+
+Mini-EPIC 32.93 — Real Package Integrity Audit Re-Run Execution Boundary
+
+Status: Closed
+Result: FAIL
+Commit at execution time: 0d7c5af786c0b379e8b9aa14ac9d34f8e7f69ab3
+Branch at execution time: main
+
+Mini-EPIC 32.93 executed the authorized real package integrity audit re-run against the corrected package archive evidence and recorded the direct pass/fail outcome.
+
+Execution evidence:
+
+docs/architecture/REAL_PACKAGE_INTEGRITY_AUDIT_RE_RUN_EXECUTION.md
+docs/architecture/MINI_EPIC_32_93_CLOSURE.md
+
+Corrected package archive inspected:
+
+not-found
+SHA256: not-calculated
+
+Corrected manifest evidence:
+
+not-found
+SHA256: not-calculated
+
+Boundary confirmation:
+
+Mini-EPIC 32.93 did not mutate the package, regenerate the package, repair the manifest, overwrite historical evidence, perform schema validation as a release gate, perform byte-for-byte rebuild verification, remediate audit findings, accept the package, declare release-readiness, deploy, publish, create a public release, create tags, push tags, promote environments, execute a CI release, or approve customer-facing artifacts.
+
+Package acceptance and release-readiness remain blocked after this mini-epic.
