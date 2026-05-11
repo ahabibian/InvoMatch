@@ -2758,3 +2758,16 @@ Public release, publication, tag, deployment, environment promotion, CI release,
 
 
 Mini-EPIC 32.91 did not regenerate the package, mutate the archive, repair the manifest, add or remove packaged files, overwrite package outputs, rewrite historical evidence, perform package acceptance, declare release-readiness, publish the package, create a public release, create or push a tag, deploy to staging or production, promote any environment, execute a CI release, perform schema validation as a release gate, perform the real package integrity audit re-run, run byte-for-byte rebuild verification, or mark any artifact as customer-facing.
+
+Mini-EPIC 32.92 — Real Package Integrity Audit Re-Run Authorization Boundary
+Status: Closed as authorization-only boundary.
+Mini-EPIC 32.92 authorized a future real package integrity audit re-run against the corrected real package archive identified by the prior package correction and reproducibility planning records.
+The authorization record is:
+
+
+docs/architecture/REAL_PACKAGE_INTEGRITY_AUDIT_RE_RUN_AUTHORIZATION.md
+
+
+The authorization identifies the corrected real package archive as the future audit target and explains that the audit re-run addresses the Mini-EPIC 32.91 reproducibility governance gap where the corrected package still requires a governed integrity audit re-run before package acceptance or release-readiness can be considered.
+Mini-EPIC 32.92 did not execute the audit re-run. It did not mutate package contents, regenerate the package, repair the manifest, overwrite historical evidence, perform schema release-gate validation, perform byte-for-byte rebuild verification, accept the package, declare release-readiness, deploy, publish, create a public release, create or push tags, promote environments, execute a CI release, or approve customer-facing artifacts.
+Package acceptance and release-readiness remain blocked until the future audit re-run is executed and documented, any audit findings are resolved under separately scoped governance, and all remaining reproducibility gaps are closed under explicit future mini-epic boundaries.
