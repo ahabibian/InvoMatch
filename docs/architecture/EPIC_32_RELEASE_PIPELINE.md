@@ -2723,3 +2723,38 @@ No real package integrity audit re-run as a release gate
 
 
 No customer-facing artifact approval
+## Mini-EPIC 32.91 — Reproducibility Gap Resolution Planning Boundary
+Status: Planned and documented.
+Mini-EPIC 32.91 converted the partial reproducibility verification result from Mini-EPIC 32.90 into a governed reproducibility gap resolution plan.
+Planning output:
+
+
+Reproducibility gap resolution plan: docs/architecture/REAL_PACKAGE_REPRODUCIBILITY_GAP_RESOLUTION_PLAN.md
+
+
+Closure document: docs/architecture/MINI_EPIC_32_91_CLOSURE.md
+
+
+The planning result confirms that package acceptance and release-readiness remain blocked until the unresolved reproducibility gaps are resolved in separately authorized future mini-epics.
+Classified blocker areas:
+
+
+Byte-for-byte rebuild verification was not performed.
+
+
+Real package integrity audit re-run was not performed after correction.
+
+
+Schema validation was not executed as a release gate.
+
+
+Corrected package acceptance has not been authorized or performed.
+
+
+Release-readiness has not been assessed after reproducibility gap resolution.
+
+
+Public release, publication, tag, deployment, environment promotion, CI release, and customer-facing artifact approval remain blocked.
+
+
+Mini-EPIC 32.91 did not regenerate the package, mutate the archive, repair the manifest, add or remove packaged files, overwrite package outputs, rewrite historical evidence, perform package acceptance, declare release-readiness, publish the package, create a public release, create or push a tag, deploy to staging or production, promote any environment, execute a CI release, perform schema validation as a release gate, perform the real package integrity audit re-run, run byte-for-byte rebuild verification, or mark any artifact as customer-facing.
