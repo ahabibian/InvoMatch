@@ -3425,3 +3425,40 @@ Artifacts:
 
 docs/architecture/MINI_EPIC_32_119_CORRECTED_PACKAGE_ACCEPTANCE_READINESS_REVIEW.md
 docs/architecture/MINI_EPIC_32_119_CLOSURE.md
+
+Mini-EPIC 32.120 — Corrected Package Acceptance Decision Authorization Boundary
+
+Mini-EPIC 32.120 completed the corrected package acceptance decision authorization boundary.
+
+This authorization boundary followed Mini-EPIC 32.119, which completed the corrected package acceptance readiness review boundary and recorded:
+
+CORRECTED_PACKAGE_ACCEPTANCE_READINESS_REVIEWED
+READY_FOR_LATER_CORRECTED_PACKAGE_ACCEPTANCE_DECISION_OR_AUTHORIZATION_BOUNDARY
+
+Mini-EPIC 32.120 explicitly verified that Mini-EPIC 32.119 remained the immediate readiness prerequisite governance input for the present authorization step.
+
+The authorization boundary also confirmed that the underlying corrected package audit acceptance governance state remains valid and scope-contained:
+
+CORRECTED_PACKAGE_AUDIT_ACCEPTANCE_GOVERNANCE_EXECUTED from Mini-EPIC 32.117
+CORRECTED_PACKAGE_AUDIT_ACCEPTANCE_GOVERNANCE_STATE_REVIEWED from Mini-EPIC 32.118
+
+The supporting governance chain from Mini-EPIC 32.107 through Mini-EPIC 32.119 remains intact and explicitly cited.
+
+Authorization result:
+
+AUTHORIZED_FOR_CORRECTED_PACKAGE_ACCEPTANCE_DECISION_EXECUTION_BOUNDARY
+
+This result means only that the project is authorized to proceed to a later, separately controlled corrected package acceptance decision execution boundary.
+
+It does not mean package acceptance occurred.
+It does not execute the corrected package acceptance decision.
+It does not make a release-readiness decision.
+It does not authorize deployment, publication, environment promotion, CI release, tag creation, public release creation, or customer-facing approval.
+
+Package acceptance remains blocked.
+Release-readiness remains blocked.
+
+Artifacts:
+
+docs/architecture/MINI_EPIC_32_120_CORRECTED_PACKAGE_ACCEPTANCE_DECISION_AUTHORIZATION.md
+docs/architecture/MINI_EPIC_32_120_CLOSURE.md
