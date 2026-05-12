@@ -3591,3 +3591,37 @@ READY_FOR_LATER_RELEASE_READINESS_DOWNSTREAM_REVIEW_OR_TRANSITION_BOUNDARY
 This readiness state is not release-readiness approval, release-readiness authorization, deployment authorization, publication authorization, tagging authorization, environment promotion authorization, CI release authorization, or customer-facing approval.
 
 Mini-EPIC 32.124 preserves the complete governance chain through Mini-EPICs 32.107 through 32.123 and introduces no corrected package audit re-run, no package or archive mutation, no acceptance re-execution, no release-readiness review, no release-readiness decision, no release-readiness authorization, no downstream release-readiness transition execution, no deployment, no publication, no tag creation, no public release creation, no environment promotion, no CI release, and no customer-facing approval.
+
+Mini-EPIC 32.125 — Release-Readiness Downstream Review / Transition Boundary Definition
+
+Mini-EPIC 32.125 defines the later release-readiness downstream review / transition governance boundary authorized for approach by Mini-EPIC 32.124.
+
+Immediate prerequisite explicitly verified:
+
+POST_ACCEPTANCE_DOWNSTREAM_GOVERNANCE_AUTHORIZED
+READY_FOR_LATER_RELEASE_READINESS_DOWNSTREAM_REVIEW_OR_TRANSITION_BOUNDARY
+
+The accepted corrected package state remains preserved:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+The boundary remains strictly definition-only:
+
+release-readiness remains blocked;
+no release-readiness review occurred;
+no release-readiness transition boundary was executed;
+no release-readiness approval or authorization was granted.
+
+Mini-EPIC 32.125 formally defines the next later governance gate as a release-readiness downstream review / transition authorization boundary, or an equivalent tightly scoped authorization boundary controlling whether the project may later proceed into separately controlled release-readiness downstream review / transition work.
+
+Recorded result:
+
+RELEASE_READINESS_DOWNSTREAM_REVIEW_OR_TRANSITION_BOUNDARY_DEFINED
+READY_FOR_LATER_RELEASE_READINESS_DOWNSTREAM_REVIEW_OR_TRANSITION_AUTHORIZATION_BOUNDARY
+
+This result is only a later-governance readiness state. It is not release-readiness approval, not release-readiness authorization, and not deployment, publication, tag, environment-promotion, CI-release, or customer-facing approval authorization.
+
+Artifacts:
+
+docs/architecture/MINI_EPIC_32_125_RELEASE_READINESS_DOWNSTREAM_REVIEW_OR_TRANSITION_BOUNDARY_DEFINITION.md
+docs/architecture/MINI_EPIC_32_125_CLOSURE.md
