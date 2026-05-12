@@ -3780,3 +3780,48 @@ docs/architecture/MINI_EPIC_32_129_RELEASE_READINESS_DOWNSTREAM_POST_EXECUTION_S
 docs/architecture/MINI_EPIC_32_129_CLOSURE.md
 
 Mini-EPIC 32.129 remains review-only. It performs no package mutation, no audit re-run, no acceptance re-execution, no new release-readiness authorization, no downstream execution re-run, and no release/publication/deployment implication.
+
+Mini-EPIC 32.130 — Release-Readiness Downstream Next Governance Boundary Definition
+
+Mini-EPIC 32.130 defines the next release-readiness downstream governance boundary after Mini-EPIC 32.129 completed the release-readiness downstream post-execution state review boundary.
+
+Immediate predecessor state explicitly verified from Mini-EPIC 32.129:
+
+RELEASE_READINESS_DOWNSTREAM_POST_EXECUTION_STATE_REVIEWED
+READY_FOR_LATER_RELEASE_READINESS_DOWNSTREAM_NEXT_GOVERNANCE_BOUNDARY
+
+Preserved prior corrected package acceptance state:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+Mini-EPIC 32.130 determines that the current governance state cleanly supports definition of a later, separately controlled:
+
+Release-Readiness Downstream Next Governance Authorization Boundary
+
+This future authorization boundary is defined only as the next valid governance continuation point. It is not performed or authorized by Mini-EPIC 32.130.
+
+Mini-EPIC 32.130 records:
+
+RELEASE_READINESS_DOWNSTREAM_NEXT_GOVERNANCE_BOUNDARY_DEFINED
+READY_FOR_LATER_RELEASE_READINESS_DOWNSTREAM_NEXT_GOVERNANCE_AUTHORIZATION_BOUNDARY
+
+These states mean only that:
+
+the next downstream governance boundary has been defined; and
+the project is ready to approach a later, separately controlled authorization boundary for that defined next step.
+
+They do not mean:
+
+release-readiness approval;
+deployment approval;
+publication approval;
+tag creation or tag push approval;
+public release approval;
+environment promotion approval;
+CI release authorization;
+customer-facing release approval.
+
+Artifacts:
+
+docs/architecture/MINI_EPIC_32_130_RELEASE_READINESS_DOWNSTREAM_NEXT_GOVERNANCE_BOUNDARY_DEFINITION.md
+docs/architecture/MINI_EPIC_32_130_CLOSURE.md
