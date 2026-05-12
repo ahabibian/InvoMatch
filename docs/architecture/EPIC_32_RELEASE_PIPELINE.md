@@ -3350,3 +3350,25 @@ The authorization records that the Mini-EPIC 32.107 corrected package audit resu
 The authorization basis explicitly preserves the full supporting chain through Mini-EPICs 32.107, 32.108, 32.109, 32.110, 32.111, 32.112, 32.113, 32.114, and 32.115.
 
 Mini-EPIC 32.116 did not perform corrected audit acceptance, package acceptance, release-readiness decision, audit re-run, audit output rewrite, package modification, archive modification, archive recreation, package repair, corrected manifest repair, deployment, publication, tag creation, tag push, public release creation, environment promotion, CI release, or customer-facing approval.
+
+Mini-EPIC 32.117 — Corrected Package Audit Acceptance Governance Execution Boundary
+
+Mini-EPIC 32.117 executed the corrected package audit acceptance governance boundary authorized by Mini-EPIC 32.116.
+
+The execution formally accepted the previously executed Mini-EPIC 32.107 corrected package audit result only within the narrow corrected package audit governance boundary, after the full supporting correction and reclassification chain through Mini-EPICs 32.108–32.116 had been completed.
+
+The explicit execution token was recorded:
+
+CORRECTED_PACKAGE_AUDIT_ACCEPTANCE_GOVERNANCE_EXECUTED
+
+Resulting state:
+
+Mini-EPIC 32.107 corrected package audit result is accepted only within the corrected audit governance boundary.
+Package acceptance remains blocked.
+Release-readiness remains blocked.
+No audit re-run, audit output rewrite, package modification, archive modification, archive recreation, package repair, corrected manifest repair, package acceptance, release-readiness decision, deployment, publication, tag creation, tag push, public release creation, environment promotion, CI release, or customer-facing approval occurred.
+
+Artifacts:
+
+docs/architecture/MINI_EPIC_32_117_CORRECTED_PACKAGE_AUDIT_ACCEPTANCE_GOVERNANCE_EXECUTION.md
+docs/architecture/MINI_EPIC_32_117_CLOSURE.md
