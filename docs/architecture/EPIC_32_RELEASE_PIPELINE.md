@@ -3526,3 +3526,39 @@ Artifacts:
 
 docs/architecture/MINI_EPIC_32_122_CORRECTED_PACKAGE_ACCEPTANCE_POST_DECISION_STATE_REVIEW.md
 docs/architecture/MINI_EPIC_32_122_CLOSURE.md
+
+Mini-EPIC 32.123 — Post-Acceptance Downstream Governance Boundary Definition
+
+Mini-EPIC 32.123 completed the post-acceptance downstream governance boundary definition step after Mini-EPIC 32.122 reviewed the corrected package acceptance post-decision state.
+
+Immediate prerequisite states from Mini-EPIC 32.122 were explicitly verified:
+
+CORRECTED_PACKAGE_ACCEPTANCE_STATE_REVIEWED
+READY_FOR_LATER_POST_ACCEPTANCE_DOWNSTREAM_GOVERNANCE_BOUNDARY
+
+The accepted corrected package state from Mini-EPIC 32.121 remained preserved:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+Release-readiness remains blocked, and no downstream release-state authorization has yet been granted.
+
+Mini-EPIC 32.123 explicitly defined the next governance boundary as:
+
+a later post-acceptance downstream governance authorization boundary
+
+This later boundary may determine whether the project is authorized to proceed toward a separately controlled release-readiness downstream governance review / transition path, but Mini-EPIC 32.123 itself performs no such authorization.
+
+Definition result recorded:
+
+POST_ACCEPTANCE_DOWNSTREAM_GOVERNANCE_BOUNDARY_DEFINED
+
+Later-governance readiness result recorded:
+
+READY_FOR_LATER_POST_ACCEPTANCE_DOWNSTREAM_GOVERNANCE_AUTHORIZATION_BOUNDARY
+
+This readiness state is not release-readiness approval and does not authorize deployment, publication, tagging, environment promotion, CI release, or any customer-facing approval.
+
+Artifacts:
+
+docs/architecture/MINI_EPIC_32_123_POST_ACCEPTANCE_DOWNSTREAM_GOVERNANCE_BOUNDARY_DEFINITION.md
+docs/architecture/MINI_EPIC_32_123_CLOSURE.md
