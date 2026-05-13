@@ -3974,3 +3974,46 @@ Artifacts:
 
 docs/architecture/FINAL_RELEASE_READINESS_DECISION_EXECUTION.md
 docs/architecture/MINI_EPIC_32_134_CLOSURE.md
+
+Mini-EPIC 32.135 — Release Execution or Publication Governance Boundary Definition
+
+Mini-EPIC 32.135 defines the next controlled downstream governance boundary that may now be approached after Mini-EPIC 32.134 completed and approved the final governance-level release-readiness decision.
+
+Mini-EPIC 32.134 was explicitly verified as the immediate predecessor and its recorded state was preserved:
+
+FINAL_RELEASE_READINESS_APPROVED
+READY_FOR_LATER_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_BOUNDARY
+
+The corrected package acceptance state from Mini-EPIC 32.121 remains explicitly preserved:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+Mini-EPIC 32.135 defines, but does not authorize or execute, the next downstream:
+
+Release Execution or Publication Governance Authorization Boundary
+
+This boundary-definition result is recorded as:
+
+RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_BOUNDARY_DEFINED
+READY_FOR_LATER_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_BOUNDARY
+
+These tokens mean only that the post-readiness downstream governance boundary has been defined and that a later separately controlled authorization step may now be approached.
+
+They do not authorize:
+
+release execution;
+deployment;
+publication;
+tag creation or tag push;
+public release creation;
+environment promotion;
+CI release execution;
+customer-facing release activation;
+any external distribution act.
+
+Mini-EPIC 32.135 does not reopen, alter, supersede, reinterpret, or re-execute:
+
+the corrected package acceptance state;
+the Mini-EPIC 32.132 final decision boundary definition;
+the Mini-EPIC 32.133 final decision authorization result;
+the Mini-EPIC 32.134 final release-readiness approval result.
