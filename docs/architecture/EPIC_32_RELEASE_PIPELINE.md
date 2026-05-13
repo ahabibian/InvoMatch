@@ -1,4 +1,4 @@
-﻿# EPIC 32 - DevOps & Release Pipeline
+# EPIC 32 - DevOps & Release Pipeline
 
 ## Status
 
@@ -4017,3 +4017,34 @@ the corrected package acceptance state;
 the Mini-EPIC 32.132 final decision boundary definition;
 the Mini-EPIC 32.133 final decision authorization result;
 the Mini-EPIC 32.134 final release-readiness approval result.
+Mini-EPIC 32.136 — Release Execution or Publication Governance Authorization Boundary
+
+Mini-EPIC 32.136 defined and performed the release execution or publication governance authorization boundary following the completed Mini-EPIC 32.135 release execution or publication governance boundary definition.
+
+This step explicitly verified Mini-EPIC 32.135 as the immediate predecessor and preserved:
+
+RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_BOUNDARY_DEFINED
+READY_FOR_LATER_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_BOUNDARY
+
+It also explicitly preserved:
+
+FINAL_RELEASE_READINESS_APPROVED from Mini-EPIC 32.134
+CORRECTED_PACKAGE_ACCEPTED from Mini-EPIC 32.121
+
+The authorization boundary evaluated whether the already-defined release execution or publication governance boundary may now be authorized for a later, separately controlled execution boundary without itself performing or implying release execution.
+
+The review completed cleanly and recorded:
+
+RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZED
+READY_FOR_LATER_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_EXECUTION_BOUNDARY
+
+These tokens are governance authorization tokens only.
+
+They do not mean that deployment, publication, tag creation, tag push, public release creation, environment promotion, CI release execution, customer-facing release activation, artifact publication, or external distribution has occurred or may occur immediately.
+
+Mini-EPIC 32.136 did not reopen, alter, supersede, reclassify, or re-execute any earlier corrected-package acceptance, downstream governance, final release-readiness, or post-readiness boundary-definition result.
+
+Primary documents:
+
+docs/architecture/RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION.md
+docs/architecture/MINI_EPIC_32_136_CLOSURE.mdrn
