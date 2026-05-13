@@ -3825,3 +3825,48 @@ Artifacts:
 
 docs/architecture/MINI_EPIC_32_130_RELEASE_READINESS_DOWNSTREAM_NEXT_GOVERNANCE_BOUNDARY_DEFINITION.md
 docs/architecture/MINI_EPIC_32_130_CLOSURE.md
+
+## Mini-EPIC 32.131 — Release-Readiness Downstream Next Governance Authorization Boundary
+
+Mini-EPIC 32.131 defines and performs the release-readiness downstream next governance authorization boundary after Mini-EPIC 32.130 completed the next-governance boundary definition.
+
+The authorization boundary explicitly verifies Mini-EPIC 32.130 as the immediate predecessor and confirms:
+
+RELEASE_READINESS_DOWNSTREAM_NEXT_GOVERNANCE_BOUNDARY_DEFINED
+READY_FOR_LATER_RELEASE_READINESS_DOWNSTREAM_NEXT_GOVERNANCE_AUTHORIZATION_BOUNDARY
+
+It also preserves the corrected package acceptance state carried forward from Mini-EPIC 32.121:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+Mini-EPIC 32.131 reviews whether the Mini-EPIC 32.130 next-governance continuation is cleanly authorized to proceed toward a later, separately controlled final release-readiness decision boundary-definition step.
+
+The authorization review completed cleanly and records:
+
+RELEASE_READINESS_DOWNSTREAM_NEXT_GOVERNANCE_AUTHORIZED
+READY_FOR_LATER_FINAL_RELEASE_READINESS_DECISION_BOUNDARY_DEFINITION
+
+These tokens mean only that:
+
+the next downstream governance continuation has been authorized at the governance level; and
+the project is ready to approach a later, separately controlled boundary-definition step for the final release-readiness decision path.
+
+They do not mean:
+
+final release-readiness approval;
+deployment approval;
+publication approval;
+tagging approval;
+environment promotion approval;
+CI release authorization;
+public release approval;
+customer-facing release approval.
+
+Mini-EPIC 32.131 does not execute the downstream next governance step, does not define the final release-readiness decision boundary yet, does not authorize final release-readiness, and does not authorize deployment, publication, tagging, environment promotion, CI release, public release creation, or customer-facing approval.
+
+Created artifacts:
+
+docs/architecture/MINI_EPIC_32_131_RELEASE_READINESS_DOWNSTREAM_NEXT_GOVERNANCE_AUTHORIZATION_BOUNDARY.md
+docs/architecture/MINI_EPIC_32_131_CLOSURE.md
+
+
