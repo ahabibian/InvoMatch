@@ -5,10 +5,10 @@ Status: Draft
 ## 1. Problem
 
 In EPIC 9, export artifacts were introduced as outputs of export operations.
-However, artifacts are not yet modeled as first-class product resources.
+Export artifacts are now modeled as first-class product resources across repository, service, API, and run-view surfaces.
 
-Current limitations:
-- No artifact-centric API
+Current resource status and remaining limitations:
+- Artifact-centric API behavior is implemented for listing run export artifacts, reading artifact metadata, and downloading eligible artifacts.
 - No explicit lifecycle model
 - No stable artifact identity in product layer
 - Download behavior is implicit and not contract-defined

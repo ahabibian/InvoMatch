@@ -322,4 +322,4 @@ This EPIC does not include:
 
 ## Status
 
-Planned.
+Completed and closed. The multi-tenant architecture defined in this EPIC has corresponding implementation evidence, Scenario 10 tenant-isolation coverage, and dedicated closure documentation in EPIC_27_CLOSURE.md.
