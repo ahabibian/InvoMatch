@@ -61,3 +61,23 @@ forbidden frontend shortcuts that would weaken or falsify the FTL narrative
 the standard that the Pilot UI must reveal FTL as a controlled product lifecycle, not as a vague internal term
 
 This deliverable ensures that EPIC 33 can later implement Pilot UI screens that make the Financial Truth Layer concrete, inspectable, and product-visible.
+
+Mini-EPIC 33.1 Deliverable Added — Initial API-to-Screen Mapping Framework
+
+The following architecture deliverable has now been added:
+
+INITIAL_API_TO_SCREEN_MAPPING_FRAMEWORK.md
+
+This document defines the initial backend API contract framework required to support the Pilot UI screens without transferring business-rule ownership to Base44.
+
+It establishes:
+
+the required read API categories for each Pilot UI surface
+the required write/action API categories for governed operator decision flows
+the separation between screen reads and intent-based backend actions
+backend-owned semantic states such as review status, finalization state, export readiness, blocker reasons, trust states, and permitted actions
+frontend derivation prohibitions that prevent Base44 from reconstructing product truth
+shared response-state requirements for ready, empty, blocked, degraded, failed, permission-denied, and stale/conflict conditions
+the design balance that backend contracts should return product semantics without becoming presentation-coupled
+
+This deliverable ensures that later EPIC 33 implementation can define exact endpoint routes and payloads on top of a clear contract architecture rather than inventing API behavior page-by-page.
