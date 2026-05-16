@@ -121,3 +121,22 @@ screen-level trust/error expectations for dashboard, intake, queue, detail, corr
 forbidden frontend patterns such as optimistic truth mutation, raw backend error display, hidden blockers, and false readiness claims
 
 This deliverable ensures that EPIC 33 demonstrates a trust-preserving Financial Truth Layer product rather than a superficial happy-path-only interface.
+
+Mini-EPIC 33.1 Deliverable Added — Pilot Demo Narrative
+
+The following architecture deliverable has now been added:
+
+PILOT_DEMO_NARRATIVE.md
+
+This document defines the official product demonstration story for the EPIC 33 Pilot UI.
+
+It establishes:
+
+the canonical demo sequence from intake context through review queue, evidence inspection, governed human decision, backend-confirmed state refresh, finalized truth record, and export readiness visibility
+the exact product meaning that each screen contributes to the demonstration
+the preferred main demo path and a valid blocker-focused alternative path
+the expected audience takeaway at each stage
+the language discipline required to avoid overstating automation or falsely implying completed export capability
+the core narrative that the Pilot UI must demonstrate Financial Truth Layer value through visible, traceable product flow rather than static screen polish
+
+This deliverable ensures that later EPIC 33 implementation and demo execution remain anchored to a fixed, product-valid Financial Truth Layer story.
