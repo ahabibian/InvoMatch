@@ -81,3 +81,24 @@ shared response-state requirements for ready, empty, blocked, degraded, failed, 
 the design balance that backend contracts should return product semantics without becoming presentation-coupled
 
 This deliverable ensures that later EPIC 33 implementation can define exact endpoint routes and payloads on top of a clear contract architecture rather than inventing API behavior page-by-page.
+
+Mini-EPIC 33.1 Deliverable Added — Operator Workflow Definition
+
+The following architecture deliverable has now been added:
+
+OPERATOR_WORKFLOW_DEFINITION.md
+
+This document defines the end-to-end operator journey that the Pilot UI must support.
+
+It establishes:
+
+the core operator flow from dashboard visibility through review, evidence inspection, governed human decision, finalized truth, and export readiness visibility
+the role of each Pilot UI screen within that workflow
+required backend truth at each stage
+transition paths between workflow stages
+blocked, permission-denied, unresolved, and evidence-incomplete branches
+mandatory backend state refresh after operator action
+the distinction between operator intent submission and backend-owned truth mutation
+alignment between the Pilot UI workflow and the Financial Truth Layer lifecycle
+
+This deliverable ensures that EPIC 33 implementation proceeds from a product-valid operational journey rather than from disconnected page construction.
