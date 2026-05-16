@@ -22,3 +22,23 @@ the Pilot UI must visibly reveal the Financial Truth Layer lifecycle from raw in
 Mini-EPIC 33.1 does not authorize actual Base44 page construction, API wiring, backend redesign, Scenario 15 execution, regression reruns, or any production release behavior.
 
 Its role is to ensure that EPIC 33 becomes a coherent product demonstration layer rather than a loose collection of disconnected UI screens.
+
+Mini-EPIC 33.1 Deliverable Added — Pilot Screen Inventory and Responsibility Map
+
+The following architecture deliverable has now been added:
+
+PILOT_SCREEN_INVENTORY_AND_RESPONSIBILITY_MAP.md
+
+This document defines the full required Pilot UI screen set for EPIC 33 and assigns an explicit product responsibility to each screen.
+
+It establishes:
+
+the core screen inventory for the Pilot UI
+each screen's product purpose
+each screen's backend data dependency
+permitted operator actions
+forbidden frontend responsibilities
+screen-level exposure of the Financial Truth Layer
+the operator journey from intake through review, correction, finalized truth, and export readiness
+
+This deliverable reinforces that EPIC 33 must be implemented as a coherent product flow, not as an ad hoc collection of pages.
