@@ -102,3 +102,22 @@ the distinction between operator intent submission and backend-owned truth mutat
 alignment between the Pilot UI workflow and the Financial Truth Layer lifecycle
 
 This deliverable ensures that EPIC 33 implementation proceeds from a product-valid operational journey rather than from disconnected page construction.
+
+Mini-EPIC 33.1 Deliverable Added — Trust, Error, and Permission Presentation Rules
+
+The following architecture deliverable has now been added:
+
+TRUST_ERROR_AND_PERMISSION_PRESENTATION_RULES.md
+
+This document defines how the Pilot UI must present backend-derived uncertainty, workflow blockers, operational failures, degraded states, and permission restrictions without exposing raw internals or misleading the operator.
+
+It establishes:
+
+the trust-state categories required across the Pilot UI
+presentation rules for validation errors, permission denials, export-not-ready conditions, failed runs, degraded health, recovery in progress, missing evidence, unresolved review state, stale/conflict state, and unavailable resources
+user-safe message expectations that explain what happened, what is affected, whether the operator can continue, and what valid next step exists
+global versus local trust presentation boundaries
+screen-level trust/error expectations for dashboard, intake, queue, detail, correction, finalized truth, and tenant/user context surfaces
+forbidden frontend patterns such as optimistic truth mutation, raw backend error display, hidden blockers, and false readiness claims
+
+This deliverable ensures that EPIC 33 demonstrates a trust-preserving Financial Truth Layer product rather than a superficial happy-path-only interface.
