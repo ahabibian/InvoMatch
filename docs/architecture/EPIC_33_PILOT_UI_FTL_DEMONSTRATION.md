@@ -42,3 +42,22 @@ screen-level exposure of the Financial Truth Layer
 the operator journey from intake through review, correction, finalized truth, and export readiness
 
 This deliverable reinforces that EPIC 33 must be implemented as a coherent product flow, not as an ad hoc collection of pages.
+
+Mini-EPIC 33.1 Deliverable Added — FTL Surface Definition
+
+The following architecture deliverable has now been added:
+
+FTL_SURFACE_DEFINITION.md
+
+This document defines how the Financial Truth Layer must become visibly understandable through the Pilot UI.
+
+It establishes:
+
+the visible lifecycle from raw financial input to finalized truth
+the distinction between raw input, normalized processing, proposed system interpretation, evidence, human review, finalized truth, lineage, audit linkage, and export readiness
+the UI surfaces responsible for exposing each Financial Truth Layer stage
+the backend-derived truth required for each visible surface
+forbidden frontend shortcuts that would weaken or falsify the FTL narrative
+the standard that the Pilot UI must reveal FTL as a controlled product lifecycle, not as a vague internal term
+
+This deliverable ensures that EPIC 33 can later implement Pilot UI screens that make the Financial Truth Layer concrete, inspectable, and product-visible.
