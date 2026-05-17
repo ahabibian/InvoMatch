@@ -1,4 +1,4 @@
-﻿
+
 Mini-EPIC 33.1 — Pilot UI Product Architecture & FTL Surface Definition
 
 Mini-EPIC 33.1 establishes the architecture foundation required before any direct Pilot UI implementation in Base44 begins.
@@ -184,3 +184,71 @@ authorize deployment, release, or public artifact publication
 With these deliverables complete, Mini-EPIC 33.1 is ready for formal closure through:
 
 MINI_EPIC_33_1_CLOSURE.md
+---
+
+## Mini-EPIC 33.2 — Pilot UI Implementation Planning & Base44 Construction Boundary
+
+Mini-EPIC 33.2 converts the architecture foundation established in Mini-EPIC 33.1 into a controlled Pilot UI implementation planning boundary.
+
+Mini-EPIC 33.1 defined:
+
+- Base44 as the Pilot UI Layer only;
+- backend ownership of product truth;
+- approved Pilot screen responsibilities;
+- Financial Truth Layer presentation surfaces;
+- initial API-to-screen mapping posture;
+- operator workflow;
+- trust, error, blocker, and permission presentation rules;
+- the canonical Pilot Demo Narrative.
+
+Mini-EPIC 33.2 does not build actual Pilot UI pages.
+
+Instead, it defines how later Base44 construction must proceed without deviating from the architecture already approved in Mini-EPIC 33.1.
+
+The following deliverables are complete:
+
+- PILOT_UI_IMPLEMENTATION_STRATEGY.md
+- BASE44_CONSTRUCTION_BOUNDARY.md
+- PILOT_SCREEN_CONSTRUCTION_SEQUENCE.md
+- FIRST_PILOT_SLICE_DEFINITION.md
+- SCREEN_READINESS_CLASSIFICATION.md
+- BACKEND_DEPENDENCY_AND_PLACEHOLDER_DISCIPLINE.md
+- SCREEN_CONSTRUCTION_ACCEPTANCE_CRITERIA.md
+- PILOT_UI_IMPLEMENTATION_PHASE_BOUNDARIES.md
+
+Together, these documents formally establish:
+
+- the staged implementation strategy for controlled Pilot UI construction;
+- the non-negotiable Base44 construction boundary;
+- the official screen construction sequence for later EPIC 33 implementation;
+- the First Pilot Slice as a review-centered, product-valid demonstration path;
+- the readiness classification of each Pilot UI screen and surface;
+- the backend dependency and placeholder discipline required before backend binding;
+- the acceptance criteria that later screen construction must satisfy;
+- the implementation phase boundaries from shell construction through backend binding and demo stabilization.
+
+Mini-EPIC 33.2 explicitly preserves the central architectural principle:
+
+> Implementation must follow architecture, not reinterpret it.
+
+Mini-EPIC 33.2 remains strictly planning-boundary work.
+
+It does not:
+
+- build actual Base44 pages;
+- write direct Base44 page-generation prompts;
+- execute UI implementation phases;
+- connect live Base44 screens to backend APIs;
+- redesign backend contracts;
+- implement matching logic;
+- implement correction execution;
+- implement finalization execution;
+- implement export readiness behavior;
+- execute export;
+- execute Scenario 15;
+- rerun regression scenarios;
+- authorize deployment, release, or public artifact publication.
+
+With these deliverables complete, Mini-EPIC 33.2 is ready for formal closure through:
+
+- MINI_EPIC_33_2_CLOSURE.md
