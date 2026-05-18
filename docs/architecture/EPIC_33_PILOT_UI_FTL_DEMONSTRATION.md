@@ -252,3 +252,58 @@ It does not:
 With these deliverables complete, Mini-EPIC 33.2 is ready for formal closure through:
 
 - MINI_EPIC_33_2_CLOSURE.md
+
+Mini-EPIC 33.3 — Pilot UI Phase A Construction Authorization & Base44 Shell Execution Boundary
+
+Mini-EPIC 33.3 begins the first controlled implementation step of EPIC 33 after the planning-boundary closure of Mini-EPIC 33.2.
+
+This Mini-EPIC formally authorizes entry into:
+
+Phase A — Base44 Shell and Navigation Foundation
+
+Mini-EPIC 33.3 does not authorize the full Pilot UI workflow.
+
+It authorizes only the controlled construction foundation required before later workflow screens may be implemented.
+
+The initial Mini-EPIC 33.3 governance deliverables are:
+
+PHASE_A_CONSTRUCTION_AUTHORIZATION.md
+PHASE_A_EXECUTION_BOUNDARY.md
+BASE44_PHASE_A_PROMPTING_BOUNDARY.md
+PHASE_A_TARGET_SHELL_ARTIFACT_DEFINITION.md
+PHASE_A_CONSTRUCTION_ACCEPTANCE_CRITERIA.md
+
+Together, these documents establish:
+
+the formal authorization to begin Phase A construction;
+the exact allowed and prohibited work inside the Phase A boundary;
+the prompting discipline required before giving Base44 a real Phase A construction instruction;
+the target Base44 shell artifact that Phase A must produce;
+the acceptance criteria that the actual shell output must satisfy before Mini-EPIC 33.3 may proceed toward closure.
+
+Mini-EPIC 33.3 preserves the central implementation principle:
+
+Phase A may establish the Pilot UI frame, but it may not begin the Pilot workflow itself.
+
+Accordingly, Mini-EPIC 33.3 does not yet:
+
+complete actual Base44 shell construction review;
+record a completed Base44 execution outcome;
+construct Pilot Dashboard behavior;
+construct Reconciliation Review Queue behavior;
+construct Match Detail / Evidence View behavior;
+construct Human Correction behavior;
+construct Finalized Truth Record behavior;
+construct Export Readiness behavior;
+construct Intake Workspace behavior;
+bind live backend APIs;
+introduce frontend-owned product truth;
+execute Scenario 15;
+rerun regression scenarios;
+authorize deployment, release, or public artifact publication.
+
+The remaining Mini-EPIC 33.3 deliverables will only become valid after actual Base44 construction and review occur:
+
+PHASE_A_BASE44_SHELL_CONSTRUCTION_EXECUTION_RECORD.md
+PHASE_A_POST_CONSTRUCTION_REVIEW.md
+MINI_EPIC_33_3_CLOSURE.md
