@@ -1,5 +1,5 @@
-
-Mini-EPIC 33.1 — Pilot UI Product Architecture & FTL Surface Definition
+﻿
+Mini-EPIC 33.1 â€” Pilot UI Product Architecture & FTL Surface Definition
 
 Mini-EPIC 33.1 establishes the architecture foundation required before any direct Pilot UI implementation in Base44 begins.
 
@@ -23,7 +23,7 @@ Mini-EPIC 33.1 does not authorize actual Base44 page construction, API wiring, b
 
 Its role is to ensure that EPIC 33 becomes a coherent product demonstration layer rather than a loose collection of disconnected UI screens.
 
-Mini-EPIC 33.1 Deliverable Added — Pilot Screen Inventory and Responsibility Map
+Mini-EPIC 33.1 Deliverable Added â€” Pilot Screen Inventory and Responsibility Map
 
 The following architecture deliverable has now been added:
 
@@ -43,7 +43,7 @@ the operator journey from intake through review, correction, finalized truth, an
 
 This deliverable reinforces that EPIC 33 must be implemented as a coherent product flow, not as an ad hoc collection of pages.
 
-Mini-EPIC 33.1 Deliverable Added — FTL Surface Definition
+Mini-EPIC 33.1 Deliverable Added â€” FTL Surface Definition
 
 The following architecture deliverable has now been added:
 
@@ -62,7 +62,7 @@ the standard that the Pilot UI must reveal FTL as a controlled product lifecycle
 
 This deliverable ensures that EPIC 33 can later implement Pilot UI screens that make the Financial Truth Layer concrete, inspectable, and product-visible.
 
-Mini-EPIC 33.1 Deliverable Added — Initial API-to-Screen Mapping Framework
+Mini-EPIC 33.1 Deliverable Added â€” Initial API-to-Screen Mapping Framework
 
 The following architecture deliverable has now been added:
 
@@ -82,7 +82,7 @@ the design balance that backend contracts should return product semantics withou
 
 This deliverable ensures that later EPIC 33 implementation can define exact endpoint routes and payloads on top of a clear contract architecture rather than inventing API behavior page-by-page.
 
-Mini-EPIC 33.1 Deliverable Added — Operator Workflow Definition
+Mini-EPIC 33.1 Deliverable Added â€” Operator Workflow Definition
 
 The following architecture deliverable has now been added:
 
@@ -103,7 +103,7 @@ alignment between the Pilot UI workflow and the Financial Truth Layer lifecycle
 
 This deliverable ensures that EPIC 33 implementation proceeds from a product-valid operational journey rather than from disconnected page construction.
 
-Mini-EPIC 33.1 Deliverable Added — Trust, Error, and Permission Presentation Rules
+Mini-EPIC 33.1 Deliverable Added â€” Trust, Error, and Permission Presentation Rules
 
 The following architecture deliverable has now been added:
 
@@ -122,7 +122,7 @@ forbidden frontend patterns such as optimistic truth mutation, raw backend error
 
 This deliverable ensures that EPIC 33 demonstrates a trust-preserving Financial Truth Layer product rather than a superficial happy-path-only interface.
 
-Mini-EPIC 33.1 Deliverable Added — Pilot Demo Narrative
+Mini-EPIC 33.1 Deliverable Added â€” Pilot Demo Narrative
 
 The following architecture deliverable has now been added:
 
@@ -141,7 +141,7 @@ the core narrative that the Pilot UI must demonstrate Financial Truth Layer valu
 
 This deliverable ensures that later EPIC 33 implementation and demo execution remain anchored to a fixed, product-valid Financial Truth Layer story.
 
-Mini-EPIC 33.1 — Architecture Foundation Completed and Ready for Closure
+Mini-EPIC 33.1 â€” Architecture Foundation Completed and Ready for Closure
 
 Mini-EPIC 33.1 has now completed its full architecture-definition scope for the EPIC 33 Pilot UI and Financial Truth Layer demonstration foundation.
 
@@ -186,7 +186,7 @@ With these deliverables complete, Mini-EPIC 33.1 is ready for formal closure thr
 MINI_EPIC_33_1_CLOSURE.md
 ---
 
-## Mini-EPIC 33.2 — Pilot UI Implementation Planning & Base44 Construction Boundary
+## Mini-EPIC 33.2 â€” Pilot UI Implementation Planning & Base44 Construction Boundary
 
 Mini-EPIC 33.2 converts the architecture foundation established in Mini-EPIC 33.1 into a controlled Pilot UI implementation planning boundary.
 
@@ -253,13 +253,13 @@ With these deliverables complete, Mini-EPIC 33.2 is ready for formal closure thr
 
 - MINI_EPIC_33_2_CLOSURE.md
 
-Mini-EPIC 33.3 — Pilot UI Phase A Construction Authorization & Base44 Shell Execution Boundary
+Mini-EPIC 33.3 â€” Pilot UI Phase A Construction Authorization & Base44 Shell Execution Boundary
 
 Mini-EPIC 33.3 begins the first controlled implementation step of EPIC 33 after the planning-boundary closure of Mini-EPIC 33.2.
 
 This Mini-EPIC formally authorizes entry into:
 
-Phase A — Base44 Shell and Navigation Foundation
+Phase A â€” Base44 Shell and Navigation Foundation
 
 Mini-EPIC 33.3 does not authorize the full Pilot UI workflow.
 
@@ -308,11 +308,11 @@ PHASE_A_BASE44_SHELL_CONSTRUCTION_EXECUTION_RECORD.md
 PHASE_A_POST_CONSTRUCTION_REVIEW.md
 MINI_EPIC_33_3_CLOSURE.md
 
-Mini-EPIC 33.3 — Phase A Base44 Shell Construction Executed, Reviewed, and Closed
+Mini-EPIC 33.3 â€” Phase A Base44 Shell Construction Executed, Reviewed, and Closed
 
 Mini-EPIC 33.3 has now completed the first controlled real implementation step of EPIC 33:
 
-Phase A — Base44 Shell and Navigation Foundation
+Phase A â€” Base44 Shell and Navigation Foundation
 
 The following execution and closure deliverables have now been completed:
 
@@ -356,11 +356,11 @@ Mini-EPIC 33.3 is therefore formally closed through:
 
 MINI_EPIC_33_3_CLOSURE.md
 
-Mini-EPIC 33.4 — Pilot UI Phase B Core Review Path Construction Authorization & Base44 Review-Surface Execution Boundary
+Mini-EPIC 33.4 â€” Pilot UI Phase B Core Review Path Construction Authorization & Base44 Review-Surface Execution Boundary
 
 Mini-EPIC 33.4 advances EPIC 33 from the accepted Phase A shell foundation into the second controlled implementation step:
 
-Phase B — Core Review Path Construction
+Phase B â€” Core Review Path Construction
 
 Mini-EPIC 33.4 formally authorizes and executes the first visible workflow-adjacent Pilot UI surfaces while preserving the core EPIC 33 doctrine:
 
@@ -396,8 +396,8 @@ Pilot Dashboard as a restrained review-path entry surface;
 Reconciliation Review Queue as a structural, non-operational review surface;
 Match Detail / Evidence View as a structural inspection-layout surface;
 recognizable navigation continuity:
-Dashboard → Review Queue;
-Review Queue → Match Detail / Evidence View.
+Dashboard â†’ Review Queue;
+Review Queue â†’ Match Detail / Evidence View.
 
 The Pilot Dashboard was accepted because it:
 
@@ -474,21 +474,21 @@ It confirms only that EPIC 33 has successfully completed the controlled Phase B 
 
 MINI_EPIC_33_4_CLOSURE.md
 
-Mini-EPIC 33.5 — Phase C Human Correction & Financial Truth Outcome Surface Construction
+Mini-EPIC 33.5 â€” Phase C Human Correction & Financial Truth Outcome Surface Construction
 
 Mini-EPIC 33.5 formally authorized and executed:
 
-Phase C — Human Correction and Financial Truth Outcome Surfaces
+Phase C â€” Human Correction and Financial Truth Outcome Surfaces
 
 This Mini-EPIC extended the visible First Pilot Slice beyond the previously completed Phase B review path.
 
 Before Mini-EPIC 33.5, the approved visible pilot path reached:
 
-Pilot Dashboard → Review Queue → Match Detail / Evidence View
+Pilot Dashboard â†’ Review Queue â†’ Match Detail / Evidence View
 
 Mini-EPIC 33.5 expanded that path into:
 
-Pilot Dashboard → Review Queue → Match Detail / Evidence View → Human Correction → Finalized Truth → Export Readiness
+Pilot Dashboard â†’ Review Queue â†’ Match Detail / Evidence View â†’ Human Correction â†’ Finalized Truth â†’ Export Readiness
 
 Phase C Construction Authorized
 
@@ -548,11 +548,11 @@ First Pilot Slice Narrative Advanced
 
 Mini-EPIC 33.5 materially advanced the visible First Pilot Slice from:
 
-review entry → evidence inspection
+review entry â†’ evidence inspection
 
 to:
 
-review entry → evidence inspection → bounded human correction posture → finalized truth visibility shell → export readiness visibility shell
+review entry â†’ evidence inspection â†’ bounded human correction posture â†’ finalized truth visibility shell â†’ export readiness visibility shell
 
 This advancement completes the review-to-truth narrative surface construction for Phase C without fabricating product truth.
 
@@ -584,3 +584,94 @@ Human Correction, Finalized Truth, and Export Readiness surfaces are present as 
 the First Pilot Slice is now visibly extended through downstream truth/readiness presentation
 backend binding has not begun
 Phase D and Phase E remain unauthorized for execution
+Mini-EPIC 33.6 — Phase D Intake Workspace & Shared Trust-State Completion
+
+Mini-EPIC 33.6 formally authorized EPIC 33 to enter:
+
+Phase D — Intake & Shared Trust-State Completion
+
+This phase remained strictly pre-backend-binding and completed the visible Pilot UI entry and shared state-presentation layer without fabricating operational product behavior.
+
+Phase D Authorized Construction Scope
+
+Mini-EPIC 33.6 authorized and executed actual Base44 construction for:
+
+Intake Workspace Surface
+Shared Trust-State Presentation
+Shared Error-State Presentation
+Shared Permission-State Presentation
+
+The construction preserved the existing EPIC 33 path already established through earlier phases:
+
+Pilot Dashboard → Review Queue → Match Detail / Evidence → Human Correction → Finalized Truth → Export Readiness
+
+and extended the visible product narrative upstream into:
+
+Intake framing → Pilot Dashboard / Review Queue → Match Detail / Evidence → Human Correction → Finalized Truth → Export Readiness
+
+Intake Workspace Completion
+
+Phase D constructed a controlled Intake Workspace as the upstream pilot entry-framing surface.
+
+This screen now explains:
+
+Where raw financial source material will later enter the InvoMatch product flow
+That backend intake binding is not yet active
+That no upload, parsing, OCR, ingestion, run creation, or queue population occurs from this surface in the current pilot
+How future intake will relate to the downstream review-to-truth narrative
+
+A controlled navigation-order correction was executed so that Intake Workspace appears after Pilot Dashboard and before Review Queue, consistent with its upstream product-entry role.
+
+Shared Trust / Error / Permission Presentation Completion
+
+Phase D completed a cross-surface presentation layer for:
+
+Trust-state posture
+Unavailable / deferred capability framing
+Future backend-dependent permission context
+
+The implemented Pilot UI now consistently communicates that:
+
+Operational truth remains backend-owned
+Backend confirmation is required where product outcomes are not yet bound
+Deferred capability is not a runtime failure
+Future permission dependency is explanatory only and not simulated enforcement
+
+These presentation rules were applied across relevant surfaces including:
+
+Intake Workspace
+Human Correction
+Finalized Truth
+Export Readiness
+Explicit Non-Actions Preserved
+
+Mini-EPIC 33.6 did not execute:
+
+Backend API binding
+Live upload integration
+Actual file persistence
+Actual ingestion
+OCR or parsing execution
+Run creation
+Live review queue population
+Real trust verification
+Trust scoring
+Actual permission enforcement
+Role-based backend access enforcement
+Matching logic
+Finalization logic
+Export logic
+Phase E execution
+Phase D Governance Outcome
+
+After Mini-EPIC 33.6, the Pilot UI is more complete in visible product narrative and shared state-language discipline:
+
+Entry surface framing is now present
+Review-to-truth narrative remains intact
+Trust / error / permission presentation is more system-consistent
+Backend truth ownership remains explicit
+
+Backend binding has not begun.
+
+Phase E remains unauthorized.
+
