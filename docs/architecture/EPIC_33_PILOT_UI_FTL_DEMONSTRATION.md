@@ -774,3 +774,24 @@ demo stabilization may improve clarity and reliability but may not fabricate ope
 actual Base44-to-backend execution remains deferred to later Mini-EPIC work
 
 Mini-EPIC 33.8 establishes the required authorization boundary before any real Phase E backend-binding execution begins.
+
+Mini-EPIC 33.9 — Phase E First Controlled Backend Binding Slice Definition
+
+Mini-EPIC 33.9 formally defines the first controlled Phase E backend-binding slice for EPIC 33.
+
+The selected first slice is:
+
+Review Queue
+Match Detail / Evidence
+
+This slice is approved as the lowest-risk and highest-narrative-value entry point into backend-governed Pilot UI binding. It is intentionally narrow, read-oriented, and aligned with the Financial Truth Layer demonstration narrative.
+
+The following surfaces are explicitly outside the first controlled slice:
+
+Pilot Dashboard, which remains only a secondary future binding candidate
+Human Correction
+Finalized Truth
+Export Readiness
+Intake Workspace
+
+Mini-EPIC 33.9 does not execute backend binding. It does not run any Base44 integration prompt, perform endpoint wiring, retire placeholders, execute Scenario 15, or begin live Pilot UI implementation. It defines the first slice that future controlled Phase E execution must obey.
