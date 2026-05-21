@@ -926,3 +926,15 @@ The backend verification did not prove a product-facing Match Detail / Evidence 
 Base44 binding remains blocked.
 
 Mini-EPIC 33.13 must be backend contract/adaptor implementation for Match Detail / Evidence read path before any UI binding is allowed.
+
+Mini-EPIC 33.13 — Match Detail / Evidence Backend Contract and Adapter Implementation Boundary
+
+Mini-EPIC 33.13 is the backend contract/adaptor step required after Mini-EPIC 33.12 reached Decision B.
+
+Base44 binding remains blocked until the backend exposes a product-facing Match Detail / Evidence read path.
+
+The required path is:
+
+Review Queue -> stable match_id -> product-facing Match Detail retrieval -> backend-owned evidence payload -> backend-owned traceability payload -> explicit failure semantics -> UI-displayable response without frontend truth synthesis.
+
+Mini-EPIC 33.13 does not authorize Base44 implementation, live UI wiring, Human Correction binding, Finalized Truth binding, Export Readiness binding, Intake Workspace binding, Pilot Dashboard expansion, Scenario 15 completion claim, or frontend truth synthesis.
