@@ -1,0 +1,67 @@
+﻿scripts/release_manifest_dry_run.py:18:    "evidence_index": "docs/architecture/RELEASE_CANDIDATE_EVIDENCE_INDEX.md",
+scripts/release_manifest_dry_run.py:25:    "evidence_reference",
+scripts/release_manifest_dry_run.py:62:REQUIRED_EVIDENCE_REFERENCE_FIELDS = [
+scripts/release_manifest_dry_run.py:63:    "evidence_index_path",
+scripts/release_manifest_dry_run.py:64:    "evidence_index_version",
+scripts/release_manifest_dry_run.py:69:    "evidence_included_in_package",
+scripts/release_manifest_dry_run.py:70:    "evidence_referenced_only",
+scripts/release_manifest_dry_run.py:90:EVIDENCE_REFERENCE_PREVIEW = {
+scripts/release_manifest_dry_run.py:91:    "evidence_index_path": DOCUMENTATION_REFERENCES["evidence_index"],
+scripts/release_manifest_dry_run.py:92:    "evidence_index_version": 1,
+scripts/release_manifest_dry_run.py:99:    "evidence_included_in_package": [],
+scripts/release_manifest_dry_run.py:100:    "evidence_referenced_only": [
+scripts/release_manifest_dry_run.py:101:        DOCUMENTATION_REFERENCES["evidence_index"],
+scripts/release_manifest_dry_run.py:126:    "release_evidence_index": {
+scripts/release_manifest_dry_run.py:128:        "path": DOCUMENTATION_REFERENCES["evidence_index"],
+scripts/release_manifest_dry_run.py:300:        "evidence_reference": EVIDENCE_REFERENCE_PREVIEW,
+scripts/release_manifest_dry_run.py:341:    for field in REQUIRED_EVIDENCE_REFERENCE_FIELDS:
+scripts/release_manifest_dry_run.py:342:        field_path = f"evidence_reference.{field}"
+scripts/release_manifest_dry_run.py:343:        if field == "evidence_included_in_package":
+scripts/release_manifest_dry_run.py:348:    if manifest["evidence_reference"].get("evidence_included_in_package") != []:
+scripts/release_manifest_dry_run.py:349:        raise _schema_error("evidence_reference.evidence_included_in_package must be empty")
+src/invomatch/domain/feedback/models.py:100:    evidence_count: int = Field(ge=1)
+src/invomatch/domain/feedback/models.py:110:    def validate_evidence_alignment(self) -> "LearningSignal":
+src/invomatch/domain/feedback/models.py:111:        if self.evidence_count < len(self.source_correction_ids):
+src/invomatch/domain/feedback/models.py:113:                "evidence_count cannot be smaller than the number of source correction ids"
+src/invomatch/domain/feedback/models.py:131:    minimum_evidence_required: int = Field(ge=1)
+src/invomatch/services/feedback/records.py:72:    evidence_count: int = Field(ge=1)
+src/invomatch/services/feedback/records.py:83:    def validate_evidence_count(self) -> "LearningSignalRecord":
+src/invomatch/services/feedback/records.py:84:        if self.evidence_count < len(self.source_correction_ids):
+src/invomatch/services/feedback/records.py:86:                "evidence_count cannot be smaller than the number of source correction ids"
+src/invomatch/services/feedback/records.py:104:    minimum_evidence_required: int = Field(ge=1)
+src/invomatch/services/feedback/rule_recommendation.py:19:        minimum_evidence_required: int,
+src/invomatch/services/feedback/rule_recommendation.py:29:            minimum_evidence_required=minimum_evidence_required,
+src/invomatch/services/feedback/signal_extraction.py:49:                evidence_count=len(grouped_events),
+src/invomatch/services/feedback/sqlite_feedback_repository.py:60:    evidence_count INTEGER NOT NULL,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:81:    minimum_evidence_required INTEGER NOT NULL,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:244:            evidence_count,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:260:            signal.evidence_count,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:310:            minimum_evidence_required,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:326:            recommendation.minimum_evidence_required,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:544:            evidence_count=int(row["evidence_count"]),
+src/invomatch/services/feedback/sqlite_feedback_repository.py:564:            minimum_evidence_required=int(row["minimum_evidence_required"]),
+src/invomatch/services/matching/explanations.py:18:        return "Candidate auto-approved due to strong score, strong evidence, and sufficient candidate separation."
+src/invomatch/services/matching/explanations.py:24:        return "Candidate has meaningful evidence but not enough certainty for automatic approval."
+tests/domain/feedback/test_feedback_models.py:98:def test_learning_signal_requires_valid_evidence_alignment() -> None:
+tests/domain/feedback/test_feedback_models.py:106:        evidence_count=2,
+tests/domain/feedback/test_feedback_models.py:116:def test_learning_signal_rejects_small_evidence_count() -> None:
+tests/domain/feedback/test_feedback_models.py:125:            evidence_count=1,
+tests/domain/feedback/test_feedback_models.py:141:            minimum_evidence_required=5,
+tests/domain/feedback/test_feedback_models.py:154:        minimum_evidence_required=5,
+tests/services/feedback/test_feedback_records.py:64:def test_learning_signal_record_rejects_small_evidence_count() -> None:
+tests/services/feedback/test_feedback_records.py:73:            evidence_count=1,
+tests/services/feedback/test_feedback_records.py:89:            minimum_evidence_required=5,
+tests/services/feedback/test_rule_recommendation.py:106:        evidence_count=2,
+tests/services/feedback/test_rule_recommendation.py:124:        minimum_evidence_required=2,
+tests/services/feedback/test_rule_recommendation.py:141:        minimum_evidence_required=2,
+tests/services/feedback/test_rule_recommendation.py:164:        minimum_evidence_required=2,
+tests/services/feedback/test_signal_extraction.py:150:    assert signals[0].evidence_count == 2
+tests/services/feedback/test_sqlite_feedback_repository.py:68:        evidence_count=2,
+tests/services/feedback/test_sqlite_feedback_repository.py:96:        minimum_evidence_required=2,
+tests/test_release_manifest_dry_run.py:45:        "evidence_reference",
+tests/test_release_manifest_dry_run.py:64:        "evidence_reference",
+tests/test_release_manifest_dry_run.py:80:    assert first["evidence_reference"]["validation_status"] == "not-executed-by-dry-run"
+tests/test_release_manifest_dry_run.py:113:    assert included["release_evidence_index"]["preview_only"] is True
+tests/test_release_manifest_dry_run.py:207:def test_manifest_schema_validator_rejects_missing_evidence_reference_field() -> None:
+tests/test_release_manifest_dry_run.py:209:    del manifest["evidence_reference"]["validation_status"]
+tests/test_release_manifest_dry_run.py:216:            "evidence_reference.validation_status"
