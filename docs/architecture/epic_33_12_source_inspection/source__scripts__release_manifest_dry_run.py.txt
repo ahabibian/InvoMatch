@@ -1,0 +1,434 @@
+﻿
+SOURCE FILE: scripts/release_manifest_dry_run.py
+Captured for Mini-EPIC 33.12 source-level backend read path inspection.
+This is a documentation snapshot only. No source code is modified.
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+
+DEFAULT_OUTPUT_PATH = Path(
+    "output/local/release_manifest_dry_run/package_manifest_preview.json"
+)
+
+DOCUMENTATION_REFERENCES = {
+    "release_pipeline": "docs/architecture/EPIC_32_RELEASE_PIPELINE.md",
+    "package_manifest_contract": "docs/architecture/RELEASE_ARTIFACT_PACKAGE_MANIFEST.md",
+    "evidence_index": "docs/architecture/RELEASE_CANDIDATE_EVIDENCE_INDEX.md",
+    "dry_run_contract": "docs/architecture/PACKAGE_MANIFEST_DRY_RUN_CONTRACT.md",
+}
+
+EXPECTED_MANIFEST_FIELDS = [
+    "package_identity",
+    "source_identity",
+    "evidence_reference",
+    "included_components",
+    "excluded_components",
+    "build_environment_assumptions",
+    "reproducibility_notes",
+    "non_deployment_boundary",
+]
+
+NON_DEPLOYMENT_BOUNDARY = {
+    "creates_package_archive": False,
+    "publishes_artifacts": False,
+    "creates_docker_image": False,
+    "creates_git_tag": False,
+    "creates_github_release": False,
+    "deploys": False,
+    "modifies_ci": False,
+    "writes_release_state_to_database": False,
+    "promotes_environment": False,
+}
+
+REQUIRED_PACKAGE_IDENTITY_FIELDS = [
+    "package_id",
+    "package_name",
+    "package_type",
+    "package_manifest_version",
+    "package_created_at",
+    "release_candidate_id",
+    "release_identity",
+    "package_status",
+]
+
+REQUIRED_SOURCE_IDENTITY_FIELDS = [
+    "branch",
+    "commit_sha",
+    "working_tree_clean",
+]
+
+REQUIRED_EVIDENCE_REFERENCE_FIELDS = [
+    "evidence_index_path",
+    "evidence_index_version",
+    "validation_status",
+    "validation_summary_reference",
+    "validation_executed_at",
+    "validation_scope",
+    "evidence_included_in_package",
+    "evidence_referenced_only",
+]
+
+EXPECTED_NON_DEPLOYMENT_BOUNDARY_FIELDS = list(NON_DEPLOYMENT_BOUNDARY.keys())
+
+PACKAGE_IDENTITY_PREVIEW = {
+    "package_id": "preview-not-created",
+    "package_name": "InvoMatch Release Package Manifest Preview",
+    "package_type": "dry-run-preview",
+    "package_manifest_version": 1,
+    "package_created_at": "not-created-in-dry-run",
+    "release_candidate_id": "preview-only",
+    "release_identity": {
+        "release_name": "preview-only",
+        "release_channel": "local-dry-run",
+        "release_version": "not-assigned-in-dry-run",
+    },
+    "package_status": "preview",
+}
+
+EVIDENCE_REFERENCE_PREVIEW = {
+    "evidence_index_path": DOCUMENTATION_REFERENCES["evidence_index"],
+    "evidence_index_version": 1,
+    "validation_status": "not-executed-by-dry-run",
+    "validation_summary_reference": "not-created-by-dry-run",
+    "validation_executed_at": "not-executed-by-dry-run",
+    "validation_scope": [
+        "manifest-content-contract-preview",
+    ],
+    "evidence_included_in_package": [],
+    "evidence_referenced_only": [
+        DOCUMENTATION_REFERENCES["evidence_index"],
+    ],
+}
+
+INCLUDED_COMPONENTS_PREVIEW = {
+    "backend_source": {
+        "included": True,
+        "path": "src/",
+        "preview_only": True,
+    },
+    "backend_tests": {
+        "included": True,
+        "path": "tests/",
+        "preview_only": True,
+    },
+    "frontend_source": {
+        "included": True,
+        "path": "ui/invomatch-ui/src/",
+        "preview_only": True,
+    },
+    "architecture_documentation": {
+        "included": True,
+        "path": "docs/architecture/",
+        "preview_only": True,
+    },
+    "release_evidence_index": {
+        "included": True,
+        "path": DOCUMENTATION_REFERENCES["evidence_index"],
+        "preview_only": True,
+    },
+    "package_manifest_contract": {
+        "included": True,
+        "path": DOCUMENTATION_REFERENCES["package_manifest_contract"],
+        "preview_only": True,
+    },
+}
+
+EXCLUDED_COMPONENTS_PREVIEW = {
+    "local_runtime_databases": {
+        "excluded": True,
+        "examples": [
+            "output/local/reconciliation_runs.sqlite3",
+            "output/local/review_store.sqlite3",
+            "output/local/exports/export_artifacts.sqlite3",
+        ],
+    },
+    "local_preview_outputs": {
+        "excluded": True,
+        "examples": [
+            DEFAULT_OUTPUT_PATH.as_posix(),
+        ],
+    },
+    "dependency_caches": {
+        "excluded": True,
+        "examples": [
+            ".venv/",
+            "node_modules/",
+            ".pytest_tmp/",
+        ],
+    },
+    "deployment_artifacts": {
+        "excluded": True,
+        "examples": [
+            "Docker images",
+            "environment promotion records",
+            "deployment credentials",
+        ],
+    },
+    "public_release_objects": {
+        "excluded": True,
+        "examples": [
+            "GitHub Releases",
+            "semantic version tags",
+        ],
+    },
+}
+
+BUILD_ENVIRONMENT_ASSUMPTIONS_PREVIEW = {
+    "operating_system_family": "Windows-compatible",
+    "shell": "PowerShell",
+    "python_version": "repo-local-validation-runtime",
+    "node_version": "repo-local-validation-runtime",
+    "npm_version": "repo-local-validation-runtime",
+    "package_manager_assumptions": {
+        "python": "pip",
+        "frontend": "npm",
+    },
+    "environment_variables_required": [
+        "PYTHONPATH=src",
+    ],
+    "external_services_required": [],
+    "database_assumptions": {
+        "runtime_database_creation": "local-only",
+        "packaged_database_state": "excluded",
+    },
+}
+
+REPRODUCIBILITY_NOTES_PREVIEW = {
+    "reproducible_from_commit": True,
+    "validation_reproducibility": "command-based",
+    "generated_artifact_reproducibility": "not-applicable-in-dry-run",
+    "local_machine_dependency_notes": [
+        "Dry-run preview records source identity but does not create a release package.",
+        "Local runtime databases and generated outputs are excluded from the package boundary preview.",
+    ],
+    "known_non_reproducible_items": [
+        "local absolute paths",
+        "machine-specific caches",
+        "execution timestamps outside this deterministic preview",
+    ],
+}
+
+
+class ReleaseManifestDryRunError(RuntimeError):
+    """Raised when a dry-run manifest preview cannot be generated safely."""
+
+
+def _schema_error(message: str) -> ReleaseManifestDryRunError:
+    return ReleaseManifestDryRunError(f"manifest schema invalid: {message}")
+
+
+def _run_git(repo_root: Path, args: list[str]) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo_root,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    if result.returncode != 0:
+        stderr = result.stderr.strip()
+        raise ReleaseManifestDryRunError(
+            f"Failed to read git metadata using git {' '.join(args)}: {stderr}"
+        )
+
+    return result.stdout.strip()
+
+
+def _require_mapping(manifest: dict[str, Any], field_path: str) -> dict[str, Any]:
+    value: Any = manifest
+    for part in field_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            raise _schema_error(f"missing required field {field_path}")
+        value = value[part]
+
+    if not isinstance(value, dict) or not value:
+        raise _schema_error(f"{field_path} must be a non-empty mapping")
+
+    return value
+
+
+def _require_field(manifest: dict[str, Any], field_path: str) -> Any:
+    value: Any = manifest
+    for part in field_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            raise _schema_error(f"missing required field {field_path}")
+        value = value[part]
+
+    if value in ({}, [], None, ""):
+        raise _schema_error(f"{field_path} must not be empty")
+
+    return value
+
+
+def _require_present_field(manifest: dict[str, Any], field_path: str) -> Any:
+    value: Any = manifest
+    for part in field_path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            raise _schema_error(f"missing required field {field_path}")
+        value = value[part]
+
+    return value
+
+
+def read_source_identity(repo_root: Path) -> dict[str, Any]:
+    branch = _run_git(repo_root, ["rev-parse", "--abbrev-ref", "HEAD"])
+    commit_sha = _run_git(repo_root, ["rev-parse", "HEAD"])
+    status = _run_git(repo_root, ["status", "--porcelain"])
+
+    return {
+        "branch": branch,
+        "commit_sha": commit_sha,
+        "working_tree_clean": status == "",
+    }
+
+
+def build_manifest_preview(
+    repo_root: Path,
+    source_identity: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    identity = source_identity or read_source_identity(repo_root)
+
+    return {
+        "schema_version": "invomatch.package_manifest_dry_run.v1",
+        "dry_run": True,
+        "package_status": "preview",
+        "package_identity": PACKAGE_IDENTITY_PREVIEW,
+        "source_identity": identity,
+        "evidence_reference": EVIDENCE_REFERENCE_PREVIEW,
+        "included_components": INCLUDED_COMPONENTS_PREVIEW,
+        "excluded_components": EXCLUDED_COMPONENTS_PREVIEW,
+        "build_environment_assumptions": BUILD_ENVIRONMENT_ASSUMPTIONS_PREVIEW,
+        "reproducibility_notes": REPRODUCIBILITY_NOTES_PREVIEW,
+        "documentation_references": DOCUMENTATION_REFERENCES,
+        "expected_manifest_fields": EXPECTED_MANIFEST_FIELDS,
+        "non_deployment_boundary": NON_DEPLOYMENT_BOUNDARY,
+    }
+
+
+def validate_manifest_preview(manifest: dict[str, Any]) -> None:
+    """Validate the local-only dry-run package manifest preview schema."""
+
+    if not isinstance(manifest, dict):
+        raise _schema_error("manifest must be a mapping")
+
+    if manifest.get("dry_run") is not True:
+        raise _schema_error("dry_run must be true")
+
+    if manifest.get("package_status") != "preview":
+        raise _schema_error("package_status must be preview")
+
+    for section in EXPECTED_MANIFEST_FIELDS:
+        _require_mapping(manifest, section)
+
+    for field in REQUIRED_PACKAGE_IDENTITY_FIELDS:
+        _require_field(manifest, f"package_identity.{field}")
+
+    if manifest["package_identity"].get("package_status") != "preview":
+        raise _schema_error("package_identity.package_status must be preview")
+
+    if manifest["package_identity"].get("package_type") != "dry-run-preview":
+        raise _schema_error("package_identity.package_type must be dry-run-preview")
+
+    for field in REQUIRED_SOURCE_IDENTITY_FIELDS:
+        _require_field(manifest, f"source_identity.{field}")
+
+    if not isinstance(manifest["source_identity"].get("working_tree_clean"), bool):
+        raise _schema_error("source_identity.working_tree_clean must be boolean")
+
+    for field in REQUIRED_EVIDENCE_REFERENCE_FIELDS:
+        field_path = f"evidence_reference.{field}"
+        if field == "evidence_included_in_package":
+            _require_present_field(manifest, field_path)
+        else:
+            _require_field(manifest, field_path)
+
+    if manifest["evidence_reference"].get("evidence_included_in_package") != []:
+        raise _schema_error("evidence_reference.evidence_included_in_package must be empty")
+
+    if set(manifest["non_deployment_boundary"].keys()) != set(
+        EXPECTED_NON_DEPLOYMENT_BOUNDARY_FIELDS
+    ):
+        raise _schema_error("non_deployment_boundary keys must match expected boundary")
+
+    for field in EXPECTED_NON_DEPLOYMENT_BOUNDARY_FIELDS:
+        if manifest["non_deployment_boundary"].get(field) is not False:
+            raise _schema_error(f"non_deployment_boundary.{field} must be false")
+
+    try:
+        json.dumps(manifest, sort_keys=True)
+    except TypeError as exc:
+        raise _schema_error(f"manifest must be JSON serializable: {exc}") from exc
+
+
+def write_manifest_preview(manifest: dict[str, Any], output_path: Path) -> Path:
+    validate_manifest_preview(manifest)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description=(
+            "Generate a local-only dry-run package manifest preview. "
+            "This does not create packages, publish artifacts, tag releases, "
+            "deploy, modify CI, or write release state."
+        )
+    )
+    parser.add_argument(
+        "--repo-root",
+        default=".",
+        help="Repository root. Defaults to the current directory.",
+    )
+    parser.add_argument(
+        "--write-preview",
+        action="store_true",
+        help=(
+            "Write the preview to the local non-release output path. "
+            "Without this flag, the preview is printed to stdout only."
+        ),
+    )
+    parser.add_argument(
+        "--output",
+        default=str(DEFAULT_OUTPUT_PATH),
+        help="Local preview output path used with --write-preview.",
+    )
+    return parser.parse_args(argv)
+
+
+def _run_cli(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    repo_root = Path(args.repo_root).resolve()
+    manifest = build_manifest_preview(repo_root)
+    validate_manifest_preview(manifest)
+
+    if args.write_preview:
+        output_path = write_manifest_preview(manifest, repo_root / args.output)
+        print(f"Wrote dry-run package manifest preview to {output_path}")
+    else:
+        print(json.dumps(manifest, indent=2, sort_keys=True))
+
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    try:
+        return _run_cli(argv)
+    except ReleaseManifestDryRunError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

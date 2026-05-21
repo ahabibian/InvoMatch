@@ -1,0 +1,90 @@
+﻿src/invomatch/api/mappers/product_contract.py:144:        match_id=str(getattr(match, "match_id", getattr(match, "id", ""))),
+src/invomatch/api/mappers/product_contract.py:159:        match_id=getattr(projection, "match_id", None),
+src/invomatch/api/product_models/match_result.py:24:    match_id: str = Field(..., description="Stable product-facing match identifier.")
+src/invomatch/api/product_models/review_case.py:36:    match_id: Optional[str] = Field(
+src/invomatch/domain/feedback/models.py:33:    match_id: str = Field(min_length=1)
+src/invomatch/domain/feedback/models.py:44:    match_id: str = Field(min_length=1)
+src/invomatch/domain/feedback/models.py:97:    source_match_ids: tuple[str, ...] = Field(min_length=1)
+src/invomatch/domain/feedback/models.py:153:    match_id: str = Field(min_length=1)
+src/invomatch/domain/feedback/repositories.py:31:    def list_correction_events_by_match(self, match_id: str) -> Sequence[CorrectionEvent]:
+src/invomatch/domain/match_record.py:13:    match_id: str = Field(min_length=1)
+src/invomatch/services/feedback/records.py:21:    match_id: str = Field(min_length=1)
+src/invomatch/services/feedback/records.py:42:    feature_snapshot_match_id: str = Field(min_length=1)
+src/invomatch/services/feedback/records.py:69:    source_match_ids: tuple[str, ...] = Field(min_length=1)
+src/invomatch/services/feedback/signal_extraction.py:45:                source_match_ids=tuple(event.match_id for event in grouped_events),
+src/invomatch/services/feedback/sqlite_feedback_repository.py:21:    match_id TEXT NOT NULL,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:36:    feature_snapshot_match_id TEXT NOT NULL,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:51:    ON feedback_correction_events (match_id, occurred_at_utc, correction_id);
+src/invomatch/services/feedback/sqlite_feedback_repository.py:58:    source_match_ids_json TEXT NOT NULL,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:135:            match_id,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:150:            feature_snapshot_match_id,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:162:            event.match_id,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:177:            event.feature_snapshot_ref.match_id,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:223:    def list_correction_events_by_match(self, match_id: str) -> tuple[CorrectionEvent, ...]:
+src/invomatch/services/feedback/sqlite_feedback_repository.py:228:            WHERE match_id = ?
+src/invomatch/services/feedback/sqlite_feedback_repository.py:231:            (match_id,),
+src/invomatch/services/feedback/sqlite_feedback_repository.py:242:            source_match_ids_json,
+src/invomatch/services/feedback/sqlite_feedback_repository.py:258:            json.dumps(list(signal.source_match_ids), separators=(",", ":")),
+src/invomatch/services/feedback/sqlite_feedback_repository.py:505:            match_id=str(row["feature_snapshot_match_id"]),
+src/invomatch/services/feedback/sqlite_feedback_repository.py:513:            match_id=str(row["match_id"]),
+src/invomatch/services/feedback/sqlite_feedback_repository.py:542:            source_match_ids=tuple(json.loads(str(row["source_match_ids_json"]))),
+src/invomatch/services/feedback_store.py:25:    def list_by_match(self, match_id: str) -> List[FeedbackRecord]:
+src/invomatch/services/reconciliation.py:136:                match_id=uuid.uuid4().hex,
+src/invomatch/services/review_queries.py:13:    match_id: Optional[str] = None
+src/invomatch/services/review_queries.py:42:def _extract_match_id(feedback: Any) -> Optional[str]:
+src/invomatch/services/review_queries.py:45:        for key in ("match_id", "candidate_match_id"):
+src/invomatch/services/review_queries.py:94:                match_id=_extract_match_id(feedback),
+src/invomatch/services/sqlite_feedback_store.py:30:                    match_id TEXT NOT NULL,
+src/invomatch/services/sqlite_feedback_store.py:43:                "CREATE INDEX IF NOT EXISTS idx_feedback_match_id ON feedback_records(match_id)"
+src/invomatch/services/sqlite_feedback_store.py:54:                    match_id,
+src/invomatch/services/sqlite_feedback_store.py:65:                    record.match_id,
+src/invomatch/services/sqlite_feedback_store.py:83:                    match_id,
+src/invomatch/services/sqlite_feedback_store.py:98:    def list_by_match(self, match_id: str) -> List[FeedbackRecord]:
+src/invomatch/services/sqlite_feedback_store.py:105:                    match_id,
+src/invomatch/services/sqlite_feedback_store.py:112:                WHERE match_id = ?
+src/invomatch/services/sqlite_feedback_store.py:115:                (match_id,),
+src/invomatch/services/sqlite_feedback_store.py:125:            match_id=row["match_id"],
+src/invomatch/services/sqlite_match_record_store.py:12:    match_id TEXT PRIMARY KEY,
+src/invomatch/services/sqlite_match_record_store.py:25:    ON reconciliation_match_records (run_id, created_at, match_id);
+src/invomatch/services/sqlite_match_record_store.py:28:    ON reconciliation_match_records (invoice_id, created_at, match_id);
+src/invomatch/services/sqlite_match_record_store.py:43:                record.match_id,
+src/invomatch/services/sqlite_match_record_store.py:62:                        match_id,
+src/invomatch/services/sqlite_match_record_store.py:86:                        match_id,
+src/invomatch/services/sqlite_match_record_store.py:98:                    ORDER BY created_at, match_id
+src/invomatch/services/sqlite_match_record_store.py:121:                "match_id": row["match_id"],
+tests/domain/feedback/test_feedback_models.py:23:        match_id="match-001",
+tests/domain/feedback/test_feedback_models.py:34:        match_id="match-001",
+tests/domain/feedback/test_feedback_models.py:59:            match_id="match-001",
+tests/domain/feedback/test_feedback_models.py:82:            match_id="match-001",
+tests/domain/feedback/test_feedback_models.py:104:        source_match_ids=("match-001",),
+tests/domain/feedback/test_feedback_models.py:123:            source_match_ids=("match-001",),
+tests/domain/test_feedback_time_contract.py:13:        match_id="match-1",
+tests/domain/test_feedback_time_contract.py:29:            match_id="match-1",
+tests/services/feedback/test_feedback_capture.py:38:    def list_correction_events_by_match(self, match_id: str) -> Sequence[CorrectionEvent]:
+tests/services/feedback/test_feedback_capture.py:39:        return [event for event in self.corrections.values() if event.match_id == match_id]
+tests/services/feedback/test_feedback_capture.py:107:        match_id="match-001",
+tests/services/feedback/test_feedback_capture.py:118:        match_id="match-001",
+tests/services/feedback/test_feedback_records.py:19:        match_id="match-001",
+tests/services/feedback/test_feedback_records.py:31:        feature_snapshot_match_id="match-001",
+tests/services/feedback/test_feedback_records.py:46:            match_id="match-001",
+tests/services/feedback/test_feedback_records.py:57:            feature_snapshot_match_id="match-001",
+tests/services/feedback/test_feedback_records.py:71:            source_match_ids=("match-001",),
+tests/services/feedback/test_rule_recommendation.py:33:    def list_correction_events_by_match(self, match_id: str) -> Sequence[CorrectionEvent]:
+tests/services/feedback/test_rule_recommendation.py:34:        return [event for event in self.corrections.values() if event.match_id == match_id]
+tests/services/feedback/test_rule_recommendation.py:104:        source_match_ids=("match-001", "match-002"),
+tests/services/feedback/test_signal_extraction.py:39:    def list_correction_events_by_match(self, match_id: str) -> Sequence[CorrectionEvent]:
+tests/services/feedback/test_signal_extraction.py:40:        return [event for event in self.corrections.values() if event.match_id == match_id]
+tests/services/feedback/test_signal_extraction.py:106:    match_id: str,
+tests/services/feedback/test_signal_extraction.py:112:        match_id=match_id,
+tests/services/feedback/test_signal_extraction.py:120:        match_id=match_id,
+tests/services/feedback/test_sqlite_feedback_repository.py:24:def build_snapshot(snapshot_id: str, match_id: str) -> FeatureSnapshotRef:
+tests/services/feedback/test_sqlite_feedback_repository.py:28:        match_id=match_id,
+tests/services/feedback/test_sqlite_feedback_repository.py:36:    match_id: str,
+tests/services/feedback/test_sqlite_feedback_repository.py:43:        match_id=match_id,
+tests/services/feedback/test_sqlite_feedback_repository.py:53:        feature_snapshot_ref=build_snapshot(f"snap-{correction_id}", match_id),
+tests/services/feedback/test_sqlite_feedback_repository.py:66:        source_match_ids=("match-001", "match-002"),
+tests/services/test_sqlite_feedback_store.py:17:        match_id="match-1",
+tests/services/test_sqlite_match_record_store.py:13:        match_id="match-001",
+tests/services/test_sqlite_match_record_store.py:30:    assert loaded[0].match_id == "match-001"
+tests/test_review_api.py:90:            "match_id": "match-789",
+tests/test_review_api.py:110:    assert response.match_id == "match-789"
