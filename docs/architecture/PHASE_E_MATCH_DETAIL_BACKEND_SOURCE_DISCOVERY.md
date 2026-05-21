@@ -1,0 +1,925 @@
+﻿# Phase E Match Detail Backend Source Discovery
+
+Mini-EPIC: 33.13.B
+
+## Purpose
+
+This document records a git-native backend source discovery pass for the Match Detail / Evidence read path required by Mini-EPIC 33.13.
+
+The purpose is to inspect tracked backend source code before any implementation is attempted.
+
+## Correction Note
+
+The earlier local discovery report used PowerShell file enumeration and malformed Markdown table output.
+
+This corrected report uses git ls-files and git grep so discovery is based on tracked repository content.
+
+## Discovery Scope
+
+Tracked source files discovered: 398
+
+## Discovery Count Summary
+
+- Route signals: 76
+- Review Queue signals: 12
+- match_id signals: 91
+- Match Detail signals: 0
+- Evidence signals: 46
+- Traceability signals: 200
+- Failure semantics signals: 200
+- API/test signals: 200
+
+## Route Signals
+
+Count: 76
+
+- src/invomatch/api/actions.py:3 — from fastapi import APIRouter, HTTPException, Request, Response, status
+- src/invomatch/api/actions.py:17 — router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-actions"])
+- src/invomatch/api/actions.py:58 — @router.post("/{run_id}/actions", response_model=ProductActionResponse)
+- src/invomatch/api/audit_events.py:5 — from fastapi import APIRouter, Request
+- src/invomatch/api/audit_events.py:17 — router = APIRouter(prefix="/api/audit", tags=["audit"])
+- src/invomatch/api/audit_events.py:20 — @router.get("/events", response_model=ProductAuditEventListResponse)
+- src/invomatch/api/auth_session.py:3 — from fastapi import APIRouter, Request
+- src/invomatch/api/auth_session.py:14 — router = APIRouter(prefix="/api/auth", tags=["auth"])
+- src/invomatch/api/auth_session.py:17 — @router.get("/session", response_model=ProductAuthSessionResponse)
+- src/invomatch/api/export.py:3 — from fastapi import APIRouter, HTTPException, Request, Response
+- src/invomatch/api/export.py:17 — router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-export"])
+- src/invomatch/api/export.py:20 — @router.get("/{run_id}/export")
+- src/invomatch/api/export_artifacts.py:3 — from fastapi import APIRouter, HTTPException, Request, Response, status
+- src/invomatch/api/export_artifacts.py:27 — router = APIRouter(prefix="/api/reconciliation", tags=["export-artifacts"])
+- src/invomatch/api/export_artifacts.py:30 — @router.get(
+- src/invomatch/api/export_artifacts.py:73 — @router.get(
+- src/invomatch/api/export_artifacts.py:113 — @router.get(
+- src/invomatch/api/health.py:1 — from fastapi import APIRouter, Request
+- src/invomatch/api/health.py:3 — router = APIRouter()
+- src/invomatch/api/health.py:6 — @router.get("/health")
+- src/invomatch/api/health.py:28 — @router.get("/readiness")
+- src/invomatch/api/operations.py:3 — from fastapi import APIRouter, HTTPException, Request
+- src/invomatch/api/operations.py:18 — router = APIRouter(prefix="/api/operations", tags=["operations"])
+- src/invomatch/api/operations.py:47 — @router.get("/metrics", response_model=OperationalMetricsResponse)
+- src/invomatch/api/operations.py:69 — @router.get("/health-summary", response_model=OperationalHealthSummaryResponse)
+- src/invomatch/api/operations.py:86 — @router.get("/alerts", response_model=OperationalAlertsResponse)
+- src/invomatch/api/operations.py:112 — @router.get("/release-identity", response_model=OperationalReleaseIdentityResponse)
+- src/invomatch/api/reconciliation_runs.py:6 — from fastapi import APIRouter, HTTPException, Request, status
+- src/invomatch/api/reconciliation_runs.py:40 — router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-runs"])
+- src/invomatch/api/reconciliation_runs.py:43 — @router.post(
+- src/invomatch/api/reconciliation_runs.py:74 — @router.post(
+- src/invomatch/api/reconciliation_runs.py:120 — @router.get("", response_model=ProductRunListResponse)
+- src/invomatch/api/reconciliation_runs.py:147 — @router.get("/{run_id}", response_model=ProductRunDetail)
+- src/invomatch/api/reconciliation_runs.py:159 — @router.get("/{run_id}/view", response_model=ProductRunView)
+- src/invomatch/api/review_cases.py:3 — from fastapi import APIRouter, HTTPException, Request
+- src/invomatch/api/review_cases.py:11 — router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-review"])
+- src/invomatch/api/review_cases.py:14 — @router.get("/{run_id}/review", response_model=ProductReviewCase)
+- src/invomatch/api/routes/input_boundary.py:5 — from fastapi import APIRouter, Body, File, HTTPException, Request, UploadFile
+- src/invomatch/api/routes/input_boundary.py:15 — router = APIRouter(prefix="/api/reconciliation/input", tags=["input-boundary"])
+- src/invomatch/api/routes/input_boundary.py:30 — @router.post("/json", response_model=ProductInputSubmissionResponse)
+- src/invomatch/api/routes/input_boundary.py:60 — @router.post("/file", response_model=ProductInputSubmissionResponse)
+- src/invomatch/api/routes/input_boundary.py:94 — @router.get("/{input_id}", response_model=ProductInputSessionView)
+- src/invomatch/api/security/dependencies.py:3 — from fastapi import Request
+- src/invomatch/api/security/errors.py:3 — from fastapi import HTTPException, status
+- src/invomatch/main.py:7 — from fastapi import FastAPI
+- src/invomatch/main.py:8 — from fastapi.middleware.cors import CORSMiddleware
+- src/invomatch/main.py:88 — ) -> FastAPI:
+- src/invomatch/main.py:89 — app = FastAPI(title="InvoMatch")
+- src/invomatch/services/operational/alert_policy.py:40 — - no FastAPI dependency
+- src/invomatch/services/operational/condition_detector.py:30 — - no FastAPI dependency
+- tests/audit/test_audit_api.py:3 — from fastapi.testclient import TestClient
+- tests/audit/test_scenario_9_audit_persistence_integrity.py:4 — from fastapi.testclient import TestClient
+- tests/contracts/conftest.py:6 — from fastapi.testclient import TestClient
+- tests/contracts/conftest.py:29 — raise RuntimeError(f"Unable to import FastAPI app from known candidates:\n{joined}")
+- tests/operational/test_operations_metrics_api.py:1 — from fastapi.testclient import TestClient
+- tests/system/test_permission_boundary_enforcement.py:6 — from fastapi.testclient import TestClient
+- tests/system/test_security_boundary_enforcement.py:6 — from fastapi.testclient import TestClient
+- tests/system/test_startup_repair_visibility_recovery_alignment.py:4 — from fastapi.testclient import TestClient
+- tests/test_actions_api.py:7 — from fastapi import HTTPException
+- tests/test_auth_session_api.py:6 — from fastapi.testclient import TestClient
+- tests/test_export_api.py:8 — from fastapi import HTTPException
+- tests/test_export_artifact_api.py:6 — from fastapi.testclient import TestClient
+- tests/test_health.py:1 — from fastapi.testclient import TestClient
+- tests/test_health_readiness.py:1 — from fastapi.testclient import TestClient
+- tests/test_ingestion_run_api.py:3 — from fastapi.testclient import TestClient
+- tests/test_input_boundary_api.py:3 — from fastapi.testclient import TestClient
+- tests/test_reconciliation_runs_api.py:6 — from fastapi import HTTPException
+- tests/test_review_api.py:6 — from fastapi import HTTPException
+- tests/test_run_view_api.py:5 — from fastapi import FastAPI
+- tests/test_run_view_api.py:6 — from fastapi.testclient import TestClient
+- tests/test_run_view_api.py:142 — app = FastAPI()
+- tests/test_run_view_contract.py:5 — from fastapi import FastAPI
+- tests/test_run_view_contract.py:6 — from fastapi.testclient import TestClient
+- tests/test_run_view_contract.py:164 — app = FastAPI()
+- tests/test_run_view_contract.py:332 — app = FastAPI()
+- tests/test_run_view_export_consistency_integration.py:5 — from fastapi.testclient import TestClient
+
+## Review Queue Signals
+
+Count: 12
+
+- src/invomatch/api/product_models/__init__.py:24 — ProductReviewQueueItem,
+- src/invomatch/api/product_models/__init__.py:46 — "ProductReviewQueueItem",
+- src/invomatch/api/product_models/review_case.py:10 — class ProductReviewQueueItem(BaseModel):
+- src/invomatch/domain/review/models.py:15 — QUEUED_FOR_REVIEW = "QUEUED_FOR_REVIEW"
+- src/invomatch/domain/review/models.py:66 — def mark_queued_for_review(self) -> None:
+- src/invomatch/domain/review/models.py:67 — self.feedback_status = FeedbackStatus.QUEUED_FOR_REVIEW
+- src/invomatch/services/review_service.py:70 — feedback.mark_queued_for_review()
+- tests/test_action_guard.py:41 — ("queued", "resolve_review"),
+- tests/test_lifecycle_guards.py:16 — RunLifecycleGuards.require_review_resolution_allowed("queued")
+- tests/test_review_service.py:31 — def test_create_review_item_queues_feedback_and_emits_audit_event() -> None:
+- tests/test_review_service.py:41 — assert feedback.feedback_status == FeedbackStatus.QUEUED_FOR_REVIEW
+- tests/test_review_service_store_integration.py:56 — assert feedback.feedback_status == FeedbackStatus.QUEUED_FOR_REVIEW
+
+## Match Identity Signals
+
+Count: 91
+
+- src/invomatch/api/mappers/product_contract.py:144 — match_id=str(getattr(match, "match_id", getattr(match, "id", ""))),
+- src/invomatch/api/mappers/product_contract.py:159 — match_id=getattr(projection, "match_id", None),
+- src/invomatch/api/product_models/match_result.py:24 — match_id: str = Field(..., description="Stable product-facing match identifier.")
+- src/invomatch/api/product_models/review_case.py:36 — match_id: Optional[str] = Field(
+- src/invomatch/api/product_models/review_case.py:38 — description="Associated product-facing match identifier if present.",
+- src/invomatch/domain/feedback/models.py:33 — match_id: str = Field(min_length=1)
+- src/invomatch/domain/feedback/models.py:44 — match_id: str = Field(min_length=1)
+- src/invomatch/domain/feedback/models.py:97 — source_match_ids: tuple[str, ...] = Field(min_length=1)
+- src/invomatch/domain/feedback/models.py:153 — match_id: str = Field(min_length=1)
+- src/invomatch/domain/feedback/repositories.py:31 — def list_correction_events_by_match(self, match_id: str) -> Sequence[CorrectionEvent]:
+- src/invomatch/domain/match_record.py:13 — match_id: str = Field(min_length=1)
+- src/invomatch/services/feedback/records.py:21 — match_id: str = Field(min_length=1)
+- src/invomatch/services/feedback/records.py:42 — feature_snapshot_match_id: str = Field(min_length=1)
+- src/invomatch/services/feedback/records.py:69 — source_match_ids: tuple[str, ...] = Field(min_length=1)
+- src/invomatch/services/feedback/signal_extraction.py:45 — source_match_ids=tuple(event.match_id for event in grouped_events),
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:21 — match_id TEXT NOT NULL,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:36 — feature_snapshot_match_id TEXT NOT NULL,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:51 — ON feedback_correction_events (match_id, occurred_at_utc, correction_id);
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:58 — source_match_ids_json TEXT NOT NULL,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:135 — match_id,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:150 — feature_snapshot_match_id,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:162 — event.match_id,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:177 — event.feature_snapshot_ref.match_id,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:223 — def list_correction_events_by_match(self, match_id: str) -> tuple[CorrectionEvent, ...]:
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:228 — WHERE match_id = ?
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:231 — (match_id,),
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:242 — source_match_ids_json,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:258 — json.dumps(list(signal.source_match_ids), separators=(",", ":")),
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:505 — match_id=str(row["feature_snapshot_match_id"]),
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:513 — match_id=str(row["match_id"]),
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:542 — source_match_ids=tuple(json.loads(str(row["source_match_ids_json"]))),
+- src/invomatch/services/feedback_store.py:25 — def list_by_match(self, match_id: str) -> List[FeedbackRecord]:
+- src/invomatch/services/reconciliation.py:136 — match_id=uuid.uuid4().hex,
+- src/invomatch/services/review_queries.py:13 — match_id: Optional[str] = None
+- src/invomatch/services/review_queries.py:42 — def _extract_match_id(feedback: Any) -> Optional[str]:
+- src/invomatch/services/review_queries.py:45 — for key in ("match_id", "candidate_match_id"):
+- src/invomatch/services/review_queries.py:94 — match_id=_extract_match_id(feedback),
+- src/invomatch/services/sqlite_feedback_store.py:30 — match_id TEXT NOT NULL,
+- src/invomatch/services/sqlite_feedback_store.py:43 — "CREATE INDEX IF NOT EXISTS idx_feedback_match_id ON feedback_records(match_id)"
+- src/invomatch/services/sqlite_feedback_store.py:54 — match_id,
+- src/invomatch/services/sqlite_feedback_store.py:65 — record.match_id,
+- src/invomatch/services/sqlite_feedback_store.py:83 — match_id,
+- src/invomatch/services/sqlite_feedback_store.py:98 — def list_by_match(self, match_id: str) -> List[FeedbackRecord]:
+- src/invomatch/services/sqlite_feedback_store.py:105 — match_id,
+- src/invomatch/services/sqlite_feedback_store.py:112 — WHERE match_id = ?
+- src/invomatch/services/sqlite_feedback_store.py:115 — (match_id,),
+- src/invomatch/services/sqlite_feedback_store.py:125 — match_id=row["match_id"],
+- src/invomatch/services/sqlite_match_record_store.py:12 — match_id TEXT PRIMARY KEY,
+- src/invomatch/services/sqlite_match_record_store.py:25 — ON reconciliation_match_records (run_id, created_at, match_id);
+- src/invomatch/services/sqlite_match_record_store.py:28 — ON reconciliation_match_records (invoice_id, created_at, match_id);
+- src/invomatch/services/sqlite_match_record_store.py:43 — record.match_id,
+- src/invomatch/services/sqlite_match_record_store.py:62 — match_id,
+- src/invomatch/services/sqlite_match_record_store.py:86 — match_id,
+- src/invomatch/services/sqlite_match_record_store.py:98 — ORDER BY created_at, match_id
+- src/invomatch/services/sqlite_match_record_store.py:121 — "match_id": row["match_id"],
+- tests/domain/feedback/test_feedback_models.py:23 — match_id="match-001",
+- tests/domain/feedback/test_feedback_models.py:34 — match_id="match-001",
+- tests/domain/feedback/test_feedback_models.py:59 — match_id="match-001",
+- tests/domain/feedback/test_feedback_models.py:82 — match_id="match-001",
+- tests/domain/feedback/test_feedback_models.py:104 — source_match_ids=("match-001",),
+- tests/domain/feedback/test_feedback_models.py:123 — source_match_ids=("match-001",),
+- tests/domain/test_feedback_time_contract.py:13 — match_id="match-1",
+- tests/domain/test_feedback_time_contract.py:29 — match_id="match-1",
+- tests/services/feedback/test_feedback_capture.py:38 — def list_correction_events_by_match(self, match_id: str) -> Sequence[CorrectionEvent]:
+- tests/services/feedback/test_feedback_capture.py:39 — return [event for event in self.corrections.values() if event.match_id == match_id]
+- tests/services/feedback/test_feedback_capture.py:107 — match_id="match-001",
+- tests/services/feedback/test_feedback_capture.py:118 — match_id="match-001",
+- tests/services/feedback/test_feedback_records.py:19 — match_id="match-001",
+- tests/services/feedback/test_feedback_records.py:31 — feature_snapshot_match_id="match-001",
+- tests/services/feedback/test_feedback_records.py:46 — match_id="match-001",
+- tests/services/feedback/test_feedback_records.py:57 — feature_snapshot_match_id="match-001",
+- tests/services/feedback/test_feedback_records.py:71 — source_match_ids=("match-001",),
+- tests/services/feedback/test_rule_recommendation.py:33 — def list_correction_events_by_match(self, match_id: str) -> Sequence[CorrectionEvent]:
+- tests/services/feedback/test_rule_recommendation.py:34 — return [event for event in self.corrections.values() if event.match_id == match_id]
+- tests/services/feedback/test_rule_recommendation.py:104 — source_match_ids=("match-001", "match-002"),
+- tests/services/feedback/test_signal_extraction.py:39 — def list_correction_events_by_match(self, match_id: str) -> Sequence[CorrectionEvent]:
+- tests/services/feedback/test_signal_extraction.py:40 — return [event for event in self.corrections.values() if event.match_id == match_id]
+- tests/services/feedback/test_signal_extraction.py:106 — match_id: str,
+- tests/services/feedback/test_signal_extraction.py:112 — match_id=match_id,
+- tests/services/feedback/test_signal_extraction.py:120 — match_id=match_id,
+- tests/services/feedback/test_sqlite_feedback_repository.py:24 — def build_snapshot(snapshot_id: str, match_id: str) -> FeatureSnapshotRef:
+- tests/services/feedback/test_sqlite_feedback_repository.py:28 — match_id=match_id,
+- tests/services/feedback/test_sqlite_feedback_repository.py:36 — match_id: str,
+- tests/services/feedback/test_sqlite_feedback_repository.py:43 — match_id=match_id,
+- tests/services/feedback/test_sqlite_feedback_repository.py:53 — feature_snapshot_ref=build_snapshot(f"snap-{correction_id}", match_id),
+- tests/services/feedback/test_sqlite_feedback_repository.py:66 — source_match_ids=("match-001", "match-002"),
+- tests/services/test_sqlite_feedback_store.py:17 — match_id="match-1",
+- tests/services/test_sqlite_match_record_store.py:13 — match_id="match-001",
+- tests/services/test_sqlite_match_record_store.py:30 — assert loaded[0].match_id == "match-001"
+- tests/test_review_api.py:90 — "match_id": "match-789",
+- tests/test_review_api.py:110 — assert response.match_id == "match-789"
+
+## Match Detail Signals
+
+Count: 0
+
+No direct tracked source signals found.
+
+## Evidence Signals
+
+Count: 46
+
+- src/invomatch/domain/feedback/models.py:100 — evidence_count: int = Field(ge=1)
+- src/invomatch/domain/feedback/models.py:110 — def validate_evidence_alignment(self) -> "LearningSignal":
+- src/invomatch/domain/feedback/models.py:111 — if self.evidence_count < len(self.source_correction_ids):
+- src/invomatch/domain/feedback/models.py:113 — "evidence_count cannot be smaller than the number of source correction ids"
+- src/invomatch/domain/feedback/models.py:131 — minimum_evidence_required: int = Field(ge=1)
+- src/invomatch/services/feedback/records.py:72 — evidence_count: int = Field(ge=1)
+- src/invomatch/services/feedback/records.py:83 — def validate_evidence_count(self) -> "LearningSignalRecord":
+- src/invomatch/services/feedback/records.py:84 — if self.evidence_count < len(self.source_correction_ids):
+- src/invomatch/services/feedback/records.py:86 — "evidence_count cannot be smaller than the number of source correction ids"
+- src/invomatch/services/feedback/records.py:104 — minimum_evidence_required: int = Field(ge=1)
+- src/invomatch/services/feedback/rule_recommendation.py:19 — minimum_evidence_required: int,
+- src/invomatch/services/feedback/rule_recommendation.py:29 — minimum_evidence_required=minimum_evidence_required,
+- src/invomatch/services/feedback/signal_extraction.py:49 — evidence_count=len(grouped_events),
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:60 — evidence_count INTEGER NOT NULL,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:81 — minimum_evidence_required INTEGER NOT NULL,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:244 — evidence_count,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:260 — signal.evidence_count,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:310 — minimum_evidence_required,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:326 — recommendation.minimum_evidence_required,
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:544 — evidence_count=int(row["evidence_count"]),
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:564 — minimum_evidence_required=int(row["minimum_evidence_required"]),
+- src/invomatch/services/matching/explanations.py:18 — return "Candidate auto-approved due to strong score, strong evidence, and sufficient candidate separation."
+- src/invomatch/services/matching/explanations.py:24 — return "Candidate has meaningful evidence but not enough certainty for automatic approval."
+- tests/domain/feedback/test_feedback_models.py:98 — def test_learning_signal_requires_valid_evidence_alignment() -> None:
+- tests/domain/feedback/test_feedback_models.py:106 — evidence_count=2,
+- tests/domain/feedback/test_feedback_models.py:116 — def test_learning_signal_rejects_small_evidence_count() -> None:
+- tests/domain/feedback/test_feedback_models.py:125 — evidence_count=1,
+- tests/domain/feedback/test_feedback_models.py:141 — minimum_evidence_required=5,
+- tests/domain/feedback/test_feedback_models.py:154 — minimum_evidence_required=5,
+- tests/services/feedback/test_feedback_records.py:64 — def test_learning_signal_record_rejects_small_evidence_count() -> None:
+- tests/services/feedback/test_feedback_records.py:73 — evidence_count=1,
+- tests/services/feedback/test_feedback_records.py:89 — minimum_evidence_required=5,
+- tests/services/feedback/test_rule_recommendation.py:106 — evidence_count=2,
+- tests/services/feedback/test_rule_recommendation.py:124 — minimum_evidence_required=2,
+- tests/services/feedback/test_rule_recommendation.py:141 — minimum_evidence_required=2,
+- tests/services/feedback/test_rule_recommendation.py:164 — minimum_evidence_required=2,
+- tests/services/feedback/test_signal_extraction.py:150 — assert signals[0].evidence_count == 2
+- tests/services/feedback/test_sqlite_feedback_repository.py:68 — evidence_count=2,
+- tests/services/feedback/test_sqlite_feedback_repository.py:96 — minimum_evidence_required=2,
+- tests/test_release_manifest_dry_run.py:45 — "evidence_reference",
+- tests/test_release_manifest_dry_run.py:64 — "evidence_reference",
+- tests/test_release_manifest_dry_run.py:80 — assert first["evidence_reference"]["validation_status"] == "not-executed-by-dry-run"
+- tests/test_release_manifest_dry_run.py:113 — assert included["release_evidence_index"]["preview_only"] is True
+- tests/test_release_manifest_dry_run.py:207 — def test_manifest_schema_validator_rejects_missing_evidence_reference_field() -> None:
+- tests/test_release_manifest_dry_run.py:209 — del manifest["evidence_reference"]["validation_status"]
+- tests/test_release_manifest_dry_run.py:216 — "evidence_reference.validation_status"
+
+## Traceability / Audit Signals
+
+Count: 200
+
+- src/invomatch/api/audit_events.py:7 — from invomatch.api.product_models.audit_event import (
+- src/invomatch/api/audit_events.py:8 — ProductAuditCategory,
+- src/invomatch/api/audit_events.py:9 — ProductAuditEvent,
+- src/invomatch/api/audit_events.py:10 — ProductAuditEventListResponse,
+- src/invomatch/api/audit_events.py:13 — from invomatch.domain.audit.models import AuditCategory, AuditEventQuery
+- src/invomatch/api/audit_events.py:15 — from invomatch.services.audit import AuditQueryService
+- src/invomatch/api/audit_events.py:17 — router = APIRouter(prefix="/api/audit", tags=["audit"])
+- src/invomatch/api/audit_events.py:20 — @router.get("/events", response_model=ProductAuditEventListResponse)
+- src/invomatch/api/audit_events.py:21 — def list_audit_events(
+- src/invomatch/api/audit_events.py:26 — category: ProductAuditCategory | None = None,
+- src/invomatch/api/audit_events.py:31 — ) -> ProductAuditEventListResponse:
+- src/invomatch/api/audit_events.py:35 — query_service: AuditQueryService = request.app.state.audit_query_service
+- src/invomatch/api/audit_events.py:37 — query = AuditEventQuery(
+- src/invomatch/api/audit_events.py:42 — category=AuditCategory(category.value) if category is not None else None,
+- src/invomatch/api/audit_events.py:50 — return ProductAuditEventListResponse(
+- src/invomatch/api/audit_events.py:52 — ProductAuditEvent(
+- src/invomatch/api/audit_events.py:58 — category=ProductAuditCategory(event.category.value),
+- src/invomatch/api/product_models/__init__.py:5 — from .audit_event import (
+- src/invomatch/api/product_models/__init__.py:6 — ProductAuditCategory,
+- src/invomatch/api/product_models/__init__.py:7 — ProductAuditEvent,
+- src/invomatch/api/product_models/__init__.py:8 — ProductAuditEventListResponse,
+- src/invomatch/api/product_models/__init__.py:34 — "ProductAuditCategory",
+- src/invomatch/api/product_models/__init__.py:35 — "ProductAuditEvent",
+- src/invomatch/api/product_models/__init__.py:36 — "ProductAuditEventListResponse",
+- src/invomatch/api/product_models/action.py:24 — description="Optional user-provided note for audit visibility.",
+- src/invomatch/api/product_models/audit_event.py:9 — class ProductAuditCategory(str, Enum):
+- src/invomatch/api/product_models/audit_event.py:14 — class ProductAuditEvent(BaseModel):
+- src/invomatch/api/product_models/audit_event.py:22 — category: ProductAuditCategory
+- src/invomatch/api/product_models/audit_event.py:39 — class ProductAuditEventListResponse(BaseModel):
+- src/invomatch/api/product_models/audit_event.py:42 — events: list[ProductAuditEvent] = Field(default_factory=list)
+- src/invomatch/api/security/dependencies.py:20 — audit_service = getattr(request.app.state, "security_audit_service", None)
+- src/invomatch/api/security/dependencies.py:21 — if audit_service is None:
+- src/invomatch/api/security/dependencies.py:24 — audit_enabled = bool(
+- src/invomatch/api/security/dependencies.py:25 — getattr(getattr(request.app.state, "security_settings", None), "security_audit_enabled", True)
+- src/invomatch/api/security/dependencies.py:27 — if not audit_enabled:
+- src/invomatch/api/security/dependencies.py:30 — audit_service.record(
+- src/invomatch/bootstrap/persistence_factory.py:4 — from invomatch.repositories.audit_event_repository_sqlite import SqliteAuditEventRepository
+- src/invomatch/bootstrap/persistence_factory.py:15 — audit_event_repository: object
+- src/invomatch/bootstrap/persistence_factory.py:46 — audit_event_repository=SqliteAuditEventRepository(
+- src/invomatch/bootstrap/persistence_factory.py:47 — str(settings.persistence.audit_event_db_path)
+- src/invomatch/config/loaders.py:66 — audit_event_db_path=_get_path("INVOMATCH_AUDIT_EVENT_DB_PATH", root / "audit_events.sqlite3"),
+- src/invomatch/config/loaders.py:125 — security_audit_enabled=_get_bool("INVOMATCH_SECURITY_AUDIT_ENABLED", True),
+- src/invomatch/config/models.py:18 — audit_event_db_path: Path
+- src/invomatch/config/models.py:81 — security_audit_enabled: bool
+- src/invomatch/config/validation.py:88 — if settings.security.security_audit_enabled:
+- src/invomatch/config/validation.py:89 — enabled_features.append("security_audit")
+- src/invomatch/domain/audit/__init__.py:1 — from .models import AuditCategory, AuditEvent, AuditEventQuery
+- src/invomatch/domain/audit/__init__.py:2 — from .repository import AuditEventRepository
+- src/invomatch/domain/audit/__init__.py:5 — "AuditCategory",
+- src/invomatch/domain/audit/__init__.py:6 — "AuditEvent",
+- src/invomatch/domain/audit/__init__.py:7 — "AuditEventQuery",
+- src/invomatch/domain/audit/__init__.py:8 — "AuditEventRepository",
+- src/invomatch/domain/audit/models.py:9 — class AuditCategory(StrEnum):
+- src/invomatch/domain/audit/models.py:15 — class AuditEvent:
+- src/invomatch/domain/audit/models.py:21 — category: AuditCategory
+- src/invomatch/domain/audit/models.py:40 — class AuditEventQuery:
+- src/invomatch/domain/audit/models.py:45 — category: AuditCategory | None = None
+- src/invomatch/domain/audit/repository.py:5 — from invomatch.domain.audit.models import AuditEvent, AuditEventQuery
+- src/invomatch/domain/audit/repository.py:8 — class AuditEventRepository(Protocol):
+- src/invomatch/domain/audit/repository.py:9 — def create(self, event: AuditEvent) -> AuditEvent:
+- src/invomatch/domain/audit/repository.py:12 — def list_events(self, query: AuditEventQuery) -> list[AuditEvent]:
+- src/invomatch/domain/operational/__init__.py:3 — OperationalAuditEvent,
+- src/invomatch/domain/operational/__init__.py:13 — "OperationalAuditEvent",
+- src/invomatch/domain/operational/models.py:85 — class OperationalAuditEvent:
+- src/invomatch/domain/review/models.py:59 — source_reference: str
+- src/invomatch/domain/review/models.py:188 — class AuditEvent:
+- src/invomatch/domain/review/models.py:189 — audit_event_id: str
+- src/invomatch/ingestion/models/ingestion_result.py:9 — from .traceability_models import RawTraceReference
+- src/invomatch/ingestion/services/invoice_ingestion_service.py:8 — from invomatch.ingestion.models.traceability_models import RawTraceReference
+- src/invomatch/ingestion/services/payment_ingestion_service.py:8 — from invomatch.ingestion.models.traceability_models import RawTraceReference
+- src/invomatch/main.py:11 — from invomatch.api.audit_events import router as audit_events_router
+- src/invomatch/main.py:30 — from invomatch.services.audit import AuditQueryService
+- src/invomatch/main.py:45 — OperationalAuditService,
+- src/invomatch/main.py:46 — PersistentOperationalAuditRepository,
+- src/invomatch/main.py:67 — PersistentSecurityAuditService,
+- src/invomatch/main.py:131 — audit_event_db_path=settings.persistence.audit_event_db_path,
+- src/invomatch/main.py:161 — audit_event_repository = persistence_dependencies.audit_event_repository
+- src/invomatch/main.py:162 — audit_query_service = AuditQueryService(audit_event_repository)
+- src/invomatch/main.py:173 — security_audit_service = PersistentSecurityAuditService(audit_event_repository)
+- src/invomatch/main.py:174 — operational_audit_service = OperationalAuditService(
+- src/invomatch/main.py:175 — PersistentOperationalAuditRepository(audit_event_repository)
+- src/invomatch/main.py:183 — app.state.security_audit_service = security_audit_service
+- src/invomatch/main.py:184 — app.state.operational_audit_service = operational_audit_service
+- src/invomatch/main.py:192 — app.state.audit_event_repository = audit_event_repository
+- src/invomatch/main.py:193 — app.state.audit_query_service = audit_query_service
+- src/invomatch/main.py:223 — audit_service=operational_audit_service,
+- src/invomatch/main.py:326 — app.include_router(audit_events_router)
+- src/invomatch/repositories/audit_event_repository_sqlite.py:7 — from invomatch.domain.audit.models import AuditCategory, AuditEvent, AuditEventQuery
+- src/invomatch/repositories/audit_event_repository_sqlite.py:8 — from invomatch.domain.audit.repository import AuditEventRepository
+- src/invomatch/repositories/audit_event_repository_sqlite.py:11 — class SqliteAuditEventRepository(AuditEventRepository):
+- src/invomatch/repositories/audit_event_repository_sqlite.py:16 — def create(self, event: AuditEvent) -> AuditEvent:
+- src/invomatch/repositories/audit_event_repository_sqlite.py:20 — INSERT INTO audit_events (
+- src/invomatch/repositories/audit_event_repository_sqlite.py:69 — return AuditEvent(
+- src/invomatch/repositories/audit_event_repository_sqlite.py:93 — def list_events(self, query: AuditEventQuery) -> list[AuditEvent]:
+- src/invomatch/repositories/audit_event_repository_sqlite.py:147 — FROM audit_events
+- src/invomatch/repositories/audit_event_repository_sqlite.py:166 — CREATE TABLE IF NOT EXISTS audit_events (
+- src/invomatch/repositories/audit_event_repository_sqlite.py:193 — for row in conn.execute("PRAGMA table_info(audit_events)").fetchall()
+- src/invomatch/repositories/audit_event_repository_sqlite.py:197 — "ALTER TABLE audit_events ADD COLUMN tenant_id TEXT NOT NULL DEFAULT 'legacy-tenant'"
+- src/invomatch/repositories/audit_event_repository_sqlite.py:202 — CREATE INDEX IF NOT EXISTS idx_audit_events_tenant_run_sequence
+- src/invomatch/repositories/audit_event_repository_sqlite.py:203 — ON audit_events (tenant_id, run_id, sequence_id)
+- src/invomatch/repositories/audit_event_repository_sqlite.py:208 — CREATE INDEX IF NOT EXISTS idx_audit_events_tenant_user_sequence
+- src/invomatch/repositories/audit_event_repository_sqlite.py:209 — ON audit_events (tenant_id, user_id, sequence_id)
+- src/invomatch/repositories/audit_event_repository_sqlite.py:214 — CREATE INDEX IF NOT EXISTS idx_audit_events_tenant_type_sequence
+- src/invomatch/repositories/audit_event_repository_sqlite.py:215 — ON audit_events (tenant_id, event_type, sequence_id)
+- src/invomatch/repositories/audit_event_repository_sqlite.py:220 — CREATE INDEX IF NOT EXISTS idx_audit_events_tenant_occurred_at
+- src/invomatch/repositories/audit_event_repository_sqlite.py:221 — ON audit_events (tenant_id, occurred_at)
+- src/invomatch/repositories/audit_event_repository_sqlite.py:232 — def _row_to_event(row: sqlite3.Row) -> AuditEvent:
+- src/invomatch/repositories/audit_event_repository_sqlite.py:233 — return AuditEvent(
+- src/invomatch/repositories/audit_event_repository_sqlite.py:237 — occurred_at=SqliteAuditEventRepository._deserialize_datetime(row["occurred_at"]),
+- src/invomatch/repositories/audit_event_repository_sqlite.py:238 — recorded_at=SqliteAuditEventRepository._deserialize_datetime(row["recorded_at"]),
+- src/invomatch/repositories/audit_event_repository_sqlite.py:240 — category=AuditCategory(row["category"]),
+- src/invomatch/services/actions/handlers/export_run.py:34 — audit_event_id = f"audit_export_{uuid4().hex}"
+- src/invomatch/services/actions/handlers/export_run.py:50 — "type": "audit_event",
+- src/invomatch/services/actions/handlers/export_run.py:51 — "audit_event_id": audit_event_id,
+- src/invomatch/services/actions/handlers/export_run.py:55 — audit_event_ids=[audit_event_id],
+- src/invomatch/services/actions/handlers/resolve_review.py:63 — source_reference = payload.get("source_reference", command.target_id or "unknown")
+- src/invomatch/services/actions/handlers/resolve_review.py:104 — audit_event_ids=[],
+- src/invomatch/services/actions/handlers/resolve_review.py:121 — audit_event_ids=[],
+- src/invomatch/services/actions/handlers/resolve_review.py:199 — "type": "audit_event",
+- src/invomatch/services/actions/handlers/resolve_review.py:200 — "audit_event_id": result.audit_event.audit_event_id,
+- src/invomatch/services/actions/handlers/resolve_review.py:201 — "action_type": result.audit_event.action_type,
+- src/invomatch/services/actions/handlers/resolve_review.py:213 — audit_event_ids=[result.audit_event.audit_event_id],
+- src/invomatch/services/actions/handlers/resolve_review.py:228 — source_reference=source_reference,
+- src/invomatch/services/actions/handlers/resolve_review.py:280 — "type": "audit_event",
+- src/invomatch/services/actions/handlers/resolve_review.py:281 — "audit_event_id": result.audit_event.audit_event_id,
+- src/invomatch/services/actions/handlers/resolve_review.py:282 — "action_type": result.audit_event.action_type,
+- src/invomatch/services/actions/handlers/resolve_review.py:289 — audit_event_ids=[result.audit_event.audit_event_id],
+- src/invomatch/services/actions/result.py:21 — audit_event_ids: List[str] = field(default_factory=list)
+- src/invomatch/services/audit/__init__.py:1 — from .audit_query_service import AuditQueryService
+- src/invomatch/services/audit/__init__.py:4 — "AuditQueryService",
+- src/invomatch/services/audit/audit_query_service.py:3 — from invomatch.domain.audit.models import AuditEvent, AuditEventQuery
+- src/invomatch/services/audit/audit_query_service.py:4 — from invomatch.domain.audit.repository import AuditEventRepository
+- src/invomatch/services/audit/audit_query_service.py:7 — class AuditQueryService:
+- src/invomatch/services/audit/audit_query_service.py:8 — def __init__(self, repository: AuditEventRepository) -> None:
+- src/invomatch/services/audit/audit_query_service.py:11 — def list_events(self, query: AuditEventQuery) -> list[AuditEvent]:
+- src/invomatch/services/export/finalized_projection.py:122 — invoice_id = str(getattr(feedback, "source_reference", "")).strip()
+- src/invomatch/services/export/finalized_projection.py:125 — "review feedback source_reference is required for export projection"
+- src/invomatch/services/export/finalized_projection_store.py:95 — "lineage": {
+- src/invomatch/services/export/finalized_projection_store.py:159 — lineage_payload = payload.get("lineage")
+- src/invomatch/services/export/finalized_projection_store.py:160 — if not isinstance(lineage_payload, dict):
+- src/invomatch/services/export/finalized_projection_store.py:161 — raise ValueError("finalized projection lineage payload must be an object")
+- src/invomatch/services/export/finalized_projection_store.py:162 — if lineage_payload.get("created_from_run_version") is None:
+- src/invomatch/services/export/finalized_projection_store.py:163 — raise ValueError("finalized projection lineage.created_from_run_version is required")
+- src/invomatch/services/export/finalized_projection_store.py:164 — if not lineage_payload.get("source_fingerprint"):
+- src/invomatch/services/export/finalized_projection_store.py:165 — raise ValueError("finalized projection lineage.source_fingerprint is required")
+- src/invomatch/services/export/finalized_projection_store.py:166 — if not lineage_payload.get("created_at"):
+- src/invomatch/services/export/finalized_projection_store.py:167 — raise ValueError("finalized projection lineage.created_at is required")
+- src/invomatch/services/export/finalized_projection_store.py:168 — if not lineage_payload.get("created_by_system"):
+- src/invomatch/services/export/finalized_projection_store.py:169 — raise ValueError("finalized projection lineage.created_by_system is required")
+- src/invomatch/services/feedback/sqlite_feedback_repository.py:496 — f"cannot record audit event for unknown recommendation_id={recommendation_id}"
+- src/invomatch/services/ingestion_run_integration/models.py:21 — class IngestionTraceabilityContext:
+- src/invomatch/services/ingestion_run_integration/runtime_adapter.py:122 — def _create_run(*, run_input, traceability):
+- src/invomatch/services/ingestion_run_integration/runtime_adapter.py:128 — traceability_path = batch_dir / "traceability.json"
+- src/invomatch/services/ingestion_run_integration/runtime_adapter.py:133 — traceability_path,
+- src/invomatch/services/ingestion_run_integration/runtime_adapter.py:135 — **traceability,
+- src/invomatch/services/ingestion_run_integration/runtime_adapter.py:149 — "traceability_path": traceability_path.as_posix(),
+- src/invomatch/services/ingestion_run_integration/service.py:110 — traceability={
+- src/invomatch/services/operational/__init__.py:7 — from .operational_audit import (
+- src/invomatch/services/operational/__init__.py:8 — InMemoryOperationalAuditRepository,
+- src/invomatch/services/operational/__init__.py:9 — OperationalAuditRepository,
+- src/invomatch/services/operational/__init__.py:10 — OperationalAuditService,
+- src/invomatch/services/operational/__init__.py:11 — OperationalAuditWrite,
+- src/invomatch/services/operational/__init__.py:12 — PersistentOperationalAuditRepository,
+- src/invomatch/services/operational/__init__.py:47 — "InMemoryOperationalAuditRepository",
+- src/invomatch/services/operational/__init__.py:48 — "OperationalAuditRepository",
+- src/invomatch/services/operational/__init__.py:49 — "OperationalAuditService",
+- src/invomatch/services/operational/__init__.py:50 — "OperationalAuditWrite",
+- src/invomatch/services/operational/__init__.py:51 — "PersistentOperationalAuditRepository",
+- src/invomatch/services/operational/operational_audit.py:8 — from invomatch.domain.audit.models import AuditCategory, AuditEvent, AuditEventQuery
+- src/invomatch/services/operational/operational_audit.py:9 — from invomatch.domain.audit.repository import AuditEventRepository
+- src/invomatch/services/operational/operational_audit.py:12 — OperationalAuditEvent,
+- src/invomatch/services/operational/operational_audit.py:22 — class OperationalAuditRepository(Protocol):
+- src/invomatch/services/operational/operational_audit.py:23 — def add(self, event: OperationalAuditEvent) -> None:
+- src/invomatch/services/operational/operational_audit.py:26 — def list_events(self, *, tenant_id: str = OPERATIONAL_BOUNDARY_TENANT_ID) -> list[OperationalAuditEvent]:
+- src/invomatch/services/operational/operational_audit.py:30 — class InMemoryOperationalAuditRepository:
+- src/invomatch/services/operational/operational_audit.py:32 — self._events: list[OperationalAuditEvent] = []
+- src/invomatch/services/operational/operational_audit.py:34 — def add(self, event: OperationalAuditEvent) -> None:
+- src/invomatch/services/operational/operational_audit.py:37 — def list_events(self, *, tenant_id: str = OPERATIONAL_BOUNDARY_TENANT_ID) -> list[OperationalAuditEvent]:
+- src/invomatch/services/operational/operational_audit.py:41 — class PersistentOperationalAuditRepository:
+- src/invomatch/services/operational/operational_audit.py:42 — def __init__(self, repository: AuditEventRepository) -> None:
+- src/invomatch/services/operational/operational_audit.py:45 — def add(self, event: OperationalAuditEvent) -> None:
+- src/invomatch/services/operational/operational_audit.py:51 — AuditEvent(
+- src/invomatch/services/operational/operational_audit.py:58 — category=AuditCategory.OPERATIONAL,
+- src/invomatch/services/operational/operational_audit.py:72 — def list_events(self, *, tenant_id: str = OPERATIONAL_BOUNDARY_TENANT_ID) -> list[OperationalAuditEvent]:
+- src/invomatch/services/operational/operational_audit.py:74 — AuditEventQuery(
+- src/invomatch/services/operational/operational_audit.py:76 — category=AuditCategory.OPERATIONAL,
+- src/invomatch/services/operational/operational_audit.py:82 — OperationalAuditEvent(
+- src/invomatch/services/operational/operational_audit.py:104 — class OperationalAuditWrite:
+- src/invomatch/services/operational/operational_audit.py:119 — class OperationalAuditService:
+- src/invomatch/services/operational/operational_audit.py:120 — def __init__(self, repository: OperationalAuditRepository) -> None:
+- src/invomatch/services/operational/operational_audit.py:123 — def record(self, data: OperationalAuditWrite) -> OperationalAuditEvent:
+- src/invomatch/services/operational/operational_audit.py:124 — event = OperationalAuditEvent(
+- src/invomatch/services/operational/recovery_loop_service.py:11 — from invomatch.services.operational.operational_audit import (
+- src/invomatch/services/operational/recovery_loop_service.py:13 — OperationalAuditService,
+- src/invomatch/services/operational/recovery_loop_service.py:14 — OperationalAuditWrite,
+- src/invomatch/services/operational/recovery_loop_service.py:74 — audit_service: OperationalAuditService | None = None,
+- src/invomatch/services/operational/recovery_loop_service.py:82 — self._audit_service = audit_service
+- src/invomatch/services/operational/recovery_loop_service.py:199 — if self._audit_service is None:
+- src/invomatch/services/operational/recovery_loop_service.py:202 — self._audit_service.record(
+- src/invomatch/services/operational/recovery_loop_service.py:203 — OperationalAuditWrite(
+
+## Failure Semantics Signals
+
+Count: 200
+
+- src/invomatch/api/actions.py:3 — from fastapi import APIRouter, HTTPException, Request, Response, status
+- src/invomatch/api/actions.py:52 — raise HTTPException(
+- src/invomatch/api/actions.py:53 — status_code=status.HTTP_400_BAD_REQUEST,
+- src/invomatch/api/actions.py:77 — response.status_code = _http_status_for_action_result(result)
+- src/invomatch/api/export.py:3 — from fastapi import APIRouter, HTTPException, Request, Response
+- src/invomatch/api/export.py:9 — ExportDataIncompleteError,
+- src/invomatch/api/export.py:13 — RunNotFoundError,
+- src/invomatch/api/export.py:32 — raise HTTPException(
+- src/invomatch/api/export.py:33 — status_code=500,
+- src/invomatch/api/export.py:50 — raise HTTPException(status_code=400, detail=str(exc))
+- src/invomatch/api/export.py:52 — except RunNotFoundError as exc:
+- src/invomatch/api/export.py:53 — raise HTTPException(status_code=404, detail=str(exc))
+- src/invomatch/api/export.py:56 — raise HTTPException(status_code=409, detail=str(exc))
+- src/invomatch/api/export.py:58 — except ExportDataIncompleteError as exc:
+- src/invomatch/api/export.py:59 — raise HTTPException(status_code=422, detail=str(exc))
+- src/invomatch/api/export.py:62 — raise HTTPException(status_code=500, detail=str(exc))
+- src/invomatch/api/export.py:65 — raise HTTPException(status_code=500, detail=str(exc))
+- src/invomatch/api/export.py:68 — raise HTTPException(status_code=400, detail=str(exc))
+- src/invomatch/api/export.py:95 — raise UnsupportedExportFormatError(
+- src/invomatch/api/export_artifacts.py:3 — from fastapi import APIRouter, HTTPException, Request, Response, status
+- src/invomatch/api/export_artifacts.py:21 — ArtifactNotFoundError,
+- src/invomatch/api/export_artifacts.py:23 — ArtifactUnavailableError,
+- src/invomatch/api/export_artifacts.py:46 — message="Reconciliation run not found",
+- src/invomatch/api/export_artifacts.py:48 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:49 — status_code=status.HTTP_404_NOT_FOUND,
+- src/invomatch/api/export_artifacts.py:57 — except Exception as exc:
+- src/invomatch/api/export_artifacts.py:59 — code="artifact_unavailable",
+- src/invomatch/api/export_artifacts.py:62 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:63 — status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+- src/invomatch/api/export_artifacts.py:91 — except ArtifactNotFoundError as exc:
+- src/invomatch/api/export_artifacts.py:94 — message="Export artifact not found",
+- src/invomatch/api/export_artifacts.py:96 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:97 — status_code=status.HTTP_404_NOT_FOUND,
+- src/invomatch/api/export_artifacts.py:100 — except Exception as exc:
+- src/invomatch/api/export_artifacts.py:102 — code="artifact_unavailable",
+- src/invomatch/api/export_artifacts.py:105 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:106 — status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+- src/invomatch/api/export_artifacts.py:136 — except ArtifactNotFoundError as exc:
+- src/invomatch/api/export_artifacts.py:139 — message="Export artifact not found",
+- src/invomatch/api/export_artifacts.py:141 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:142 — status_code=status.HTTP_404_NOT_FOUND,
+- src/invomatch/api/export_artifacts.py:151 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:152 — status_code=status.HTTP_410_GONE,
+- src/invomatch/api/export_artifacts.py:161 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:162 — status_code=status.HTTP_410_GONE,
+- src/invomatch/api/export_artifacts.py:171 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:172 — status_code=status.HTTP_409_CONFLICT,
+- src/invomatch/api/export_artifacts.py:176 — except ArtifactUnavailableError as exc:
+- src/invomatch/api/export_artifacts.py:178 — code="artifact_unavailable",
+- src/invomatch/api/export_artifacts.py:179 — message="Export artifact content is unavailable",
+- src/invomatch/api/export_artifacts.py:181 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:182 — status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+- src/invomatch/api/export_artifacts.py:186 — except Exception as exc:
+- src/invomatch/api/export_artifacts.py:188 — code="artifact_unavailable",
+- src/invomatch/api/export_artifacts.py:191 — raise HTTPException(
+- src/invomatch/api/export_artifacts.py:192 — status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+- src/invomatch/api/health.py:15 — "readiness_reason": "startup_result_unavailable",
+- src/invomatch/api/health.py:36 — "readiness_reason": "startup_result_unavailable",
+- src/invomatch/api/operations.py:3 — from fastapi import APIRouter, HTTPException, Request
+- src/invomatch/api/operations.py:24 — raise HTTPException(
+- src/invomatch/api/operations.py:25 — status_code=500,
+- src/invomatch/api/operations.py:118 — raise HTTPException(
+- src/invomatch/api/operations.py:119 — status_code=500,
+- src/invomatch/api/reconciliation_runs.py:6 — from fastapi import APIRouter, HTTPException, Request, status
+- src/invomatch/api/reconciliation_runs.py:46 — status_code=status.HTTP_201_CREATED,
+- src/invomatch/api/reconciliation_runs.py:61 — raise HTTPException(status_code=400, detail=to_api_error_response(exc).model_dump(exclude_none=True)) from exc
+- src/invomatch/api/reconciliation_runs.py:63 — raise HTTPException(status_code=500, detail=to_api_error_response(exc).model_dump(exclude_none=True)) from exc
+- src/invomatch/api/reconciliation_runs.py:77 — status_code=status.HTTP_200_OK,
+- src/invomatch/api/reconciliation_runs.py:155 — raise HTTPException(status_code=404, detail="Reconciliation run not found")
+- src/invomatch/api/reconciliation_runs.py:191 — raise HTTPException(status_code=404, detail="Reconciliation run not found")
+- src/invomatch/api/reconciliation_runs.py:196 — raise HTTPException(status_code=404, detail="Reconciliation run not found")
+- src/invomatch/api/reconciliation_schemas.py:19 — raise ValueError("Path must not be empty")
+- src/invomatch/api/reconciliation_schemas.py:35 — raise ValueError("Field must not be empty")
+- src/invomatch/api/reconciliation_schemas.py:59 — raise ValueError("Field must not be empty")
+- src/invomatch/api/reconciliation_schemas.py:81 — raise ValueError("ingestion_batch_id must not be empty")
+- src/invomatch/api/reconciliation_schemas.py:98 — error_code: str
+- src/invomatch/api/reconciliation_schemas.py:105 — error_code=error.error_code,
+- src/invomatch/api/review_cases.py:3 — from fastapi import APIRouter, HTTPException, Request
+- src/invomatch/api/review_cases.py:20 — raise HTTPException(status_code=404, detail="Review case not found")
+- src/invomatch/api/review_cases.py:26 — raise HTTPException(status_code=404, detail="Review case not found")
+- src/invomatch/api/routes/input_boundary.py:5 — from fastapi import APIRouter, Body, File, HTTPException, Request, UploadFile
+- src/invomatch/api/routes/input_boundary.py:102 — raise HTTPException(status_code=404, detail="Input session not found")
+- src/invomatch/api/security/dependencies.py:47 — raise unauthorized("Authentication boundary is disabled unexpectedly")
+- src/invomatch/api/security/dependencies.py:51 — raise RuntimeError("authentication_service is not configured on application state")
+- src/invomatch/api/security/dependencies.py:69 — raise unauthorized("Token expired")
+- src/invomatch/api/security/dependencies.py:71 — raise unauthorized("Token revoked")
+- src/invomatch/api/security/dependencies.py:73 — raise unauthorized("Authentication required")
+- src/invomatch/api/security/dependencies.py:82 — reason="missing_principal",
+- src/invomatch/api/security/dependencies.py:84 — raise unauthorized("Authentication required")
+- src/invomatch/api/security/dependencies.py:94 — raise forbidden("User is inactive")
+- src/invomatch/api/security/dependencies.py:119 — reason="missing_tenant_id",
+- src/invomatch/api/security/dependencies.py:121 — raise forbidden("Tenant context is required")
+- src/invomatch/api/security/dependencies.py:138 — raise RuntimeError("authorization_service is not configured on application state")
+- src/invomatch/api/security/dependencies.py:154 — raise forbidden("Permission denied")
+- src/invomatch/api/security/errors.py:3 — from fastapi import HTTPException, status
+- src/invomatch/api/security/errors.py:6 — def unauthorized(detail: str = "Authentication required") -> HTTPException:
+- src/invomatch/api/security/errors.py:7 — return HTTPException(
+- src/invomatch/api/security/errors.py:8 — status_code=status.HTTP_401_UNAUTHORIZED,
+- src/invomatch/api/security/errors.py:13 — def forbidden(detail: str = "Permission denied") -> HTTPException:
+- src/invomatch/api/security/errors.py:14 — return HTTPException(
+- src/invomatch/api/security/errors.py:15 — status_code=status.HTTP_403_FORBIDDEN,
+- src/invomatch/bootstrap/app_factory.py:26 — raise ValueError(
+- src/invomatch/bootstrap/persistence_factory.py:28 — raise ValueError(f"Unsupported run store backend: {settings.persistence.run_store_backend}")
+- src/invomatch/bootstrap/persistence_factory.py:37 — raise ValueError(
+- src/invomatch/domain/export/models.py:38 — raise ValueError("invoice_id is required")
+- src/invomatch/domain/export/models.py:40 — raise ValueError("invoice_number is required")
+- src/invomatch/domain/export/models.py:42 — raise ValueError("currency is required")
+- src/invomatch/domain/export/models.py:54 — raise ValueError("payment_id is required")
+- src/invomatch/domain/export/models.py:56 — raise ValueError("currency is required")
+- src/invomatch/domain/export/models.py:68 — raise ValueError("method is required")
+- src/invomatch/domain/export/models.py:90 — raise ValueError("result_id is required")
+- src/invomatch/domain/export/models.py:92 — raise ValueError("run_id is required")
+- src/invomatch/domain/export/models.py:94 — raise ValueError("invoice is required")
+- src/invomatch/domain/export/models.py:96 — raise ValueError("match is required")
+- src/invomatch/domain/export/models.py:98 — raise ValueError("review is required")
+- src/invomatch/domain/export/models.py:101 — raise ValueError("payments are required for MATCH and PARTIAL results")
+- src/invomatch/domain/export/models.py:104 — raise ValueError("UNMATCHED results must have matched_amount == 0")
+- src/invomatch/domain/export/models.py:107 — raise ValueError("UNMATCHED results must have difference_amount equal to invoice.amount")
+- src/invomatch/domain/export/models.py:110 — raise ValueError("PARTIAL results must have matched_amount < invoice.amount")
+- src/invomatch/domain/export/models.py:113 — raise ValueError("MATCH results must have matched_amount equal to invoice.amount")
+- src/invomatch/domain/export/models.py:117 — raise ValueError("payment currency must match invoice currency")
+- src/invomatch/domain/export/models.py:131 — raise ValueError(f"{field_name} must be >= 0")
+- src/invomatch/domain/export/models.py:146 — raise ValueError("schema_version is required")
+- src/invomatch/domain/export/models.py:148 — raise ValueError("run_id is required")
+- src/invomatch/domain/export/models.py:150 — raise ValueError("status is required")
+- src/invomatch/domain/export/models.py:152 — raise ValueError("currency is required")
+- src/invomatch/domain/export/models.py:154 — raise ValueError("summary is required")
+- src/invomatch/domain/export/models.py:166 — raise ValueError("content_type is required")
+- src/invomatch/domain/export/models.py:168 — raise ValueError("body is required")
+- src/invomatch/domain/export_delivery/models.py:57 — raise ValueError("value must not be blank")
+- src/invomatch/domain/export_delivery/models.py:64 — raise ValueError("byte_size must be >= 0")
+- src/invomatch/domain/export_delivery/models.py:79 — raise ValueError("expires_at must be >= created_at")
+- src/invomatch/domain/export_delivery/repository.py:11 — raise NotImplementedError
+- src/invomatch/domain/export_delivery/repository.py:15 — raise NotImplementedError
+- src/invomatch/domain/export_delivery/repository.py:23 — raise NotImplementedError
+- src/invomatch/domain/export_delivery/repository.py:27 — raise NotImplementedError
+- src/invomatch/domain/export_delivery/repository.py:35 — raise NotImplementedError
+- src/invomatch/domain/feedback/models.py:74 — raise ValueError(
+- src/invomatch/domain/feedback/models.py:80 — raise ValueError("accept_match must use reviewer action 'accept'")
+- src/invomatch/domain/feedback/models.py:84 — raise ValueError("reject_match must use reviewer action 'reject'")
+- src/invomatch/domain/feedback/models.py:112 — raise ValueError(
+- src/invomatch/domain/feedback/models.py:142 — raise ValueError("approved or active recommendation requires approver_id")
+- src/invomatch/domain/feedback/models.py:144 — raise ValueError("approved or active recommendation requires replay_test_passed=True")
+- src/invomatch/domain/feedback/models.py:166 — raise ValueError("created_at must be timezone-aware (UTC required)")
+- src/invomatch/domain/feedback/repositories.py:16 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:20 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:24 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:28 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:32 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:36 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:40 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:44 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:51 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:58 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:65 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:74 — raise NotImplementedError
+- src/invomatch/domain/feedback/repositories.py:84 — raise NotImplementedError
+- src/invomatch/domain/matching/decisioning.py:14 — raise ValueError("candidate_count must be >= 1.")
+- src/invomatch/domain/matching/decisioning.py:16 — raise ValueError("competing_candidate_count must be >= 0.")
+- src/invomatch/domain/matching/decisioning.py:18 — raise ValueError("top_score_gap must be >= 0 when provided.")
+- src/invomatch/domain/matching/features.py:23 — raise ValueError("invoice_id must not be empty.")
+- src/invomatch/domain/matching/features.py:25 — raise ValueError("supplier_name must not be empty.")
+- src/invomatch/domain/matching/features.py:27 — raise ValueError("invoice_number must not be empty.")
+- src/invomatch/domain/matching/features.py:29 — raise ValueError("currency must not be empty.")
+- src/invomatch/domain/matching/features.py:31 — raise ValueError("gross_amount must be >= 0.")
+- src/invomatch/domain/matching/features.py:33 — raise ValueError("ocr_confidence must be between 0.0 and 1.0.")
+- src/invomatch/domain/matching/features.py:49 — raise ValueError("payment_id must not be empty.")
+- src/invomatch/domain/matching/features.py:51 — raise ValueError("counterparty_name must not be empty.")
+- src/invomatch/domain/matching/features.py:53 — raise ValueError("currency must not be empty.")
+- src/invomatch/domain/matching/features.py:55 — raise ValueError("amount must be >= 0.")
+- src/invomatch/domain/matching/features.py:90 — raise ValueError("invoice_id must not be empty.")
+- src/invomatch/domain/matching/features.py:92 — raise ValueError("payment_id must not be empty.")
+- src/invomatch/domain/matching/features.py:94 — raise ValueError("amount_delta_absolute must be >= 0.")
+- src/invomatch/domain/matching/features.py:96 — raise ValueError("amount_delta_percentage must be >= 0.")
+- src/invomatch/domain/matching/features.py:98 — raise ValueError("reference_token_overlap_score must be between 0.0 and 1.0.")
+- src/invomatch/domain/matching/features.py:100 — raise ValueError("combined_reference_signal_score must be between 0.0 and 1.0.")
+- src/invomatch/domain/matching/models.py:44 — raise ValueError("MatchExplanation.summary must not be empty.")
+- src/invomatch/domain/matching/models.py:46 — raise ValueError("competing_candidate_count must be >= 0.")
+- src/invomatch/domain/matching/models.py:48 — raise ValueError("top_score_gap must be >= 0 when provided.")
+- src/invomatch/domain/matching/models.py:69 — raise ValueError(f"{field_name} must not be empty.")
+- src/invomatch/domain/matching/models.py:90 — raise ValueError("decision_id must not be empty.")
+- src/invomatch/domain/matching/models.py:92 — raise ValueError("run_id must not be empty.")
+- src/invomatch/domain/matching/models.py:95 — raise ValueError("At least one invoice_id or payment_id must be present.")
+- src/invomatch/domain/matching/models.py:98 — raise ValueError("invoice_ids must not contain empty values.")
+- src/invomatch/domain/matching/models.py:101 — raise ValueError("payment_ids must not contain empty values.")
+- src/invomatch/domain/matching/models.py:104 — raise ValueError("score must be >= 0.")
+- src/invomatch/domain/matching/models.py:108 — raise ValueError("ONE_TO_ONE requires exactly 1 invoice_id and 1 payment_id.")
+- src/invomatch/domain/matching/models.py:112 — raise ValueError("ONE_TO_MANY requires 1 invoice_id and at least 2 payment_ids.")
+- src/invomatch/domain/matching/models.py:116 — raise ValueError("MANY_TO_ONE requires at least 2 invoice_ids and exactly 1 payment_id.")
+- src/invomatch/domain/matching/models.py:120 — raise ValueError("MANY_TO_MANY requires at least 2 invoice_ids and 2 payment_ids.")
+- src/invomatch/domain/matching/models.py:124 — raise ValueError("UNMATCHED requires at least one side to exist.")
+- src/invomatch/domain/matching/models.py:128 — raise ValueError(
+- src/invomatch/domain/matching/models.py:136 — raise ValueError(
+- src/invomatch/domain/matching/models.py:142 — raise ValueError("auto_action_eligible requires confidence=high.")
+- src/invomatch/domain/matching/models.py:148 — raise ValueError(
+- src/invomatch/domain/matching/models.py:158 — raise ValueError(
+- src/invomatch/domain/matching/models.py:163 — raise ValueError(
+- src/invomatch/domain/matching/rules.py:23 — raise ValueError("rule_id must not be empty.")
+- src/invomatch/domain/matching/rules.py:25 — raise ValueError("reason_code must not be empty.")
+- src/invomatch/domain/matching/rules.py:27 — raise ValueError("score_delta must be >= 0.")
+
+## API / Contract Test Signals
+
+Count: 200
+
+- src/invomatch/api/actions.py:3 — from fastapi import APIRouter, HTTPException, Request, Response, status
+- src/invomatch/api/actions.py:5 — from invomatch.api.mappers.product_contract import to_product_action_response
+- src/invomatch/api/actions.py:6 — from invomatch.api.product_models.action import (
+- src/invomatch/api/actions.py:10 — from invomatch.api.security import record_privileged_success, require_permission
+- src/invomatch/api/actions.py:17 — router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-actions"])
+- src/invomatch/api/actions.py:58 — @router.post("/{run_id}/actions", response_model=ProductActionResponse)
+- src/invomatch/api/audit_events.py:5 — from fastapi import APIRouter, Request
+- src/invomatch/api/audit_events.py:7 — from invomatch.api.product_models.audit_event import (
+- src/invomatch/api/audit_events.py:12 — from invomatch.api.security import get_tenant_context, require_permission
+- src/invomatch/api/audit_events.py:17 — router = APIRouter(prefix="/api/audit", tags=["audit"])
+- src/invomatch/api/audit_events.py:20 — @router.get("/events", response_model=ProductAuditEventListResponse)
+- src/invomatch/api/auth_session.py:3 — from fastapi import APIRouter, Request
+- src/invomatch/api/auth_session.py:5 — from invomatch.api.product_models.auth_session import (
+- src/invomatch/api/auth_session.py:9 — from invomatch.api.security import get_authenticated_principal
+- src/invomatch/api/auth_session.py:14 — router = APIRouter(prefix="/api/auth", tags=["auth"])
+- src/invomatch/api/auth_session.py:17 — @router.get("/session", response_model=ProductAuthSessionResponse)
+- src/invomatch/api/export.py:3 — from fastapi import APIRouter, HTTPException, Request, Response
+- src/invomatch/api/export.py:5 — from invomatch.api.security import record_privileged_success, require_permission
+- src/invomatch/api/export.py:17 — router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-export"])
+- src/invomatch/api/export.py:20 — @router.get("/{run_id}/export")
+- src/invomatch/api/export_artifacts.py:3 — from fastapi import APIRouter, HTTPException, Request, Response, status
+- src/invomatch/api/export_artifacts.py:5 — from invomatch.api.mappers.product_contract import (
+- src/invomatch/api/export_artifacts.py:10 — from invomatch.api.product_models.export_artifact import (
+- src/invomatch/api/export_artifacts.py:15 — from invomatch.api.security import record_privileged_success, require_permission
+- src/invomatch/api/export_artifacts.py:27 — router = APIRouter(prefix="/api/reconciliation", tags=["export-artifacts"])
+- src/invomatch/api/export_artifacts.py:30 — @router.get(
+- src/invomatch/api/export_artifacts.py:73 — @router.get(
+- src/invomatch/api/export_artifacts.py:113 — @router.get(
+- src/invomatch/api/health.py:1 — from fastapi import APIRouter, Request
+- src/invomatch/api/health.py:3 — router = APIRouter()
+- src/invomatch/api/health.py:6 — @router.get("/health")
+- src/invomatch/api/health.py:28 — @router.get("/readiness")
+- src/invomatch/api/mappers/product_contract.py:6 — from invomatch.api.product_models.action import (
+- src/invomatch/api/mappers/product_contract.py:10 — from invomatch.api.product_models.export import ProductExportModel
+- src/invomatch/api/mappers/product_contract.py:11 — from invomatch.api.product_models.export_artifact import (
+- src/invomatch/api/mappers/product_contract.py:18 — from invomatch.api.product_models.match_result import ProductMatchResult
+- src/invomatch/api/mappers/product_contract.py:19 — from invomatch.api.product_models.review_case import ProductReviewCase
+- src/invomatch/api/mappers/product_contract.py:20 — from invomatch.api.product_models.run import (
+- src/invomatch/api/operations.py:3 — from fastapi import APIRouter, HTTPException, Request
+- src/invomatch/api/operations.py:5 — from invomatch.api.security import require_permission
+- src/invomatch/api/operations.py:6 — from invomatch.api.operations_models import (
+- src/invomatch/api/operations.py:18 — router = APIRouter(prefix="/api/operations", tags=["operations"])
+- src/invomatch/api/operations.py:47 — @router.get("/metrics", response_model=OperationalMetricsResponse)
+- src/invomatch/api/operations.py:69 — @router.get("/health-summary", response_model=OperationalHealthSummaryResponse)
+- src/invomatch/api/operations.py:86 — @router.get("/alerts", response_model=OperationalAlertsResponse)
+- src/invomatch/api/operations.py:112 — @router.get("/release-identity", response_model=OperationalReleaseIdentityResponse)
+- src/invomatch/api/reconciliation_runs.py:6 — from fastapi import APIRouter, HTTPException, Request, status
+- src/invomatch/api/reconciliation_runs.py:8 — from invomatch.api.mappers.product_contract import (
+- src/invomatch/api/reconciliation_runs.py:12 — from invomatch.api.product_models.run import (
+- src/invomatch/api/reconciliation_runs.py:16 — from invomatch.api.product_models.run_view import ProductRunView
+- src/invomatch/api/reconciliation_runs.py:17 — from invomatch.api.reconciliation_schemas import (
+- src/invomatch/api/reconciliation_runs.py:18 — ApiErrorResponse,
+- src/invomatch/api/reconciliation_runs.py:22 — to_api_error_response,
+- src/invomatch/api/reconciliation_runs.py:24 — from invomatch.api.security import get_tenant_context, record_privileged_success, require_permission
+- src/invomatch/api/reconciliation_runs.py:40 — router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-runs"])
+- src/invomatch/api/reconciliation_runs.py:43 — @router.post(
+- src/invomatch/api/reconciliation_runs.py:47 — responses={400: {"model": ApiErrorResponse}, 500: {"model": ApiErrorResponse}},
+- src/invomatch/api/reconciliation_runs.py:61 — raise HTTPException(status_code=400, detail=to_api_error_response(exc).model_dump(exclude_none=True)) from exc
+- src/invomatch/api/reconciliation_runs.py:63 — raise HTTPException(status_code=500, detail=to_api_error_response(exc).model_dump(exclude_none=True)) from exc
+- src/invomatch/api/reconciliation_runs.py:74 — @router.post(
+- src/invomatch/api/reconciliation_runs.py:120 — @router.get("", response_model=ProductRunListResponse)
+- src/invomatch/api/reconciliation_runs.py:147 — @router.get("/{run_id}", response_model=ProductRunDetail)
+- src/invomatch/api/reconciliation_runs.py:159 — @router.get("/{run_id}/view", response_model=ProductRunView)
+- src/invomatch/api/reconciliation_schemas.py:97 — class ApiErrorResponse(BaseModel):
+- src/invomatch/api/reconciliation_schemas.py:103 — def to_api_error_response(error: ReconciliationServiceError) -> ApiErrorResponse:
+- src/invomatch/api/reconciliation_schemas.py:104 — return ApiErrorResponse(
+- src/invomatch/api/review_cases.py:3 — from fastapi import APIRouter, HTTPException, Request
+- src/invomatch/api/review_cases.py:5 — from invomatch.api.mappers.product_contract import to_product_review_case
+- src/invomatch/api/review_cases.py:6 — from invomatch.api.product_models.review_case import ProductReviewCase
+- src/invomatch/api/review_cases.py:7 — from invomatch.api.security import require_permission
+- src/invomatch/api/review_cases.py:11 — router = APIRouter(prefix="/api/reconciliation/runs", tags=["reconciliation-review"])
+- src/invomatch/api/review_cases.py:14 — @router.get("/{run_id}/review", response_model=ProductReviewCase)
+- src/invomatch/api/routes/input_boundary.py:5 — from fastapi import APIRouter, Body, File, HTTPException, Request, UploadFile
+- src/invomatch/api/routes/input_boundary.py:7 — from invomatch.api.product_models.input_boundary import (
+- src/invomatch/api/routes/input_boundary.py:12 — from invomatch.api.security import record_privileged_success, require_permission
+- src/invomatch/api/routes/input_boundary.py:15 — router = APIRouter(prefix="/api/reconciliation/input", tags=["input-boundary"])
+- src/invomatch/api/routes/input_boundary.py:30 — @router.post("/json", response_model=ProductInputSubmissionResponse)
+- src/invomatch/api/routes/input_boundary.py:60 — @router.post("/file", response_model=ProductInputSubmissionResponse)
+- src/invomatch/api/routes/input_boundary.py:94 — @router.get("/{input_id}", response_model=ProductInputSessionView)
+- src/invomatch/api/security/dependencies.py:3 — from fastapi import Request
+- src/invomatch/api/security/dependencies.py:5 — from invomatch.api.security.errors import forbidden, unauthorized
+- src/invomatch/api/security/dependencies.py:126 — authentication_source="api_auth",
+- src/invomatch/api/security/errors.py:3 — from fastapi import HTTPException, status
+- src/invomatch/main.py:7 — from fastapi import FastAPI
+- src/invomatch/main.py:8 — from fastapi.middleware.cors import CORSMiddleware
+- src/invomatch/main.py:10 — from invomatch.api.actions import router as actions_router
+- src/invomatch/main.py:11 — from invomatch.api.audit_events import router as audit_events_router
+- src/invomatch/main.py:12 — from invomatch.api.auth_session import router as auth_session_router
+- src/invomatch/main.py:13 — from invomatch.api.export import router as export_router
+- src/invomatch/main.py:14 — from invomatch.api.export_artifacts import router as export_artifacts_router
+- src/invomatch/main.py:15 — from invomatch.api.health import router as health_router
+- src/invomatch/main.py:16 — from invomatch.api.operations import router as operations_router
+- src/invomatch/main.py:17 — from invomatch.api.reconciliation_runs import router as reconciliation_runs_router
+- src/invomatch/main.py:18 — from invomatch.api.review_cases import router as review_cases_router
+- src/invomatch/main.py:19 — from invomatch.api.routes.input_boundary import router as input_boundary_router
+- src/invomatch/main.py:88 — ) -> FastAPI:
+- src/invomatch/main.py:89 — app = FastAPI(title="InvoMatch")
+- src/invomatch/main.py:323 — app.include_router(input_boundary_router)
+- src/invomatch/main.py:324 — app.include_router(auth_session_router)
+- src/invomatch/main.py:325 — app.include_router(health_router)
+- src/invomatch/main.py:326 — app.include_router(audit_events_router)
+- src/invomatch/main.py:327 — app.include_router(operations_router)
+- src/invomatch/main.py:328 — app.include_router(reconciliation_runs_router)
+- src/invomatch/main.py:329 — app.include_router(review_cases_router)
+- src/invomatch/main.py:330 — app.include_router(actions_router)
+- src/invomatch/main.py:331 — app.include_router(export_router)
+- src/invomatch/main.py:332 — app.include_router(export_artifacts_router)
+- src/invomatch/persistence/base.py:8 — Backend-independent lifecycle persistence contract.
+- src/invomatch/services/action_service.py:7 — from invomatch.api.product_models.action import ProductActionRequest
+- src/invomatch/services/export/finalized_projection.py:398 — "duplicate_detected is not supported by finalized export contract"
+- src/invomatch/services/export/finalized_projection.py:453 — "duplicate_detected is not supported by finalized export contract"
+- src/invomatch/services/export/finalized_result_reader.py:9 — """Read contract for finalized results used by the export layer."""
+- src/invomatch/services/feedback_store.py:10 — Contract for feedback persistence.
+- src/invomatch/services/input_boundary/json_input_service.py:7 — from invomatch.api.reconciliation_schemas import CreateRunFromIngestionRequest
+- src/invomatch/services/operational/alert_policy.py:40 — - no FastAPI dependency
+- src/invomatch/services/operational/condition_detector.py:30 — - no FastAPI dependency
+- src/invomatch/services/run_view_query_service.py:6 — from invomatch.api.product_models.run_view import (
+- src/invomatch/services/run_view_query_service.py:451 — download_url = f"/api/reconciliation/exports/{artifact_id}/download"
+- tests/audit/test_audit_api.py:3 — from fastapi.testclient import TestClient
+- tests/audit/test_audit_api.py:22 — client = TestClient(app)
+- tests/audit/test_audit_api.py:36 — def test_audit_api_filters_by_user_and_event_type(tmp_path) -> None:
+- tests/audit/test_audit_api.py:49 — request_path="/api/reconciliation/runs",
+- tests/audit/test_audit_api.py:57 — request_path="/api/reconciliation/runs",
+- tests/audit/test_audit_api.py:64 — response = client.get(
+- tests/audit/test_audit_api.py:65 — "/api/audit/events",
+- tests/audit/test_audit_api.py:76 — def test_audit_api_does_not_return_events_from_other_tenants(tmp_path) -> None:
+- tests/audit/test_audit_api.py:90 — request_path="/api/reconciliation/runs",
+- tests/audit/test_audit_api.py:115 — response = client.get(
+- tests/audit/test_audit_api.py:116 — "/api/audit/events",
+- tests/audit/test_audit_event_repository_sqlite.py:23 — request_path="/api/reconciliation/runs",
+- tests/audit/test_scenario_9_audit_persistence_integrity.py:4 — from fastapi.testclient import TestClient
+- tests/audit/test_scenario_9_audit_persistence_integrity.py:68 — client = TestClient(app)
+- tests/audit/test_scenario_9_audit_persistence_integrity.py:78 — request_path="/api/reconciliation/runs",
+- tests/audit/test_scenario_9_audit_persistence_integrity.py:141 — response = client.get(
+- tests/audit/test_scenario_9_audit_persistence_integrity.py:142 — "/api/audit/events",
+- tests/audit/test_security_audit_persistence.py:23 — request_path="/api/reconciliation/runs",
+- tests/conftest.py:2 — "test_run_store_contract.py",
+- tests/contracts/conftest.py:5 — import pytest
+- tests/contracts/conftest.py:6 — from fastapi.testclient import TestClient
+- tests/contracts/conftest.py:13 — "invomatch.api.app:app",
+- tests/contracts/conftest.py:14 — "invomatch.api.main:app",
+- tests/contracts/conftest.py:29 — raise RuntimeError(f"Unable to import FastAPI app from known candidates:\n{joined}")
+- tests/contracts/conftest.py:32 — @pytest.fixture(scope="session")
+- tests/contracts/conftest.py:40 — @pytest.fixture()
+- tests/contracts/conftest.py:42 — client = TestClient(app)
+- tests/contracts/test_internal_field_leakage.py:32 — def test_runs_endpoint_does_not_leak_internal_fields(client):
+- tests/contracts/test_internal_field_leakage.py:33 — response = client.get("/api/reconciliation/runs")
+- tests/contracts/test_internal_field_leakage.py:39 — def test_run_detail_endpoint_does_not_leak_internal_fields(client):
+- tests/contracts/test_internal_field_leakage.py:40 — response = client.get("/api/reconciliation/runs/test-run-id")
+- tests/contracts/test_product_contract_actions.py:13 — response = client.post("/api/reconciliation/runs/test-run-id/actions", json=payload)
+- tests/contracts/test_product_contract_actions.py:28 — def test_post_run_actions_accepts_product_contract_shape(client):
+- tests/contracts/test_product_contract_actions.py:36 — response = client.post("/api/reconciliation/runs/test-run-id/actions", json=payload)
+- tests/contracts/test_product_contract_input_boundary.py:5 — from invomatch.api.product_models.input_boundary import (
+- tests/contracts/test_product_contract_review.py:4 — def test_get_run_review_conforms_to_product_contract(client):
+- tests/contracts/test_product_contract_review.py:5 — response = client.get("/api/reconciliation/runs/test-run-id/review")
+- tests/contracts/test_product_contract_runs.py:9 — def test_get_runs_conforms_to_product_contract(client):
+- tests/contracts/test_product_contract_runs.py:10 — response = client.get("/api/reconciliation/runs")
+- tests/contracts/test_product_contract_runs.py:45 — def test_get_run_detail_conforms_to_product_contract(client):
+- tests/contracts/test_product_contract_runs.py:46 — response = client.get("/api/reconciliation/runs/test-run-id")
+- tests/domain/feedback/test_feedback_models.py:2 — import pytest
+- tests/domain/feedback/test_feedback_models.py:54 — with pytest.raises(ValidationError):
+- tests/domain/feedback/test_feedback_models.py:77 — with pytest.raises(ValidationError):
+- tests/domain/feedback/test_feedback_models.py:117 — with pytest.raises(ValidationError):
+- tests/domain/feedback/test_feedback_models.py:133 — with pytest.raises(ValidationError):
+- tests/domain/test_feedback_time_contract.py:3 — import pytest
+- tests/domain/test_feedback_time_contract.py:25 — with pytest.raises(ValidationError, match="timezone-aware"):
+- tests/input_boundary/test_json_input_service.py:64 — def test_build_ingestion_request_normalizes_using_contract() -> None:
+- tests/operational/test_operations_metrics_api.py:1 — from fastapi.testclient import TestClient
+- tests/operational/test_operations_metrics_api.py:20 — return TestClient(app)
+- tests/operational/test_operations_metrics_api.py:26 — response = client.get("/api/operations/metrics")
+- tests/operational/test_operations_metrics_api.py:34 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:35 — "/api/operations/metrics",
+- tests/operational/test_operations_metrics_api.py:56 — client = TestClient(app)
+- tests/operational/test_operations_metrics_api.py:58 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:59 — "/api/operations/metrics",
+- tests/operational/test_operations_metrics_api.py:90 — client = TestClient(app)
+- tests/operational/test_operations_metrics_api.py:92 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:93 — "/api/operations/metrics",
+- tests/operational/test_operations_metrics_api.py:114 — client = TestClient(app)
+- tests/operational/test_operations_metrics_api.py:116 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:117 — "/api/operations/metrics",
+- tests/operational/test_operations_metrics_api.py:130 — client = TestClient(app)
+- tests/operational/test_operations_metrics_api.py:132 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:133 — "/api/operations/health-summary",
+- tests/operational/test_operations_metrics_api.py:155 — client = TestClient(app)
+- tests/operational/test_operations_metrics_api.py:157 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:158 — "/api/operations/health-summary",
+- tests/operational/test_operations_metrics_api.py:171 — client = TestClient(app)
+- tests/operational/test_operations_metrics_api.py:173 — response = client.get("/api/operations/health-summary")
+- tests/operational/test_operations_metrics_api.py:186 — client = TestClient(app)
+- tests/operational/test_operations_metrics_api.py:188 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:189 — "/api/operations/health-summary",
+- tests/operational/test_operations_metrics_api.py:214 — client = TestClient(app)
+- tests/operational/test_operations_metrics_api.py:216 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:217 — "/api/operations/health-summary",
+- tests/operational/test_operations_metrics_api.py:241 — client = TestClient(app)
+- tests/operational/test_operations_metrics_api.py:243 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:244 — "/api/operations/health-summary",
+- tests/operational/test_operations_metrics_api.py:258 — response = client.get(
+- tests/operational/test_operations_metrics_api.py:259 — "/api/operations/metrics",
+
+## Discovery Interpretation
+
+This discovery does not implement backend behavior.
+
+This discovery does not authorize Base44 binding.
+
+This discovery does not authorize live UI wiring.
+
+This discovery does not claim Scenario 15 completion.
+
+A product-facing Match Detail / Evidence backend path must not be considered ready unless the following are explicitly available and testable:
+
+- Review Queue exposes stable match_id
+- Match Detail retrieval accepts the same stable match_id
+- response includes backend-owned evidence payload
+- response includes backend-owned traceability payload
+- failure semantics distinguish match not found
+- failure semantics distinguish missing evidence
+- failure semantics distinguish unavailable evidence
+- failure semantics distinguish malformed or incomplete payload
+- frontend truth synthesis is not required
+
+## Required Next Step
+
+The next Mini-EPIC step should convert this git-native discovery into a bounded backend implementation plan.
+
+That implementation plan must name the exact files to modify and must not proceed through UI-side assumptions.
+
