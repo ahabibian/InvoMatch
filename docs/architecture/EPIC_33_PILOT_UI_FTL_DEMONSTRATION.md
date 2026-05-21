@@ -902,3 +902,17 @@ Consequence:
 Mini-EPIC 33.13 may proceed as controlled Base44 first-slice binding limited to Review Queue + Match Detail / Evidence.
 
 No Base44 prompt, live UI wiring, Human Correction binding, Finalized Truth binding, Export Readiness binding, or Scenario 15 completion claim was introduced by Mini-EPIC 33.12.
+
+Mini-EPIC 33.12 — Corrected Binding Readiness Decision
+
+A corrective review invalidated the earlier Decision A classification.
+
+Corrected decision:
+
+Decision B — Not ready; backend contract/adaptor implementation required.
+
+Reason:
+
+The evidence summary showed zero product-facing detail route candidates, zero backend traceability lines, and zero backend failure semantic lines. Therefore controlled Base44 binding is not defensible.
+
+Mini-EPIC 33.13 must be backend contract/adaptor implementation for Match Detail / Evidence read path before any Base44 binding is allowed.
