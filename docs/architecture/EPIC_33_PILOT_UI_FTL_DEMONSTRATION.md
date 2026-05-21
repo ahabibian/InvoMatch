@@ -823,3 +823,30 @@ No placeholder retirement is authorized.
 Frontend truth synthesis remains prohibited.
 
 The required next step is a bounded Match Detail / Evidence contract clarification boundary before any first-slice Phase E execution may be authorized.
+
+Mini-EPIC 33.11 — Match Detail / Evidence Product-Facing Contract Clarification Boundary
+
+Mini-EPIC 33.11 closes the bounded clarification gap identified by Mini-EPIC 33.10.
+
+Mini-EPIC 33.10 determined that the first controlled Phase E backend-binding slice was ready only after bounded contract clarification because Review Queue had a materially stronger backend product-facing read posture than Match Detail / Evidence.
+
+Mini-EPIC 33.11 clarifies Match Detail / Evidence as a backend-owned product-facing read contract.
+
+The clarified posture defines:
+
+match_id as the authoritative review-to-detail handoff identifier
+backend-owned Match Detail retrieval
+backend-defined evidence posture
+product-facing traceability posture
+explicit not-found, missing-evidence, unavailable-evidence, malformed-payload, and backend-error semantics
+a first-slice execution reconsideration gate for the next Mini-EPIC
+
+Mini-EPIC 33.11 does not execute Base44 binding.
+
+Mini-EPIC 33.11 does not wire Review Queue live.
+
+Mini-EPIC 33.11 does not wire Match Detail / Evidence live.
+
+Mini-EPIC 33.11 does not introduce Human Correction, write actions, Finalized Truth, Export Readiness, Intake Workspace, Pilot Dashboard expansion, broad Phase E stabilization, or Scenario 15 completion claims.
+
+Mini-EPIC 33.11 permits only a future controlled reconsideration of first-slice Phase E execution under backend-owned contract rules.
