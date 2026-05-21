@@ -916,3 +916,13 @@ Reason:
 The evidence summary showed zero product-facing detail route candidates, zero backend traceability lines, and zero backend failure semantic lines. Therefore controlled Base44 binding is not defensible.
 
 Mini-EPIC 33.13 must be backend contract/adaptor implementation for Match Detail / Evidence read path before any Base44 binding is allowed.
+
+Mini-EPIC 33.12 — Closed
+
+Mini-EPIC 33.12 is closed with Decision B — Not ready; backend contract/adaptor implementation required.
+
+The backend verification did not prove a product-facing Match Detail / Evidence read path sufficient for controlled Base44 binding.
+
+Base44 binding remains blocked.
+
+Mini-EPIC 33.13 must be backend contract/adaptor implementation for Match Detail / Evidence read path before any UI binding is allowed.
