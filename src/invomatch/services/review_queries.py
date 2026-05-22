@@ -72,6 +72,11 @@ def _extract_match_id(feedback: Any) -> Optional[str]:
 
 
 def _is_terminal_review_item(review_item: Any) -> bool:
+    item_status = getattr(review_item, "item_status", None)
+    item_status_value = getattr(item_status, "value", item_status)
+    if str(item_status_value).upper() == "CLOSED":
+        return True
+
     closed_at = getattr(review_item, "closed_at", None)
     if closed_at is not None:
         return True
@@ -154,7 +159,7 @@ class ReviewQueryService:
                 continue
 
             status = _normalize_review_status(review_item.item_status)
-            if status != "open":
+            if status != "open" or _is_terminal_review_item(review_item):
                 continue
 
             rows.append(
