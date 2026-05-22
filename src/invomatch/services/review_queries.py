@@ -131,7 +131,7 @@ class ReviewQueryService:
             return ReviewCaseProjection(
                 case_id=str(review_item.review_item_id),
                 run_id=str(run_id),
-                status=_normalize_review_status(str(review_item.item_status)),
+                status=_normalize_review_status(review_item.item_status),
                 reason_code=_extract_reason_code(feedback),
                 match_id=_extract_match_id(feedback),
                 recommended_action=_extract_recommended_action(review_item),
@@ -153,7 +153,7 @@ class ReviewQueryService:
             if feedback is None:
                 continue
 
-            status = _normalize_review_status(str(review_item.item_status))
+            status = _normalize_review_status(review_item.item_status)
             if status != "open":
                 continue
 
@@ -198,7 +198,7 @@ class ReviewQueryService:
                 MatchDetailProjection(
                     match_id=str(match_id),
                     run_id=str(getattr(feedback, "run_id", "")),
-                    status=_normalize_review_status(str(review_item.item_status)),
+                    status=_normalize_review_status(review_item.item_status),
                     reason_code=_extract_reason_code(feedback),
                     invoice_id=_optional_str(raw_payload.get("invoice_id")),
                     payment_id=_optional_str(raw_payload.get("payment_id")),
