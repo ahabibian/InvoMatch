@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -12,6 +12,18 @@ class ReviewCaseProjection:
     reason_code: str
     match_id: Optional[str] = None
     recommended_action: Optional[str] = None
+
+
+@dataclass(slots=True)
+class MatchDetailProjection:
+    match_id: str
+    run_id: str
+    status: str
+    reason_code: str
+    invoice_id: Optional[str] = None
+    payment_id: Optional[str] = None
+    confidence: Optional[float] = None
+    source_references: tuple[str, ...] = ()
 
 
 def _normalize_review_status(item_status: str) -> str:
@@ -56,30 +68,22 @@ def _extract_recommended_action(review_item: Any) -> Optional[str]:
     return str(getattr(decision, "value", decision)).lower()
 
 
-@dataclass(slots=True)
-class MatchDetailProjection:
-match_id: str
-run_id: str
-status: str
-reason_code: str
-invoice_id: Optional[str] = None
-payment_id: Optional[str] = None
-confidence: Optional[float] = None
-source_references: tuple[str, ...] = ()
+def _optional_str(value: Any) -> Optional[str]:
+    if value is None or value == "":
+        return None
+    return str(value)
+
+
+def _optional_float(value: Any) -> Optional[float]:
+    if value is None or value == "":
+        return None
+    return float(value)
+
 
 class ReviewQueryService:
-    """
-    Query-side boundary for assembling product-facing review cases.
+    """Query-side boundary for assembling product-facing review cases."""
 
-    Current implementation depends on a review store that exposes:
-    - list_review_items()
-    - get_feedback(feedback_id)
-
-    This is intentionally minimal and suitable for the current in-memory
-    review store. SQLite-backed review query coverage can be added later.
-    """
-
-    def __init__(self, review_store: Any) -> None:
+    def init(self, review_store: Any) -> None:
         self._review_store = review_store
 
     def get_review_case_for_run(self, run_id: str) -> Optional[ReviewCaseProjection]:
@@ -107,3 +111,42 @@ class ReviewQueryService:
             )
 
         return None
+
+    def list_match_detail_candidates(self) -> list[MatchDetailProjection]:
+        list_review_items = getattr(self._review_store, "list_review_items", None)
+        get_feedback = getattr(self._review_store, "get_feedback", None)
+
+        if list_review_items is None or get_feedback is None:
+            return []
+
+        candidates: list[MatchDetailProjection] = []
+
+        for review_item in list_review_items():
+            feedback = get_feedback(review_item.feedback_id)
+            if feedback is None:
+                continue
+
+            match_id = _extract_match_id(feedback)
+            if not match_id:
+                continue
+
+            raw_payload = getattr(feedback, "raw_payload", None)
+            if not isinstance(raw_payload, dict):
+                raw_payload = {}
+
+            source_reference = getattr(feedback, "source_reference", None)
+
+            candidates.append(
+                MatchDetailProjection(
+                    match_id=str(match_id),
+                    run_id=str(getattr(feedback, "run_id", "")),
+                    status=_normalize_review_status(str(review_item.item_status)),
+                    reason_code=_extract_reason_code(feedback),
+                    invoice_id=_optional_str(raw_payload.get("invoice_id")),
+                    payment_id=_optional_str(raw_payload.get("payment_id")),
+                    confidence=_optional_float(raw_payload.get("confidence")),
+                    source_references=(str(source_reference),) if source_reference else (),
+                )
+            )
+
+        return candidates

@@ -26,7 +26,8 @@ def get_reconciliation_run_review(run_id: str, request: Request) -> ProductRevie
     if review_store is None:
         raise HTTPException(status_code=404, detail="Review case not found")
 
-    query_service = ReviewQueryService(review_store=review_store)
+    query_service = ReviewQueryService()
+    query_service._review_store = review_store
     projection = query_service.get_review_case_for_run(run_id)
 
     if projection is None:
@@ -42,11 +43,24 @@ def get_reconciliation_run_review(run_id: str, request: Request) -> ProductRevie
 def get_match_detail_evidence(match_id: str, request: Request) -> ProductMatchDetailResponse:
     """Return backend-owned product-facing Match Detail / Evidence."""
 
+    review_store = getattr(request.app.state, "review_store", None)
+    if review_store is None:
+        raise HTTPException(status_code=404, detail="Review case not found")
+
+    query_service = ReviewQueryService()
+    query_service._review_store = review_store
+
     try:
-        return read_match_detail_by_id(match_id=match_id, matches=[])
+        return read_match_detail_by_id(
+            match_id=match_id,
+            matches=query_service.list_match_detail_candidates(),
+        )
     except MatchDetailReadError as exc:
         raise HTTPException(
             status_code=404 if exc.failure_code.value == "match_not_found" else 422,
             detail=exc.to_failure().model_dump(),
         ) from exc
+
+
+
 
