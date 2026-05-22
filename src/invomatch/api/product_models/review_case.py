@@ -17,6 +17,10 @@ class ProductReviewQueueItem(BaseModel):
         description="Product-facing review case status.",
     )
     reason_code: str = Field(..., description="Reason why this case entered review.")
+    match_id: Optional[str] = Field(
+        default=None,
+        description="Backend-owned match identifier used for Match Detail handoff if present.",
+    )
     priority: Optional[str] = Field(
         default=None,
         description="Optional product-facing priority label.",

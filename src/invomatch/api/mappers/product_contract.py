@@ -16,7 +16,7 @@ from invomatch.api.product_models.export_artifact import (
     ExportArtifactResource,
 )
 from invomatch.api.product_models.match_result import ProductMatchResult
-from invomatch.api.product_models.review_case import ProductReviewCase
+from invomatch.api.product_models.review_case import ProductReviewCase, ProductReviewQueueItem
 from invomatch.api.product_models.run import (
     ProductRunDetail,
     ProductRunListResponse,
@@ -149,6 +149,16 @@ def to_product_match_result(match: Any) -> ProductMatchResult:
         explanation=[],
     )
 
+
+def to_product_review_queue_item(projection: Any) -> ProductReviewQueueItem:
+    return ProductReviewQueueItem(
+        case_id=str(projection.case_id),
+        run_id=str(projection.run_id),
+        status=str(projection.status),
+        reason_code=str(projection.reason_code),
+        match_id=getattr(projection, "match_id", None),
+        priority=getattr(projection, "priority", None),
+    )
 
 def to_product_review_case(projection: Any) -> ProductReviewCase:
     return ProductReviewCase(

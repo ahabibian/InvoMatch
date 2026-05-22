@@ -15,6 +15,16 @@ class ReviewCaseProjection:
 
 
 @dataclass(slots=True)
+class ReviewQueueRowProjection:
+    case_id: str
+    run_id: str
+    status: str
+    reason_code: str
+    match_id: Optional[str] = None
+    priority: Optional[str] = None
+
+
+@dataclass(slots=True)
 class MatchDetailProjection:
     match_id: str
     run_id: str
@@ -111,6 +121,37 @@ class ReviewQueryService:
             )
 
         return None
+
+    def list_review_queue_rows(self) -> list[ReviewQueueRowProjection]:
+        list_review_items = getattr(self._review_store, "list_review_items", None)
+        get_feedback = getattr(self._review_store, "get_feedback", None)
+
+        if list_review_items is None or get_feedback is None:
+            return []
+
+        rows: list[ReviewQueueRowProjection] = []
+
+        for review_item in list_review_items():
+            feedback = get_feedback(review_item.feedback_id)
+            if feedback is None:
+                continue
+
+            status = _normalize_review_status(str(review_item.item_status))
+            if status != "open":
+                continue
+
+            rows.append(
+                ReviewQueueRowProjection(
+                    case_id=str(review_item.review_item_id),
+                    run_id=str(getattr(feedback, "run_id", "")),
+                    status=status,
+                    reason_code=_extract_reason_code(feedback),
+                    match_id=_extract_match_id(feedback),
+                    priority=None,
+                )
+            )
+
+        return rows
 
     def list_match_detail_candidates(self) -> list[MatchDetailProjection]:
         list_review_items = getattr(self._review_store, "list_review_items", None)
