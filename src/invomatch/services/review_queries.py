@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -55,6 +55,17 @@ def _extract_recommended_action(review_item: Any) -> Optional[str]:
         return None
     return str(getattr(decision, "value", decision)).lower()
 
+
+@dataclass(slots=True)
+class MatchDetailProjection:
+match_id: str
+run_id: str
+status: str
+reason_code: str
+invoice_id: Optional[str] = None
+payment_id: Optional[str] = None
+confidence: Optional[float] = None
+source_references: tuple[str, ...] = ()
 
 class ReviewQueryService:
     """

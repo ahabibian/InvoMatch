@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
 from invomatch.services.match_detail_read_service import (
@@ -39,7 +39,7 @@ def get_reconciliation_run_review(run_id: str, request: Request) -> ProductRevie
     "/api/review/matches/{match_id}/detail",
     response_model=ProductMatchDetailResponse,
 )
-def get_match_detail_evidence(match_id: str) -> ProductMatchDetailResponse:
+def get_match_detail_evidence(match_id: str, request: Request) -> ProductMatchDetailResponse:
     """Return backend-owned product-facing Match Detail / Evidence."""
 
     try:
@@ -49,3 +49,4 @@ def get_match_detail_evidence(match_id: str) -> ProductMatchDetailResponse:
             status_code=404 if exc.failure_code.value == "match_not_found" else 422,
             detail=exc.to_failure().model_dump(),
         ) from exc
+

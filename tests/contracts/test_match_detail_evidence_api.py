@@ -103,3 +103,46 @@ def test_match_detail_malformed_payload_is_distinguishable(monkeypatch):
     assert response.status_code == 422
     payload = response.json()
     assert payload["detail"]["code"] == "malformed_or_incomplete_payload"
+
+def test_match_detail_route_binds_review_store_match_id_to_detail_response():
+class FakeReviewItem:
+review_item_id = "review-item-1"
+feedback_id = "feedback-1"
+item_status = "PENDING"
+current_decision = None
+
+class FakeFeedback:
+    run_id = "run-1"
+    source_reference = "review-feedback-source"
+    raw_payload = {
+        "match_id": "match-bound-1",
+        "reason_code": "amount_date_candidate",
+        "invoice_id": "inv-bound-1",
+        "payment_id": "pay-bound-1",
+        "confidence": 0.88,
+    }
+
+class FakeReviewStore:
+    def list_review_items(self):
+        return [FakeReviewItem()]
+
+    def get_feedback(self, feedback_id):
+        assert feedback_id == "feedback-1"
+        return FakeFeedback()
+
+app = FastAPI()
+app.state.review_store = FakeReviewStore()
+app.include_router(review_cases.router)
+
+response = TestClient(app).get("/api/review/matches/match-bound-1/detail")
+
+assert response.status_code == 200
+payload = response.json()
+assert payload["match_id"] == "match-bound-1"
+assert payload["invoice_summary"]["invoice_id"] == "inv-bound-1"
+assert payload["payment_summary"]["payment_id"] == "pay-bound-1"
+assert payload["traceability"]["invoice_id"] == "inv-bound-1"
+assert payload["traceability"]["payment_id"] == "pay-bound-1"
+assert payload["evidence"][0]["source"] == "backend_match_record"
+assert payload["failure"] is None
+
