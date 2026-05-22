@@ -71,6 +71,23 @@ def _extract_match_id(feedback: Any) -> Optional[str]:
     return None
 
 
+def _is_terminal_review_item(review_item: Any) -> bool:
+    closed_at = getattr(review_item, "closed_at", None)
+    if closed_at is not None:
+        return True
+
+    is_closed = getattr(review_item, "is_closed", None)
+    if isinstance(is_closed, bool):
+        return is_closed
+    if callable(is_closed):
+        return bool(is_closed())
+
+    current_decision = getattr(review_item, "current_decision", None)
+    if current_decision is not None:
+        return True
+
+    return False
+
 def _extract_recommended_action(review_item: Any) -> Optional[str]:
     decision = getattr(review_item, "current_decision", None)
     if decision is None:
