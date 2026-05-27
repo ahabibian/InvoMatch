@@ -323,3 +323,26 @@ export async function getOperationalAlerts(): Promise<OperationalAlertsResponse>
     method: "GET",
   });
 }
+
+export type ReviewQueueRow = {
+  match_id: string;
+  status?: string | null;
+  reason?: string | null;
+  run_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  amount_summary?: string | null;
+};
+
+export type ReviewQueueResponse = {
+  items: ReviewQueueRow[];
+  total: number;
+  limit?: number;
+  offset?: number;
+};
+
+export async function listReviewQueue(): Promise<ReviewQueueResponse> {
+  return request<ReviewQueueResponse>("/api/review/queue", {
+    method: "GET",
+  });
+}
