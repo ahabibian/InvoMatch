@@ -1,10 +1,11 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { useAuthSession } from "./auth/useAuthSession";
+import MatchDetailPanel from "./components/MatchDetailPanel";
 import OperationalVisibilityPage from "./pages/OperationalVisibilityPage";
 import RunDetailPage from "./pages/RunDetailPage";
 import RunListPage from "./pages/RunListPage";
-import UploadPage from "./pages/UploadPage";
 import ReviewQueuePage from "./pages/ReviewQueuePage";
+import UploadPage from "./pages/UploadPage";
 
 const OPERATIONS_VIEW_METRICS_PERMISSION = "operations.view_metrics";
 
@@ -37,6 +38,7 @@ setViewMode("detail");
 
 function openReviewQueue() {
 setSelectedRunId(null);
+setSelectedReviewMatchId(null);
 setViewMode("reviewQueue");
 }
 
@@ -134,9 +136,7 @@ Admin Ops
   {effectiveViewMode === "reviewQueue" && (
     <section>
       {selectedReviewMatchId && (
-        <div role="status">
-          Review Queue selected match_id: {selectedReviewMatchId}. Only match_id is captured here. Match Detail loading is not validated in Mini-EPIC 33.13.P-U.
-        </div>
+        <MatchDetailPanel matchId={selectedReviewMatchId} />
       )}
       <ReviewQueuePage onOpenMatch={openMatchFromReviewQueue} />
     </section>

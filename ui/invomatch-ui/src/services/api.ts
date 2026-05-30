@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
+﻿const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 const API_AUTH_TOKEN = import.meta.env.VITE_API_AUTH_TOKEN ?? "";
 
 export type ApiError = {
@@ -345,4 +345,14 @@ export async function listReviewQueue(): Promise<ReviewQueueResponse> {
   return request<ReviewQueueResponse>("/api/review/queue", {
     method: "GET",
   });
+}
+export type MatchDetailResponse = Record<string, unknown>;
+
+export async function getReviewMatchDetail(matchId: string): Promise<MatchDetailResponse> {
+const encodedMatchId = encodeURIComponent(matchId);
+const path = "/api/review/matches/" + encodedMatchId + "/detail";
+
+return request<MatchDetailResponse>(path, {
+method: "GET",
+});
 }
