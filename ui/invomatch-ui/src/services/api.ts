@@ -224,7 +224,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       status: response.status,
       code: String(errorBody.error_code ?? errorBody.code ?? "API_ERROR"),
       message: String(errorBody.message ?? `Request failed with status ${response.status}`),
-      details: errorBody.details,
+      details: errorBody.details ?? errorBody.detail,
     };
 
     throw error;
@@ -356,3 +356,4 @@ return request<MatchDetailResponse>(path, {
 method: "GET",
 });
 }
+
