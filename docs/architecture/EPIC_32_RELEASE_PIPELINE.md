@@ -4250,3 +4250,23 @@ Mini-EPIC 32.122 made no new acceptance decision, performed no corrected package
 Result:
 
 MINI_EPIC_32_122_POST_PUSH_EVIDENCE_VERIFIED
+
+Mini-EPIC 32.123 Pipeline Repair Note
+
+Mini-EPIC 32.122 verified the pushed post-acceptance evidence state.
+
+Mini-EPIC 32.123 defines the post-acceptance downstream governance boundary after that verification.
+
+The accepted corrected package state remains CORRECTED_PACKAGE_ACCEPTED.
+
+Release-readiness remains blocked.
+
+No release-readiness authorization occurred.
+
+No release-readiness decision occurred.
+
+Reference documents:
+
+docs/architecture/MINI_EPIC_32_123_POST_ACCEPTANCE_DOWNSTREAM_GOVERNANCE_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_123_CLOSURE.md
