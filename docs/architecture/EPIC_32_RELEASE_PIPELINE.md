@@ -4193,3 +4193,32 @@ Artifacts:
 
 docs/architecture/MINI_EPIC_32_140_EPIC_32_FINAL_CLOSURE_EXECUTION.md
 docs/architecture/MINI_EPIC_32_140_CLOSURE.md
+Mini-EPIC 32.121 — Corrected Package Acceptance Decision Execution Boundary
+
+Mini-EPIC 32.121 executed the corrected package acceptance decision boundary authorized by Mini-EPIC 32.120.
+
+Mini-EPIC 32.120 was explicitly verified as the immediate corrected package acceptance decision authorization prerequisite.
+
+AUTHORIZED_FOR_CORRECTED_PACKAGE_ACCEPTANCE_DECISION_EXECUTION_BOUNDARY
+
+The following prior readiness and governance states were explicitly verified:
+
+CORRECTED_PACKAGE_ACCEPTANCE_READINESS_REVIEWED
+
+READY_FOR_LATER_CORRECTED_PACKAGE_ACCEPTANCE_DECISION_OR_AUTHORIZATION_BOUNDARY
+
+CORRECTED_PACKAGE_AUDIT_ACCEPTANCE_GOVERNANCE_EXECUTED
+
+CORRECTED_PACKAGE_AUDIT_ACCEPTANCE_GOVERNANCE_STATE_REVIEWED
+
+The supporting governance chain through Mini-EPICs 32.107 through 32.120 remains intact and explicitly cited.
+
+Decision result:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+The accepted scope applies only to the corrected package governed by the Mini-EPIC 32.107 corrected audit result.
+
+Release-readiness remains blocked.
+
+No corrected package audit re-run occurs; no audit output is rewritten or recreated; no package contents are modified; no archive contents are modified; no archive recreation occurs; no package repair occurs; no corrected manifest repair occurs; no additional package acceptance authorization occurs; no release-readiness decision occurs; no deployment occurs; no publication occurs; no tag creation or tag push occurs; no public release is created; no environment promotion occurs; no CI release occurs; no customer-facing approval occurs.
