@@ -4309,3 +4309,41 @@ Mini-EPIC 32.124 does not authorize release-readiness.
 Mini-EPIC 32.124 does not execute release-readiness review.
 
 Mini-EPIC 32.124 does not make a release-readiness decision.
+
+## Mini-EPIC 32.125 — Post-Amend Release-Readiness Preconditions Verification Boundary
+
+Mini-EPIC 32.125 verifies the post-amend and post-push state of Mini-EPIC 32.124.
+
+Mini-EPIC 32.124 is the immediate predecessor.
+
+Mini-EPIC 32.125 verifies that Mini-EPIC 32.124 remains a release-readiness authorization preconditions boundary only.
+
+Mini-EPIC 32.125 verifies that the corrected Mini-EPIC 32.124 heading exists in EPIC_32_RELEASE_PIPELINE.md.
+
+Mini-EPIC 32.125 verifies the governance state:
+
+CORRECTED_PACKAGE_ACCEPTED
+DOWNSTREAM_GOVERNANCE_DEFINED
+RELEASE_READINESS_BLOCKED
+
+Mini-EPIC 32.125 confirms that release-readiness authorization has not occurred.
+
+Mini-EPIC 32.125 confirms that release-readiness review has not occurred.
+
+Mini-EPIC 32.125 confirms that release-readiness decision has not occurred.
+
+Mini-EPIC 32.125 confirms that release-readiness remains blocked.
+
+Mini-EPIC 32.125 confirms that no deployment, publication, tag, public release, environment promotion, CI release, or customer-facing approval occurred.
+
+Mini-EPIC 32.125 creates the following documents:
+
+docs/architecture/MINI_EPIC_32_125_POST_AMEND_RELEASE_READINESS_PRECONDITIONS_VERIFICATION_BOUNDARY.md
+docs/architecture/MINI_EPIC_32_125_CLOSURE.md
+
+Mini-EPIC 32.125 does not authorize release-readiness.
+
+Mini-EPIC 32.125 does not execute release-readiness review.
+
+Mini-EPIC 32.125 does not make a release-readiness decision.
+
