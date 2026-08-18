@@ -4347,3 +4347,39 @@ Mini-EPIC 32.125 does not execute release-readiness review.
 
 Mini-EPIC 32.125 does not make a release-readiness decision.
 
+## Mini-EPIC 32.126 — Release-Readiness Authorization Boundary Definition
+
+Mini-EPIC 32.126 defines and completes the formal authorization boundary required before EPIC 32 may enter a future, separately controlled release-readiness review stage.
+
+Mini-EPIC 32.125 is the immediate predecessor. Mini-EPIC 32.124 and Mini-EPIC 32.125 are explicitly required predecessors: Mini-EPIC 32.124 defined the release-readiness authorization preconditions, and Mini-EPIC 32.125 verified those preconditions after amend and push.
+
+Mini-EPIC 32.126 preserves and references the Mini-EPIC 32.107 corrected audit result, Mini-EPIC 32.121 corrected package acceptance decision, Mini-EPIC 32.122 post-push evidence verification, Mini-EPIC 32.123 downstream governance boundary definition, Mini-EPIC 32.124 preconditions definition, Mini-EPIC 32.125 preconditions verification, all related closure documents, and the repository state after Mini-EPIC 32.125 push verification at commit `d46f4b373628a3d8f63ea8209e53fd3082e97c0c`.
+
+The verified predecessor state is:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+DOWNSTREAM_GOVERNANCE_DEFINED
+
+RELEASE_READINESS_PRECONDITIONS_DEFINED
+
+RELEASE_READINESS_PRECONDITIONS_VERIFIED
+
+RELEASE_READINESS_REVIEW_NOT_STARTED
+
+Authorization outcome:
+
+RELEASE_READINESS_REVIEW_AUTHORIZED
+
+This authorization permits only a future release-readiness review boundary to start under separate Mini-EPIC control.
+
+Mini-EPIC 32.126 does not perform the release-readiness review. The review remains not started. It does not make a release-readiness decision or approve release.
+
+No deployment, publication, tag creation or push, public release, environment promotion, CI release, or customer-facing approval occurs. No corrected package audit re-run, audit output rewrite, package or archive modification, archive recreation, package or corrected manifest repair, or corrected package acceptance decision re-execution occurs. No downstream governance execution occurs.
+
+Mini-EPIC 32.126 creates:
+
+docs/architecture/MINI_EPIC_32_126_RELEASE_READINESS_AUTHORIZATION_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_126_CLOSURE.md
+
