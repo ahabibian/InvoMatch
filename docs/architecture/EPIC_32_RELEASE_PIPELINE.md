@@ -4539,3 +4539,59 @@ docs/architecture/MINI_EPIC_32_142_CANONICAL_RELEASE_READINESS_DECISION_BOUNDARY
 
 docs/architecture/MINI_EPIC_32_142_CLOSURE.md
 
+## Mini-EPIC 32.143 — Canonical Release-Readiness Decision Authorization Boundary
+
+Mini-EPIC 32.143 performs the first fresh canonical decision authorization after Mini-EPIC 32.141 reconciled the corrected governance chain and Mini-EPIC 32.142 defined the canonical release-readiness decision boundary.
+
+Mini-EPIC 32.142 is the immediate authoritative predecessor. It was merged through PR #35 at commit `714501c877fc452c963ddd63319fc895302bc4ae`.
+
+The authoritative incoming state is:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+RELEASE_READINESS_REVIEW_COMPLETED
+
+CANONICAL_DOWNSTREAM_GOVERNANCE_RECONCILED
+
+HISTORICAL_DOWNSTREAM_GOVERNANCE_AUTHORITY_SUPERSEDED
+
+CANONICAL_RELEASE_READINESS_DECISION_BOUNDARY_DEFINED
+
+READY_FOR_CANONICAL_RELEASE_READINESS_DECISION_AUTHORIZATION_BOUNDARY
+
+CANONICAL_RELEASE_READINESS_DECISION_NOT_EXECUTED
+
+The authorization review verifies canonical predecessor integrity, reconciliation integrity, corrected-package authority, review completion, historical non-adoption, the complete decision scope and evidence model, positive, negative, and blocked or unresolved outcome categories, authorization-versus-execution separation, operational separation, and the absence of an unresolved authorization blocker.
+
+All authorization criteria pass. Mini-EPIC 32.143 records only:
+
+CANONICAL_RELEASE_READINESS_DECISION_AUTHORIZED
+
+READY_FOR_CANONICAL_RELEASE_READINESS_DECISION_EXECUTION_BOUNDARY
+
+CANONICAL_RELEASE_READINESS_DECISION_NOT_EXECUTED
+
+The corrected canonical continuation is:
+
+corrected Mini-EPIC 32.127 review completion
+
+→ Mini-EPIC 32.141 canonical reconciliation
+
+→ Mini-EPIC 32.142 canonical decision boundary definition
+
+→ Mini-EPIC 32.143 canonical decision authorization
+
+→ future Mini-EPIC 32.144 canonical decision execution
+
+Historical Mini-EPIC 32.128 through 32.140 authority remains superseded. Historical Mini-EPIC 32.133 is a structural reference only. Historical `FINAL_RELEASE_READINESS_DECISION_AUTHORIZED`, historical `FINAL_RELEASE_READINESS_APPROVED` from Mini-EPIC 32.134, and historical Mini-EPIC 32.140 closure remain non-canonical.
+
+Mini-EPIC 32.143 does not execute the decision and selects no positive, negative, or blocked or unresolved outcome. It does not approve release. No deployment, publication, tag creation or push, GitHub Release creation, environment, staging, or production promotion, CI release execution, customer-facing approval, or artifact distribution occurs. No corrected-package audit re-run, audit-output rewrite or recreation, corrected package or archive modification, archive recreation, corrected manifest modification, corrected package acceptance re-execution, historical authority restoration, historical Mini-EPIC 32.134 approval adoption, or historical Mini-EPIC 32.140 closure adoption occurs.
+
+The exact next separately controlled boundary is Mini-EPIC 32.144 — Canonical Release-Readiness Decision Execution Boundary.
+
+Documents:
+
+docs/architecture/MINI_EPIC_32_143_CANONICAL_RELEASE_READINESS_DECISION_AUTHORIZATION_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_143_CLOSURE.md
+
