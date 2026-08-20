@@ -4473,3 +4473,69 @@ docs/architecture/MINI_EPIC_32_141_CANONICAL_DOWNSTREAM_GOVERNANCE_RECONCILIATIO
 
 docs/architecture/MINI_EPIC_32_141_CLOSURE.md
 
+## Mini-EPIC 32.142 — Canonical Release-Readiness Decision Boundary Definition
+
+Mini-EPIC 32.142 defines the first fresh canonical release-readiness decision boundary after Mini-EPIC 32.141 reconciled and superseded the historical downstream governance authority path.
+
+Mini-EPIC 32.141 is the immediate authoritative predecessor and was merged through PR #34 at commit `e31517c59605457da2a9e57aac5bf3092b9f1f2d`.
+
+The authoritative incoming state is:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+DOWNSTREAM_GOVERNANCE_DEFINED
+
+RELEASE_READINESS_PRECONDITIONS_DEFINED
+
+RELEASE_READINESS_PRECONDITIONS_VERIFIED
+
+RELEASE_READINESS_REVIEW_AUTHORIZED
+
+RELEASE_READINESS_REVIEW_COMPLETED
+
+READY_FOR_RELEASE_READINESS_DECISION_BOUNDARY
+
+CANONICAL_DOWNSTREAM_GOVERNANCE_RECONCILED
+
+HISTORICAL_DOWNSTREAM_GOVERNANCE_AUTHORITY_SUPERSEDED
+
+READY_FOR_CANONICAL_RELEASE_READINESS_DECISION_BOUNDARY_DEFINITION
+
+Historical Mini-EPIC 32.128 through 32.140 authority remains superseded. Historical Mini-EPIC 32.132 and 32.133 structures are design references only. Historical `FINAL_RELEASE_READINESS_DECISION_AUTHORIZED`, historical `FINAL_RELEASE_READINESS_APPROVED` from Mini-EPIC 32.134, and historical Mini-EPIC 32.140 closure remain non-canonical.
+
+Mini-EPIC 32.142 defines the scope and authoritative evidence requirements for a future decision. It defines positive, negative, and blocked or unresolved categories without selecting one:
+
+- `CANONICAL_RELEASE_READINESS_DECISION_APPROVED`;
+- `CANONICAL_RELEASE_READINESS_DECISION_NOT_APPROVED`; and
+- `CANONICAL_RELEASE_READINESS_DECISION_BLOCKED_OR_UNRESOLVED`.
+
+No outcome is selected. The decision state remains:
+
+CANONICAL_RELEASE_READINESS_DECISION_NOT_EXECUTED
+
+The corrected canonical continuation is:
+
+corrected Mini-EPIC 32.127 review completion
+
+→ Mini-EPIC 32.141 canonical reconciliation
+
+→ Mini-EPIC 32.142 canonical decision boundary definition
+
+→ future separately controlled canonical decision authorization
+
+→ future separately controlled canonical decision execution
+
+Mini-EPIC 32.142 records only:
+
+CANONICAL_RELEASE_READINESS_DECISION_BOUNDARY_DEFINED
+
+READY_FOR_CANONICAL_RELEASE_READINESS_DECISION_AUTHORIZATION_BOUNDARY
+
+The decision is not authorized or executed, and release is not approved. No deployment and no publication occur. No tag creation or tag push occurs. No public GitHub Release is created. No environment promotion occurs. No staging promotion occurs. No production promotion occurs. No CI release execution, no customer-facing approval, and no artifact distribution occur. No corrected-package audit re-run, audit-output rewrite or recreation, corrected package or archive modification, archive recreation, corrected manifest repair or modification, or corrected package acceptance re-execution occurs. No historical authority restoration occurs. No historical Mini-EPIC 32.134 approval adoption occurs. No historical Mini-EPIC 32.140 closure adoption occurs.
+
+Documents:
+
+docs/architecture/MINI_EPIC_32_142_CANONICAL_RELEASE_READINESS_DECISION_BOUNDARY_DEFINITION.md
+
+docs/architecture/MINI_EPIC_32_142_CLOSURE.md
+
