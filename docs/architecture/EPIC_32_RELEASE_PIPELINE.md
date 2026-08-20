@@ -4423,3 +4423,53 @@ docs/architecture/MINI_EPIC_32_127_RELEASE_READINESS_REVIEW_BOUNDARY_EXECUTION.m
 
 docs/architecture/MINI_EPIC_32_127_CLOSURE.md
 
+## Mini-EPIC 32.141 — Canonical Downstream Governance Reconciliation and Supersession Boundary
+
+Mini-EPIC 32.141 reconciles the EPIC 32 governance authority path after corrected Mini-EPIC 32.127 replaced incompatible historical predecessor semantics while historical Mini-EPIC 32.128 through Mini-EPIC 32.140 artifacts remained preserved in the repository.
+
+The authoritative baseline is corrected Mini-EPIC 32.127, merged through PR #33 at commit `c02ef3b4691e912062dd24701ad54027884276ec`.
+
+Corrected Mini-EPIC 32.127 records:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+DOWNSTREAM_GOVERNANCE_DEFINED
+
+RELEASE_READINESS_PRECONDITIONS_DEFINED
+
+RELEASE_READINESS_PRECONDITIONS_VERIFIED
+
+RELEASE_READINESS_REVIEW_AUTHORIZED
+
+RELEASE_READINESS_REVIEW_COMPLETED
+
+READY_FOR_RELEASE_READINESS_DECISION_BOUNDARY
+
+The first broken transition is corrected Mini-EPIC 32.127 to historical Mini-EPIC 32.128. Historical Mini-EPIC 32.128 requires consistency-audit and downstream review or transition execution-readiness tokens produced by the former Mini-EPIC 32.127 semantics. Corrected Mini-EPIC 32.127 does not produce those tokens and instead completes the release-readiness review.
+
+Historical Mini-EPIC 32.128 through Mini-EPIC 32.140 remain preserved as repository history, but their completed governance and closure outcomes are not authoritative corrected-chain continuation states unless explicitly re-established through a valid future chain.
+
+The historical Mini-EPIC 32.132 decision-boundary definition structure and historical Mini-EPIC 32.133 authorization-versus-execution separation remain reusable as governance design semantics. Their historical recorded outcomes are not silently preserved as corrected-chain authority.
+
+Historical `FINAL_RELEASE_READINESS_DECISION_AUTHORIZED` is not authoritative for the corrected chain. Historical `FINAL_RELEASE_READINESS_APPROVED` from Mini-EPIC 32.134 is not canonical. The dependent historical release execution or publication governance and EPIC closure outcomes through Mini-EPIC 32.140 are likewise not authoritative corrected-chain continuation states.
+
+Mini-EPIC 32.141 supersedes the unsupported authority path, not repository history, and records:
+
+CANONICAL_DOWNSTREAM_GOVERNANCE_RECONCILED
+
+HISTORICAL_DOWNSTREAM_GOVERNANCE_AUTHORITY_SUPERSEDED
+
+READY_FOR_CANONICAL_RELEASE_READINESS_DECISION_BOUNDARY_DEFINITION
+
+The first clean forward canonical boundary is a later, separately controlled canonical release-readiness decision boundary definition deriving from corrected Mini-EPIC 32.127 and Mini-EPIC 32.141.
+
+Mini-EPIC 32.141 records no release-readiness decision execution and no release approval. There is no deployment and no publication. There is no tag creation or tag push. There is no GitHub Release creation. There is no environment, staging, or production promotion. There is no CI release execution, no customer-facing approval, and no artifact distribution. There is no corrected-package audit re-run, no audit output rewrite or recreation, no package or archive modification, no archive recreation, no corrected manifest modification, and no package acceptance re-execution. There is no release or publication operational execution.
+
+Historical artifacts are not deleted, renumbered, or rewritten.
+
+Documents:
+
+docs/architecture/MINI_EPIC_32_141_CANONICAL_DOWNSTREAM_GOVERNANCE_RECONCILIATION_AND_SUPERSESSION_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_141_CLOSURE.md
+
