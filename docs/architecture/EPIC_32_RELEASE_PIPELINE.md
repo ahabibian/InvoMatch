@@ -4383,3 +4383,43 @@ docs/architecture/MINI_EPIC_32_126_RELEASE_READINESS_AUTHORIZATION_BOUNDARY.md
 
 docs/architecture/MINI_EPIC_32_126_CLOSURE.md
 
+## Mini-EPIC 32.127 — Release-Readiness Review Boundary Execution
+
+Mini-EPIC 32.127 executes only the release-readiness review boundary authorized by Mini-EPIC 32.126.
+
+Mini-EPIC 32.126 is the immediate predecessor. Mini-EPIC 32.124, Mini-EPIC 32.125, and Mini-EPIC 32.126 are explicitly required predecessors: Mini-EPIC 32.124 defined the authorization preconditions, Mini-EPIC 32.125 verified those preconditions after amend and push, and Mini-EPIC 32.126 authorized a future review without performing it or making a release-readiness decision.
+
+Mini-EPIC 32.127 references and preserves the Mini-EPIC 32.107 corrected audit result, Mini-EPIC 32.121 corrected package acceptance decision, Mini-EPIC 32.122 post-push evidence verification, Mini-EPIC 32.123 downstream governance boundary definition, Mini-EPIC 32.124 preconditions definition, Mini-EPIC 32.125 preconditions verification, Mini-EPIC 32.126 review authorization, all related closure documents, and the repository state after squash merge commit `47950c7f28351155c8b8deee3fb3debc73ed74c6`.
+
+The incoming governance state is:
+
+CORRECTED_PACKAGE_ACCEPTED
+
+DOWNSTREAM_GOVERNANCE_DEFINED
+
+RELEASE_READINESS_PRECONDITIONS_DEFINED
+
+RELEASE_READINESS_PRECONDITIONS_VERIFIED
+
+RELEASE_READINESS_REVIEW_AUTHORIZED
+
+RELEASE_READINESS_REVIEW_NOT_STARTED
+
+Mini-EPIC 32.127 is the first corrected-chain boundary that executes the release-readiness review. Corrected package acceptance remains limited to the package governed by the Mini-EPIC 32.107 corrected audit result. Downstream governance definition remains non-executing unless separately authorized. The release-readiness decision and all operational release actions remain outside this boundary.
+
+Review outcomes:
+
+RELEASE_READINESS_REVIEW_COMPLETED
+
+READY_FOR_RELEASE_READINESS_DECISION_BOUNDARY
+
+These outcomes mean only that the review boundary is complete and a later, separately controlled release-readiness decision boundary may be approached. They do not approve release.
+
+No release-readiness decision occurs. No release approval occurs. No deployment, publication, tag creation or push, public release, environment promotion, CI release, or customer-facing approval occurs. No corrected package audit re-run, audit output rewrite or recreation, package or archive modification, archive recreation, package repair, corrected manifest repair, or corrected package acceptance decision re-execution occurs. No downstream governance execution occurs unless separately authorized.
+
+Mini-EPIC 32.127 creates:
+
+docs/architecture/MINI_EPIC_32_127_RELEASE_READINESS_REVIEW_BOUNDARY_EXECUTION.md
+
+docs/architecture/MINI_EPIC_32_127_CLOSURE.md
+
