@@ -4781,3 +4781,59 @@ docs/architecture/MINI_EPIC_32_146_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GO
 
 docs/architecture/MINI_EPIC_32_146_CLOSURE.md
 
+## Mini-EPIC 32.147 — Canonical Release Execution or Publication Governance Authorization Boundary
+
+Mini-EPIC 32.147 performs an action-specific authorization review under the boundary defined by Mini-EPIC 32.146.
+
+Mini-EPIC 32.146 is the immediate authoritative predecessor. It was merged through PR #39 at commit `066a5a8f3e40f6286581aad354ccacbfcf803cc5` and records:
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_BOUNDARY_DEFINED
+
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_BOUNDARY
+
+The exact release subject considered is repository `ahabibian/InvoMatch`, approved `main` source revision `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7`, with successful exact-source validation run `32487366423`.
+
+The exact action considered is GitHub Release creation only. The exact target is the GitHub Releases surface of `ahabibian/InvoMatch`.
+
+The approved source commit remains immutable. The current governance baseline adds only Mini-EPIC 32.146 documentation, but complete subject identity cannot be established: no matching package/archive, manifest, digest, build/release-candidate identity, or coherent operational release version exists for the approved source revision.
+
+No canonical authorized human operator or repository-controlled release automation is identified. The active workflow is validation-only. The manifest script is explicitly dry-run and non-releasing. No GitHub Release creation process, bounded permission evidence, failure/partial-failure controls, rollback/remediation contract, or post-creation verification is established.
+
+The current release-readiness approval remains authoritative, and the action and target are specific. Complete release-subject identity, actor/process authority, operational capability, and failure-control prerequisites do not pass.
+
+Exactly one result is selected:
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_BLOCKED
+
+No authorization-success or execution-readiness token is emitted. Mini-EPIC 32.148 execution readiness is not established.
+
+The corrected canonical chain is:
+
+corrected Mini-EPIC 32.127 review completion
+
+→ Mini-EPIC 32.141 reconciliation
+
+→ Mini-EPIC 32.142 decision definition
+
+→ Mini-EPIC 32.143 decision authorization
+
+→ Mini-EPIC 32.144 blocked decision
+
+→ Mini-EPIC 32.145 stabilization and release-readiness approval
+
+→ Mini-EPIC 32.146 release/publication governance definition
+
+→ Mini-EPIC 32.147 action-specific authorization blocked
+
+→ future evidence remediation and fresh authorization re-evaluation
+
+Historical Mini-EPIC 32.128 through 32.140 authority remains superseded. Historical `FINAL_RELEASE_READINESS_APPROVED` from Mini-EPIC 32.134 remains non-canonical. Historical Mini-EPIC 32.136 authorization and 32.137 execution are not reused.
+
+No tag creation or push, GitHub Release creation, artifact publication or distribution, deployment, staging or production promotion, CI release execution, external publication, or customer-facing activation occurs. No package, archive, manifest, or release-subject mutation, release-readiness re-execution, historical authority restoration, historical Mini-EPIC 32.134 approval adoption, or historical Mini-EPIC 32.135 through 32.140 authority adoption occurs.
+
+Documents:
+
+docs/architecture/MINI_EPIC_32_147_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_147_CLOSURE.md
+
