@@ -1,0 +1,120 @@
+name: Canonical release execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      authorization_state:
+        description: Exact authorization outcome from a later canonical re-evaluation boundary
+        required: true
+        type: string
+      source_sha:
+        description: Exact approved source SHA
+        required: true
+        type: string
+      manifest_identity_sha256:
+        description: Exact canonical manifest identity
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with approved source history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Verify canonical source, version, manifest, and digests without mutation
+        run: >-
+          python scripts/canonical_release_preflight.py
+          --manifest docs/architecture/CANONICAL_RELEASE_SUBJECT_0_1_0.json
+          --repo-root .
+
+  execute:
+    needs: preflight
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      REPOSITORY: ahabibian/InvoMatch
+      TAG: v0.1.0
+      SOURCE_SHA: 6c4b3c3e35798de945a3219bbd419d4f6e41d8b7
+      MANIFEST_IDENTITY: 51e1393476197d07799248c93dc0b2325f26b7d711f206e0d7668852f9177f45
+      REQUIRED_AUTHORIZATION: CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZED
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout repository with approved source history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Fail closed unless exact later authorization and subject inputs match
+        env:
+          INPUT_AUTHORIZATION: ${{ inputs.authorization_state }}
+          INPUT_SOURCE_SHA: ${{ inputs.source_sha }}
+          INPUT_MANIFEST_IDENTITY: ${{ inputs.manifest_identity_sha256 }}
+        run: |
+          test "$INPUT_AUTHORIZATION" = "$REQUIRED_AUTHORIZATION"
+          test "$INPUT_SOURCE_SHA" = "$SOURCE_SHA"
+          test "$INPUT_MANIFEST_IDENTITY" = "$MANIFEST_IDENTITY"
+
+      - name: Verify canonical source, version, manifest, and digests
+        run: >-
+          python scripts/canonical_release_preflight.py
+          --manifest docs/architecture/CANONICAL_RELEASE_SUBJECT_0_1_0.json
+          --repo-root .
+
+      - name: Inspect remote source, tag, and release conflicts
+        id: state
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_source=$(gh api "repos/$REPOSITORY/git/commits/$SOURCE_SHA" --jq .sha)
+          test "$remote_source" = "$SOURCE_SHA"
+
+          tag_sha=""
+          if tag_json=$(gh api "repos/$REPOSITORY/git/ref/tags/$TAG" 2>/dev/null); then
+            tag_sha=$(jq -r .object.sha <<<"$tag_json")
+            test "$tag_sha" = "$SOURCE_SHA"
+          fi
+
+          if release_json=$(gh release view "$TAG" --repo "$REPOSITORY" --json tagName,body 2>/dev/null); then
+            test -n "$tag_sha"
+            test "$(jq -r .tagName <<<"$release_json")" = "$TAG"
+            grep -Fq "Canonical-Manifest-SHA256: $MANIFEST_IDENTITY" <<<"$(jq -r .body <<<"$release_json")"
+            echo "create=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "create=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create bounded tag-if-absent and GitHub Release operation
+        if: steps.state.outputs.create == 'true'
+        run: |
+          gh release create "$TAG" \
+            --repo "$REPOSITORY" \
+            --target "$SOURCE_SHA" \
+            --title "$TAG" \
+            --notes "Canonical-Manifest-SHA256: $MANIFEST_IDENTITY"
+
+      - name: Post-action verification
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/$REPOSITORY/git/ref/tags/$TAG" --jq .object.sha)" = "$SOURCE_SHA"
+          release_json=$(gh release view "$TAG" --repo "$REPOSITORY" --json tagName,body)
+          test "$(jq -r .tagName <<<"$release_json")" = "$TAG"
+          grep -Fq "Canonical-Manifest-SHA256: $MANIFEST_IDENTITY" <<<"$(jq -r .body <<<"$release_json")"
