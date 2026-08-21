@@ -1,0 +1,46 @@
+{
+  "schema": "invomatch.canonical_release_subject.v1",
+  "repository": "ahabibian/InvoMatch",
+  "source": {
+    "branch": "main",
+    "sha": "6c4b3c3e35798de945a3219bbd419d4f6e41d8b7"
+  },
+  "release": {
+    "version": "0.1.0",
+    "tag": "v0.1.0",
+    "version_authority": "pyproject.toml project.version at the approved source SHA"
+  },
+  "package": {
+    "id": "invomatch-0.1.0-source-6c4b3c3e3579",
+    "filename": "invomatch-0.1.0-source-6c4b3c3e3579.tar",
+    "format": "deterministic-git-tree-tar-v1",
+    "sha256": "f7e8f394d6bc41b63bb9e39e8abf86f8d32820b9774b2a24d1a01ca15b8d2b84",
+    "size_bytes": 6318080,
+    "materialization": "generated on demand from the approved source SHA; not published or committed"
+  },
+  "dependencies": {
+    "frontend_lock_path": "ui/invomatch-ui/package-lock.json",
+    "frontend_lock_sha256": "d4c6f5f6e74cd45bf143488dff19a5318d4119426f78e6a2dd5f39912c00ef1a",
+    "backend_lock": "not present; pyproject.toml is the declared backend dependency authority"
+  },
+  "configuration": {
+    "ci_workflow_path": ".github/workflows/ci.yml",
+    "ci_workflow_sha256": "030a71a32c0cd7f90b40377797678f298741932d9df6617b91f2ad5c481783b2",
+    "deployment_configuration": "not defined and not included in this release subject"
+  },
+  "build": {
+    "identity": "github-actions-run-32487366423",
+    "validation_run_id": 32487366423,
+    "validation_status": "success",
+    "validation_source_sha": "6c4b3c3e35798de945a3219bbd419d4f6e41d8b7"
+  },
+  "action": {
+    "category": "github-release-creation-only",
+    "target": "github.com/ahabibian/InvoMatch/releases",
+    "requires_preexisting_tag": true,
+    "creates_tag": false
+  },
+  "manifest": {
+    "identity_sha256": "ee0786cb54c937c6ae9fa11a5940cab2fe3892861ee0d9aab43e008e09eb88c3"
+  }
+}

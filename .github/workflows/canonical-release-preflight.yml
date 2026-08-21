@@ -1,0 +1,31 @@
+name: Canonical release preflight
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with approved source history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Verify canonical release subject without mutation
+        run: >-
+          python scripts/canonical_release_preflight.py
+          --manifest docs/architecture/CANONICAL_RELEASE_SUBJECT_0_1_0.json
+          --repo-root .
+
+      - name: Confirm non-operational boundary
+        run: |
+          echo "Preflight only: no tag, GitHub Release, artifact publication, deployment, or promotion is performed."

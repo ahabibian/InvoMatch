@@ -4837,3 +4837,63 @@ docs/architecture/MINI_EPIC_32_147_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GO
 
 docs/architecture/MINI_EPIC_32_147_CLOSURE.md
 
+## Mini-EPIC 32.148 — Canonical Release Authorization Blocker Remediation Boundary
+
+Mini-EPIC 32.148 follows the action-specific authorization blocked by Mini-EPIC 32.147, merged through PR #40 at `34f7171cbf05495473b4f539fe818533cbd4b62f`.
+
+The incoming state remains:
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_BLOCKED
+
+Mini-EPIC 32.148 addresses the four blocker categories: complete release-subject identity, actor/process authority, operational capability evidence, and failure/rollback/remediation/verification controls.
+
+It introduces a deterministic canonical subject manifest for approved source `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7`, product version `0.1.0`, tag identity `v0.1.0`, cross-platform canonical Git-tree tar SHA-256 `f7e8f394d6bc41b63bb9e39e8abf86f8d32820b9774b2a24d1a01ca15b8d2b84`, dependency-lock and CI-configuration digests, validation run identity, and canonical manifest identity digest.
+
+A non-mutating preflight regenerates and verifies the evidence. It fails on source, digest, version, tag, action, or manifest mismatch and distinguishes absent/conflicting tags, fresh release state, conflicting releases, and exact replay.
+
+A manual-only GitHub Actions preflight workflow uses `contents: read`, has no push/PR trigger, and contains no tag or release creation command. The future actor model is repository-controlled GitHub Actions, but write capability remains intentionally absent pending valid authorization and execution boundaries.
+
+The failure contract requires pre-mutation abort on every identity, validation, authorization, capability, permission, or conflict mismatch. It forbids automatic deletion of tags or public releases, requires separate remediation for partial public state, and defines post-creation verification and evidence capture.
+
+Release-subject identity and failure-control blockers are remediated. Actor/process is bounded for preflight. Operational capability remains critically incomplete because GitHub Release creation only requires a pre-existing `v0.1.0` tag, no such tag exists, and Mini-EPIC 32.148 cannot create it or expand the action into implicit tag creation.
+
+Exactly one remediation outcome is selected:
+
+CANONICAL_RELEASE_AUTHORIZATION_BLOCKER_REMEDIATION_INCOMPLETE
+
+No blocker-remediated success token, authorization re-evaluation readiness, authorization success, or execution readiness is emitted.
+
+The corrected chain is:
+
+Mini-EPIC 32.145 release-readiness approval
+
+→ Mini-EPIC 32.146 release/publication governance definition
+
+→ Mini-EPIC 32.147 authorization blocked
+
+→ Mini-EPIC 32.148 blocker remediation incomplete
+
+→ future pre-existing-tag governance or action-scope amendment and remaining remediation
+
+→ future authorization re-evaluation only after remediation completes
+
+Mini-EPIC 32.149 readiness is not established.
+
+No tag creation or push, GitHub Release creation, artifact publication or distribution, deployment, staging or production promotion, CI release execution, external publication, or customer-facing activation occurs. Historical Mini-EPIC 32.134 approval remains non-canonical, and historical Mini-EPIC 32.135 through 32.140 authority remains superseded.
+
+Documents and evidence:
+
+docs/architecture/CANONICAL_RELEASE_SUBJECT_0_1_0.json
+
+docs/architecture/MINI_EPIC_32_148_CANONICAL_RELEASE_AUTHORIZATION_BLOCKER_REMEDIATION_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_148_CLOSURE.md
+
+scripts/canonical_release_preflight.py
+
+.github/workflows/canonical-release-preflight.yml
+
+.github/workflows/ci.yml
+
+tests/test_canonical_release_preflight.py
+
