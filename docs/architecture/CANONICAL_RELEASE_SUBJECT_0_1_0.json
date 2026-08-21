@@ -35,12 +35,13 @@
     "validation_source_sha": "6c4b3c3e35798de945a3219bbd419d4f6e41d8b7"
   },
   "action": {
-    "category": "github-release-creation-only",
+    "category": "github-release-with-tag-if-absent",
     "target": "github.com/ahabibian/InvoMatch/releases",
-    "requires_preexisting_tag": true,
-    "creates_tag": false
+    "requires_preexisting_tag": false,
+    "creates_tag_if_absent": true,
+    "target_commitish": "6c4b3c3e35798de945a3219bbd419d4f6e41d8b7"
   },
   "manifest": {
-    "identity_sha256": "ee0786cb54c937c6ae9fa11a5940cab2fe3892861ee0d9aab43e008e09eb88c3"
+    "identity_sha256": "51e1393476197d07799248c93dc0b2325f26b7d711f206e0d7668852f9177f45"
   }
 }

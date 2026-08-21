@@ -144,8 +144,14 @@ def validate_manifest(repo_root: Path, manifest: dict[str, Any]) -> dict[str, An
         raise PreflightError("release tag does not match the canonical vMAJOR.MINOR.PATCH syntax")
     if manifest["package"]["format"] != "deterministic-git-tree-tar-v1":
         raise PreflightError("unsupported package format")
-    if manifest["action"]["category"] != "github-release-creation-only":
+    if manifest["action"]["category"] != "github-release-with-tag-if-absent":
         raise PreflightError("action category mismatch")
+    if manifest["action"].get("requires_preexisting_tag") is not False:
+        raise PreflightError("pre-existing tag policy mismatch")
+    if manifest["action"].get("creates_tag_if_absent") is not True:
+        raise PreflightError("tag-if-absent action mismatch")
+    if manifest["action"].get("target_commitish") != evidence["source_sha"]:
+        raise PreflightError("target_commitish mismatch")
     if manifest_identity_sha256(manifest) != manifest["manifest"]["identity_sha256"]:
         raise PreflightError("manifest identity digest mismatch")
     return evidence
@@ -157,14 +163,12 @@ def validate_repository_state(manifest: dict[str, Any], state: dict[str, Any]) -
     tags = state.get("tags", {})
     releases = state.get("releases", {})
 
-    if tag not in tags:
-        raise PreflightError(
-            f"required pre-existing tag {tag} is absent; GitHub Release-only execution must not create it"
-        )
-    if tags[tag] != source_sha:
+    if tag in tags and tags[tag] != source_sha:
         raise PreflightError(f"existing tag {tag} targets a conflicting source SHA")
     if tag not in releases:
         return "ready-for-fresh-authorization-review"
+    if tag not in tags:
+        raise PreflightError(f"existing GitHub Release {tag} has no matching tag evidence")
     if releases[tag].get("target_sha") != source_sha:
         raise PreflightError(f"existing GitHub Release {tag} targets a conflicting source SHA")
     if releases[tag].get("manifest_identity_sha256") != manifest["manifest"]["identity_sha256"]:

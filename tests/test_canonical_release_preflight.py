@@ -46,10 +46,12 @@ def test_manifest_mismatches_fail_preflight(path, value, message):
         MODULE.validate_manifest(ROOT, manifest)
 
 
-def test_repository_state_requires_preexisting_tag_and_detects_conflicts():
+def test_repository_state_allows_missing_tag_and_detects_conflicts():
     manifest = _manifest()
-    with pytest.raises(MODULE.PreflightError, match="pre-existing tag"):
+    assert (
         MODULE.validate_repository_state(manifest, {"tags": {}, "releases": {}})
+        == "ready-for-fresh-authorization-review"
+    )
 
     conflicting = {"tags": {manifest["release"]["tag"]: "f" * 40}, "releases": {}}
     with pytest.raises(MODULE.PreflightError, match="conflicting source SHA"):
@@ -81,3 +83,19 @@ def test_preflight_workflow_is_manual_read_only_and_non_mutating():
     assert "pull_request:" not in workflow
     assert "contents: write" not in workflow
     assert "gh release create" not in workflow
+
+
+def test_future_execution_workflow_is_manual_bounded_and_authorization_gated():
+    workflow = (ROOT / ".github/workflows/canonical-release-execution.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "workflow_dispatch:" in workflow
+    assert "contents: write" in workflow
+    assert "push:" not in workflow
+    assert "pull_request:" not in workflow
+    assert "authorization_state" in workflow
+    assert "CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZED" in workflow
+    assert "gh release create" in workflow
+    assert "--target \"$SOURCE_SHA\"" in workflow
+    assert "canonical_release_preflight.py" in workflow
+    assert "Post-action verification" in workflow

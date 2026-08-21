@@ -2,7 +2,7 @@ Mini-EPIC 32.148 Closure — Canonical Release Authorization Blocker Remediation
 
 Closure Summary
 
-Mini-EPIC 32.148 is closed as partially remediated and still blocked. Mini-EPIC 32.147 remains preserved as the historical blocked authorization result.
+Mini-EPIC 32.148 is closed with all four blocker classes remediated for a fresh authorization re-evaluation. Mini-EPIC 32.147 remains preserved as the historical blocked authorization result.
 
 Immediate Predecessor
 
@@ -15,42 +15,43 @@ Remediation Completed
 - Canonical subject manifest binds approved source `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7`, version `0.1.0`, tag identity `v0.1.0`, cross-platform deterministic Git-tree tar identity, archive digest and size, dependency-lock digest, CI configuration digest, build validation identity, and manifest identity digest.
 - Non-mutating preflight independently regenerates and verifies subject evidence and fails closed on mismatches.
 - Manual read-only GitHub Actions preflight establishes the bounded repository-controlled process model without release mutation.
+- A separate future execution workflow is manual `workflow_dispatch` only, authorization-gated, and limited to `contents: write` for one bounded compound tag-if-absent and GitHub Release creation action.
+- The future workflow verifies exact source SHA, version/tag, canonical manifest identity, archive/configuration/dependency digests, remote conflicts, and post-action tag/release state.
 - CI validation uses full-history checkout so deterministic evidence tests can resolve the exact approved historical source object.
 - Failure, abort, partial-failure, remediation, post-verification, idempotency, and conflict contracts are defined.
 - Tests cover source/digest/version mismatches, deterministic identity, absent/conflicting tag states, fresh versus replay states, workflow trigger safety, permissions, and absence of mutation commands.
 
 Validation Evidence
 
-- `python -m pytest -q tests/test_canonical_release_preflight.py`: `7 passed`.
+- `python -m pytest -q tests/test_canonical_release_preflight.py`: `8 passed`.
 - `python scripts/canonical_release_preflight.py --manifest docs/architecture/CANONICAL_RELEASE_SUBJECT_0_1_0.json --repo-root .`: completed with `subject-identity-verified` and the expected source, archive, lock, workflow, version, and tag evidence.
-- `python -m pytest -q --basetemp=.pytest_tmp_32148`: `738 passed, 1 warning`.
+- `python -m pytest -q --basetemp=.pytest_tmp_32148_correction`: `739 passed, 1 warning`.
 - `npm run lint` from `ui/invomatch-ui`: passed.
 - `npm run build` from `ui/invomatch-ui`: passed.
+- `js-yaml` parsing of CI, canonical preflight, and canonical execution workflows: passed.
 - `git diff --check`: passed.
 
 The warning is the existing Starlette `TestClient` deprecation warning and does not affect the validation result.
 
-Remaining Critical Blocker
+Repository Policy Reassessment
 
-GitHub Release creation only requires a pre-existing `v0.1.0` tag at the approved source SHA. No such tag exists. Mini-EPIC 32.148 may not create or push one, and implicit tag creation would expand the action beyond its authorized scope.
+No authoritative InvoMatch repository policy independently requires `v0.1.0` to pre-exist. References prohibiting tag creation are non-action statements for earlier boundaries, not a future release mechanism constraint.
 
-The write-capable execution job is also intentionally absent until separately controlled authorization and execution boundaries permit it.
+The corrected canonical future action is one explicit compound operation: create tag `v0.1.0` if absent at approved SHA `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7`, then create GitHub Release `v0.1.0`. Existing conflicting tag or release state aborts without overwrite. The workflow exists as capability evidence but is not invoked by Mini-EPIC 32.148.
 
 Remediation Outcome
 
 Exactly one result is selected:
 
-CANONICAL_RELEASE_AUTHORIZATION_BLOCKER_REMEDIATION_INCOMPLETE
+CANONICAL_RELEASE_AUTHORIZATION_BLOCKERS_REMEDIATED
 
-The success tokens `CANONICAL_RELEASE_AUTHORIZATION_BLOCKERS_REMEDIATED` and `READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_REEVALUATION_BOUNDARY` are not emitted.
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_REEVALUATION_BOUNDARY
 
 No authorization has been re-issued. No execution readiness exists.
 
 Forward Boundary
 
-Mini-EPIC 32.149 authorization re-evaluation readiness is not established.
-
-The only valid continuation is a separately controlled pre-existing-tag governance path or an explicit action-scope amendment, followed by completion of remaining capability evidence and fresh blocker-remediation review.
+The exact next boundary is Mini-EPIC 32.149 — Canonical Release Execution or Publication Governance Authorization Re-Evaluation Boundary. It must decide authorization separately and must not treat remediation readiness as execution authority.
 
 Historical and Operational Separation
 
@@ -62,6 +63,8 @@ Closure Result
 
 Mini-EPIC 32.148 is closed with:
 
-CANONICAL_RELEASE_AUTHORIZATION_BLOCKER_REMEDIATION_INCOMPLETE
+CANONICAL_RELEASE_AUTHORIZATION_BLOCKERS_REMEDIATED
 
-The subject and preflight portions are remediated, but critical operational prerequisites remain unresolved. Authorization remains blocked and no public release mutation occurred.
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_REEVALUATION_BOUNDARY
+
+All four original blocker classes are remediated for fresh re-evaluation. Authorization remains a later decision and no public release mutation occurred.

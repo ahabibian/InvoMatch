@@ -4855,13 +4855,15 @@ A manual-only GitHub Actions preflight workflow uses `contents: read`, has no pu
 
 The failure contract requires pre-mutation abort on every identity, validation, authorization, capability, permission, or conflict mismatch. It forbids automatic deletion of tags or public releases, requires separate remediation for partial public state, and defines post-creation verification and evidence capture.
 
-Release-subject identity and failure-control blockers are remediated. Actor/process is bounded for preflight. Operational capability remains critically incomplete because GitHub Release creation only requires a pre-existing `v0.1.0` tag, no such tag exists, and Mini-EPIC 32.148 cannot create it or expand the action into implicit tag creation.
+All four blocker classes are remediated. The canonical future action is one bounded compound operation that creates tag `v0.1.0` if absent at exact approved SHA `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7` and creates GitHub Release `v0.1.0`. Existing conflicting tag or release state fails closed.
 
 Exactly one remediation outcome is selected:
 
-CANONICAL_RELEASE_AUTHORIZATION_BLOCKER_REMEDIATION_INCOMPLETE
+CANONICAL_RELEASE_AUTHORIZATION_BLOCKERS_REMEDIATED
 
-No blocker-remediated success token, authorization re-evaluation readiness, authorization success, or execution readiness is emitted.
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_REEVALUATION_BOUNDARY
+
+No authorization success or execution readiness is emitted.
 
 The corrected chain is:
 
@@ -4873,11 +4875,9 @@ Mini-EPIC 32.145 release-readiness approval
 
 → Mini-EPIC 32.148 blocker remediation incomplete
 
-→ future pre-existing-tag governance or action-scope amendment and remaining remediation
+→ future 32.149 authorization re-evaluation
 
-→ future authorization re-evaluation only after remediation completes
-
-Mini-EPIC 32.149 readiness is not established.
+Mini-EPIC 32.149 re-evaluation readiness is established; authorization itself is not.
 
 No tag creation or push, GitHub Release creation, artifact publication or distribution, deployment, staging or production promotion, CI release execution, external publication, or customer-facing activation occurs. Historical Mini-EPIC 32.134 approval remains non-canonical, and historical Mini-EPIC 32.135 through 32.140 authority remains superseded.
 
@@ -4892,6 +4892,8 @@ docs/architecture/MINI_EPIC_32_148_CLOSURE.md
 scripts/canonical_release_preflight.py
 
 .github/workflows/canonical-release-preflight.yml
+
+.github/workflows/canonical-release-execution.yml
 
 .github/workflows/ci.yml
 

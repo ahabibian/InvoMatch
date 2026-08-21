@@ -76,7 +76,7 @@ The canonical subject manifest binds:
 - frontend dependency-lock SHA-256: `d4c6f5f6e74cd45bf143488dff19a5318d4119426f78e6a2dd5f39912c00ef1a`;
 - CI configuration SHA-256: `030a71a32c0cd7f90b40377797678f298741932d9df6617b91f2ad5c481783b2`;
 - build identity: GitHub Actions run `32487366423`; and
-- canonical manifest identity SHA-256: `ee0786cb54c937c6ae9fa11a5940cab2fe3892861ee0d9aab43e008e09eb88c3`.
+- canonical manifest identity SHA-256: `51e1393476197d07799248c93dc0b2325f26b7d711f206e0d7668852f9177f45`.
 
 The package is a reproducible on-demand identity product. Mini-EPIC 32.148 does not commit, publish, distribute, or upload the archive.
 
@@ -94,10 +94,10 @@ Mini-EPIC 32.148 establishes the repository-controlled actor model:
 
 - preflight actor: manually invoked GitHub Actions workflow `Canonical release preflight`;
 - future authorization evaluator: a separately controlled canonical governance boundary;
-- future execution actor, if separately authorized and implemented: repository-controlled GitHub Actions using the GitHub-provided token for the single GitHub Release creation action; and
+- future execution actor, if separately authorized: repository-controlled GitHub Actions using the GitHub-provided token for the bounded compound tag-if-absent and GitHub Release creation action; and
 - no individual user identity, personal token, secret, or credential is invented.
 
-The current workflow implements preflight only. A write-capable execution job is deliberately absent because authorization remains blocked and Mini-EPIC 32.148 may not implement execution.
+The read-only workflow continues to implement preflight only. A separate manual execution workflow now represents the future operation, but fails closed unless exact later authorization and canonical subject inputs are supplied. Mini-EPIC 32.148 does not invoke it.
 
 Permission Boundary
 
@@ -107,7 +107,7 @@ The added preflight workflow has only:
 
 It is manual `workflow_dispatch` only and has no push or pull-request trigger. It cannot create tags, releases, artifacts, deployments, or promotions.
 
-A future separately authorized execution workflow would require the narrow `contents: write` permission for GitHub Release creation. That permission must be scoped to the future execution job and must not be added to normal CI or this preflight workflow. No broader administrative permission is defined.
+The separate future execution workflow defaults to `contents: read` and grants the narrow `contents: write` permission only to its execution job. It is not added to normal CI or the standalone preflight workflow. No broader administrative permission is defined.
 
 Operational Capability Evidence
 
@@ -124,9 +124,14 @@ The preflight mechanism can safely represent and verify the release subject and 
 - fresh-release versus exact-replay classification; and
 - fail-closed exit behavior.
 
-The intended future creation mechanism is the GitHub Releases API or `gh release create` executed only by a separately authorized repository-controlled workflow. It is not implemented or called by Mini-EPIC 32.148.
+The future creation mechanism is `gh release create` in the separately authorized repository-controlled workflow. The mechanism is implemented as capability evidence but is not called by Mini-EPIC 32.148.
 
-Capability remains incomplete because the exact GitHub Release-only action requires a pre-existing tag, while repository inspection finds no `v0.1.0` tag and Mini-EPIC 32.148 is prohibited from creating one. Allowing GitHub Release creation to create the tag implicitly would expand the action into an unauthorized compound tag-plus-release operation.
+Repository policy contains no authoritative requirement that `v0.1.0` pre-exist. GitHub Release creation supports creating a missing tag at an exact `target_commitish` or `--target` SHA. The canonical action is therefore one bounded compound operation: create tag `v0.1.0` if absent at approved SHA `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7`, then create GitHub Release `v0.1.0`. Existing mismatched tag or release state fails closed.
+
+Platform capability authority:
+
+- GitHub CLI `gh release create`: https://cli.github.com/manual/gh_release_create
+- GitHub REST API create-release `target_commitish`: https://docs.github.com/en/rest/releases/releases#create-a-release
 
 Dry-Run and Preflight Behavior
 
@@ -134,17 +139,17 @@ The local preflight completed successfully for subject identity and printed `sub
 
 The manual workflow runs the same command with read-only permissions. It performs no GitHub mutation.
 
-Repository-state preflight intentionally fails when the required pre-existing tag is absent. It also fails on a tag targeting a different source SHA or a release whose target or manifest identity conflicts. An exact existing release is classified as an exact replay rather than overwritten.
+Repository-state preflight accepts an absent tag as valid pre-mutation state for the compound action. It fails on a tag targeting a different source SHA, a release without matching tag evidence, or a release whose target or manifest identity conflicts. An exact existing release is classified as an exact replay rather than overwritten.
 
 Failure, Abort, Rollback, and Remediation Contract
 
 Pre-execution abort
 
-Future execution must stop before mutation for any source, version, tag, manifest, digest, dependency-lock, configuration, validation, authorization, permission, capability, duplicate, or target mismatch. The current absent-tag state requires abort.
+Future execution must stop before mutation for any source, version, tag, manifest, digest, dependency-lock, configuration, validation, authorization, permission, capability, duplicate, or target mismatch. An absent tag is permitted only as the expected input to the bounded tag-if-absent operation.
 
 Partial failure
 
-The authorized action must remain GitHub Release creation only. The tag must already exist and is not created by that action. If GitHub Release creation fails, the pre-existing tag must not be deleted automatically. If future artifact attachment is separately authorized and an upload fails after release creation, the release must be marked or documented incomplete and routed to remediation; public evidence must not be silently deleted.
+The future action is the bounded compound tag-if-absent plus GitHub Release creation operation. If automatic tag creation succeeds but GitHub Release creation fails, the tag must not be deleted automatically; evidence is captured and separately remediated. If future artifact attachment is separately authorized and an upload fails after release creation, the release must be marked or documented incomplete and routed to remediation; public evidence must not be silently deleted.
 
 Rollback and remediation
 
@@ -156,7 +161,7 @@ A future execution must verify the tag target SHA, version/tag, GitHub Release e
 
 Idempotency and Conflict Handling
 
-- Absent required tag: blocked; do not create it implicitly.
+- Absent tag and absent release: eligible for the bounded compound operation after separate authorization.
 - Existing tag at another SHA: conflict; abort.
 - Existing tag at the approved SHA with no release: eligible for fresh authorization review only.
 - Existing release at another subject or manifest identity: conflict; abort without overwrite.
@@ -176,39 +181,34 @@ Mini-EPIC 32.148 validates:
 - manual-only workflow triggering;
 - read-only workflow permissions;
 - absence of release mutation commands; and
+- separate future execution workflow authorization gating, job-scoped write permission, exact target command, conflict handling, and post-action verification; and
 - non-mutating local preflight success.
 
 Full repository validation results are recorded in the closure after execution.
 
-Remaining Blocker Matrix
+Re-evaluated Blocker Matrix
 
 Release-subject identity: remediated.
 
-Actor/process model: defined, with read-only preflight implemented; write-capable execution remains intentionally unimplemented.
+Actor/process model: remediated. Read-only preflight remains separate; the future manual execution workflow is authorization-gated and uses repository-controlled GitHub Actions.
 
 Failure/rollback/remediation/verification contract: remediated as a governance contract.
 
-Operational capability: partially remediated, but critically incomplete because:
-
-- required pre-existing tag `v0.1.0` does not exist;
-- no separately authorized tag-creation path has established it;
-- the action may not create the tag implicitly;
-- no authorization re-evaluation has approved GitHub Release creation; and
-- the write-capable execution job must remain absent until later authorization and execution boundaries.
+Operational capability: remediated. The future workflow is manual only, has job-scoped `contents: write`, verifies authorization, exact source, version, tag, manifest identity and digests, rejects conflicts, performs the bounded `gh release create v0.1.0 --target <approved SHA>` operation, and verifies the resulting tag and release. It is not invoked by Mini-EPIC 32.148.
 
 Remediation Outcome
 
-At least one critical prerequisite remains unresolved. Mini-EPIC 32.148 therefore selects exactly one result:
+All four Mini-EPIC 32.147 blocker classes are now resolved for fresh authorization re-evaluation. Mini-EPIC 32.148 selects:
 
-CANONICAL_RELEASE_AUTHORIZATION_BLOCKER_REMEDIATION_INCOMPLETE
+CANONICAL_RELEASE_AUTHORIZATION_BLOCKERS_REMEDIATED
 
-Mini-EPIC 32.148 does not emit blocker-remediated success, authorization success, authorization re-evaluation readiness, or execution readiness.
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_REEVALUATION_BOUNDARY
+
+Mini-EPIC 32.148 does not emit authorization success or execution readiness.
 
 Forward Boundary
 
-The next permissible boundary is a separately controlled canonical pre-existing-tag governance definition, authorization, and execution or equivalent action-scope amendment boundary. Only after `v0.1.0` exists at the exact approved source under valid authority, and the remaining capability evidence is established, may blocker remediation and authorization re-evaluation be reconsidered.
-
-Mini-EPIC 32.149 authorization re-evaluation readiness is not established.
+The exact next boundary is Mini-EPIC 32.149 — Canonical Release Execution or Publication Governance Authorization Re-Evaluation Boundary. It may evaluate authorization but must not execute the future workflow.
 
 Operational Non-Actions
 
@@ -239,6 +239,8 @@ Boundary Result
 
 Mini-EPIC 32.148 records only:
 
-CANONICAL_RELEASE_AUTHORIZATION_BLOCKER_REMEDIATION_INCOMPLETE
+CANONICAL_RELEASE_AUTHORIZATION_BLOCKERS_REMEDIATED
 
-Subject identity and non-mutating preflight evidence are established, but the pre-existing-tag and write-capable execution prerequisites remain unresolved. Authorization stays blocked and no public mutation occurs.
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_REEVALUATION_BOUNDARY
+
+Subject identity, actor/process authority, operational capability, and failure/remediation/post-verification controls are established. Authorization has not been re-issued and no public mutation occurs.
