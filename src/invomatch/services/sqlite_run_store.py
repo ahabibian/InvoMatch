@@ -463,6 +463,8 @@ class SqliteRunStore:
                         report_json
                     FROM reconciliation_runs
                     {where_clause}
+                    -- Keep this total order aligned with RunStore.list_runs:
+                    -- immutable run_id resolves equal created_at values.
                     ORDER BY created_at {order_by}, run_id {order_by}
                     LIMIT ? OFFSET ?
                     """,

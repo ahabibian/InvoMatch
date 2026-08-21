@@ -1,10 +1,12 @@
 import json
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
 from invomatch.domain.models import (
     ReconciliationReport,
+    ReconciliationRun,
     RunError,
     can_transition,
     is_terminal_status,
@@ -109,8 +111,71 @@ def test_run_store_list_operations_support_status_filter_pagination_and_sort(tmp
     paged_runs, total = run_store.list_runs(limit=1, offset=1, sort_order="asc")
     assert total == 3
     assert len(paged_runs) == 1
-    assert paged_runs[0].run_id == failed.run_id
+    expected_middle = sorted((pending, failed, completed), key=lambda run: (run.created_at, run.run_id))[1]
+    assert paged_runs[0].run_id == expected_middle.run_id
     assert pending.run_id != completed.run_id
+
+
+def _tied_run(run_id: str, *, status: str = "queued") -> ReconciliationRun:
+    tied_at = datetime(2026, 8, 21, 12, 0, tzinfo=timezone.utc)
+    return ReconciliationRun(
+        run_id=run_id,
+        tenant_id="tenant-tied-order",
+        status=status,
+        created_at=tied_at,
+        updated_at=tied_at,
+        invoice_csv_path=f"sample-data/{run_id}-invoices.csv",
+        payment_csv_path=f"sample-data/{run_id}-payments.csv",
+    )
+
+
+def test_run_store_tied_timestamps_have_identical_total_order_and_stable_pages(tmp_path: Path):
+    store_factories = (
+        lambda: JsonRunStore(tmp_path / "tied-runs.json"),
+        lambda: SqliteRunStore(tmp_path / "tied-runs.sqlite3"),
+        InMemoryRunStore,
+    )
+    runs = (
+        _tied_run("run-e"),
+        _tied_run("run-b", status="failed"),
+        _tied_run("run-d"),
+        _tied_run("run-a", status="failed"),
+        _tied_run("run-c"),
+    )
+    expected_ascending = ["run-a", "run-b", "run-c", "run-d", "run-e"]
+    expected_descending = list(reversed(expected_ascending))
+    backend_results: list[tuple[list[str], list[str]]] = []
+
+    for store_factory in store_factories:
+        store = store_factory()
+        for run in runs:
+            store.create_run(run)
+
+        ascending, total = store.list_runs(limit=10, sort_order="asc")
+        descending, descending_total = store.list_runs(limit=10, sort_order="desc")
+        assert total == descending_total == 5
+        assert [run.run_id for run in ascending] == expected_ascending
+        assert [run.run_id for run in descending] == expected_descending
+
+        first_page, _ = store.list_runs(limit=2, offset=0, sort_order="asc")
+        middle_page, _ = store.list_runs(limit=2, offset=2, sort_order="asc")
+        final_page, _ = store.list_runs(limit=2, offset=4, sort_order="asc")
+        assert [run.run_id for run in first_page] == ["run-a", "run-b"]
+        assert [run.run_id for run in middle_page] == ["run-c", "run-d"]
+        assert [run.run_id for run in final_page] == ["run-e"]
+
+        failed_runs, failed_total = store.list_runs(status="failed", sort_order="asc")
+        assert failed_total == 2
+        assert [run.run_id for run in failed_runs] == ["run-a", "run-b"]
+
+        repeated_orders = [
+            [run.run_id for run in store.list_runs(limit=10, sort_order="asc")[0]]
+            for _ in range(5)
+        ]
+        assert repeated_orders == [expected_ascending] * 5
+        backend_results.append((expected_ascending, expected_descending))
+
+    assert backend_results == [(expected_ascending, expected_descending)] * 3
 
 
 @pytest.mark.parametrize("store_factory", [JsonRunStore, SqliteRunStore, lambda path: InMemoryRunStore()])
