@@ -4649,3 +4649,73 @@ docs/architecture/MINI_EPIC_32_144_CANONICAL_RELEASE_READINESS_DECISION_EXECUTIO
 
 docs/architecture/MINI_EPIC_32_144_CLOSURE.md
 
+## Mini-EPIC 32.145 — Canonical Release-Readiness Validation Stabilization and Decision Re-Evaluation Boundary
+
+Mini-EPIC 32.145 follows Mini-EPIC 32.144, merged through PR #37 at commit `8eb52be26f5dd9a1eca313ae4e95600bde28fd53`.
+
+Mini-EPIC 32.144 remains preserved with:
+
+CANONICAL_RELEASE_READINESS_DECISION_BLOCKED
+
+READY_FOR_CANONICAL_RELEASE_READINESS_VALIDATION_STABILIZATION_AND_DECISION_REEVALUATION_BOUNDARY
+
+Before modification, the affected store and API pagination tests reproduced the blocker across ten unchanged combined runs with exit codes:
+
+1,1,1,1,1,1,1,1,0,1
+
+The root cause was a validation-contract mismatch. JSON, SQLite, and in-memory stores already applied the deterministic total order `(created_at, run_id)`. Tests assumed insertion order while random UUID-based IDs became the tie-breaker when timestamps collided, so assertions changed outcome across newly randomized test datasets.
+
+Mini-EPIC 32.145 explicitly documents `created_at` followed by immutable unique `run_id` as the backend-independent total-order contract. It uses a named shared ordering key, documents SQLite alignment, fixes affected expectations, and adds intentional equal-timestamp fixed-ID regression coverage for ascending and descending order, filtering, first/middle/final pagination, repeated calls, and cross-backend equivalence.
+
+Ten unchanged post-fix repetitions all passed:
+
+0,0,0,0,0,0,0,0,0,0
+
+Full stabilization validation records 58 passing cross-store relevant tests, 731 passing full-backend tests, 51 passing release-contract tests, 85 passing operational tests, 4 passing required scenario tests, passing frontend lint, and a passing frontend production build.
+
+Mini-EPIC 32.145 re-applies the canonical decision criteria. The corrected package acceptance and completed review remain authoritative. Reconciliation, decision definition, and authorization remain valid. Historical authority remains superseded. The validation blocker is resolved and no other material blocker is identified.
+
+The current state transitions from:
+
+CANONICAL_RELEASE_READINESS_DECISION_BLOCKED
+
+to exactly one re-evaluated outcome:
+
+CANONICAL_RELEASE_READINESS_APPROVED
+
+The corrected canonical path is:
+
+corrected Mini-EPIC 32.127 review completion
+
+→ Mini-EPIC 32.141 reconciliation
+
+→ Mini-EPIC 32.142 decision definition
+
+→ Mini-EPIC 32.143 authorization
+
+→ Mini-EPIC 32.144 blocked decision execution
+
+→ Mini-EPIC 32.145 validation stabilization and decision re-evaluation
+
+→ future outcome-dependent governance boundary
+
+Historical Mini-EPIC 32.128 through 32.140 authority remains superseded. Historical `FINAL_RELEASE_READINESS_APPROVED` from Mini-EPIC 32.134 remains non-canonical. No historical authority is restored.
+
+Mini-EPIC 32.145 records:
+
+CANONICAL_RELEASE_READINESS_VALIDATION_STABILIZED
+
+CANONICAL_RELEASE_READINESS_APPROVED
+
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_BOUNDARY_DEFINITION
+
+The exact future boundary is Mini-EPIC 32.146 — Canonical Release Execution or Publication Governance Boundary Definition.
+
+Mini-EPIC 32.145 does not implement or authorize that operational path. No deployment, publication, tag creation or push, GitHub Release creation, environment, staging, or production promotion, CI release publication, customer-facing activation, or artifact distribution occurs.
+
+Documents:
+
+docs/architecture/MINI_EPIC_32_145_CANONICAL_RELEASE_READINESS_VALIDATION_STABILIZATION_AND_DECISION_REEVALUATION_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_145_CLOSURE.md
+

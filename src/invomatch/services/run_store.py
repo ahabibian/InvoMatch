@@ -55,7 +55,11 @@ class RunStore(Protocol):
         offset: int = 0,
         sort_order: SortOrder = "desc",
     ) -> tuple[list[ReconciliationRun], int]:
-        """List persisted reconciliation runs with filtering and pagination."""
+        """List runs ordered by ``created_at`` then ``run_id`` in the requested direction.
+
+        The immutable unique ``run_id`` is the required tie-breaker that makes
+        pagination deterministic when multiple runs share a creation timestamp.
+        """
 
 
 def _validate_next_version(run: ReconciliationRun, expected_version: int) -> None:
@@ -390,7 +394,13 @@ def _query_runs(
         runs = [run for run in runs if run.status == status]
 
     reverse = sort_order == "desc"
-    runs.sort(key=lambda run: (run.created_at, run.run_id), reverse=reverse)
+    runs.sort(key=_run_order_key, reverse=reverse)
 
     total = len(runs)
     return runs[offset : offset + limit], total
+
+
+def _run_order_key(run: ReconciliationRun) -> tuple[datetime, str]:
+    """Return the backend-independent total-order key for run listings."""
+
+    return run.created_at, run.run_id

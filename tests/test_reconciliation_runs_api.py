@@ -373,7 +373,10 @@ def test_get_reconciliation_runs_applies_pagination(tmp_path: Path):
     assert response.limit == 1
     assert response.offset == 1
     assert len(response.items) == 1
-    assert response.items[0].run_id == run_ids[1]
+    seeded_runs = [run_store.get_run(run_id) for run_id in run_ids]
+    assert all(run is not None for run in seeded_runs)
+    expected_middle = sorted(seeded_runs, key=lambda run: (run.created_at, run.run_id))[1]
+    assert response.items[0].run_id == expected_middle.run_id
 
 
 def test_get_reconciliation_run_detail_returns_failed_payload(tmp_path: Path):
