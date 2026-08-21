@@ -4595,3 +4595,57 @@ docs/architecture/MINI_EPIC_32_143_CANONICAL_RELEASE_READINESS_DECISION_AUTHORIZ
 
 docs/architecture/MINI_EPIC_32_143_CLOSURE.md
 
+## Mini-EPIC 32.144 — Canonical Release-Readiness Decision Execution Boundary
+
+Mini-EPIC 32.144 performs the first authoritative corrected-chain execution of the canonical release-readiness decision.
+
+Mini-EPIC 32.143 is the immediate authoritative predecessor. It was merged through PR #36 at commit `afd6973cff3fcecd0965734b20af89c054c6f120` and records:
+
+CANONICAL_RELEASE_READINESS_DECISION_AUTHORIZED
+
+READY_FOR_CANONICAL_RELEASE_READINESS_DECISION_EXECUTION_BOUNDARY
+
+CANONICAL_RELEASE_READINESS_DECISION_NOT_EXECUTED
+
+The decision reviews the corrected Mini-EPIC 32.107 evidence origin, Mini-EPIC 32.121 acceptance, Mini-EPIC 32.122 post-push verification, corrected Mini-EPIC 32.127 review completion, Mini-EPIC 32.141 reconciliation, Mini-EPIC 32.142 boundary definition, Mini-EPIC 32.143 authorization, and their closure documents.
+
+Current validation evidence is GitHub Actions run `32423083996` for exact `main` commit `afd6973cff3fcecd0965734b20af89c054c6f120`. The official release-validation job succeeded, including the full backend baseline, contract tests, operational tests, required scenario regression pack, frontend lint, and frontend build.
+
+A secondary local Python 3.12.13 full-suite run produced 729 passing tests and one failure in `tests/test_reconciliation_runs_api.py::test_get_reconciliation_runs_applies_pagination`. Five unchanged immediate repetitions alternated pass and fail with exit codes `0,1,0,1,0`. This required backend test is nondeterministic, so the official pass and current diagnostic evidence are internally contradictory.
+
+The canonical governance evidence remains authoritative and traceable, but the validation contradiction prevents a safe positive or negative readiness determination. Exactly one decision class is selected:
+
+CANONICAL_RELEASE_READINESS_DECISION_BLOCKED
+
+The decision state advances from `CANONICAL_RELEASE_READINESS_DECISION_NOT_EXECUTED` to `CANONICAL_RELEASE_READINESS_DECISION_BLOCKED`. The not-executed token remains historical incoming-state evidence and no longer describes the current decision state.
+
+The corrected canonical chain is:
+
+corrected Mini-EPIC 32.127 review completion
+
+→ Mini-EPIC 32.141 canonical reconciliation
+
+→ Mini-EPIC 32.142 canonical decision boundary definition
+
+→ Mini-EPIC 32.143 canonical decision authorization
+
+→ Mini-EPIC 32.144 canonical decision execution
+
+→ future outcome-dependent governance boundary definition
+
+Historical Mini-EPIC 32.128 through 32.140 authority remains superseded. Historical Mini-EPIC 32.132 definition, historical Mini-EPIC 32.133 authorization, historical `FINAL_RELEASE_READINESS_APPROVED` from Mini-EPIC 32.134, and historical Mini-EPIC 32.135 through 32.140 outcomes remain non-canonical. No historical authority is restored.
+
+The blocked decision creates no release-execution or publication-governance readiness. It establishes only:
+
+READY_FOR_CANONICAL_RELEASE_READINESS_VALIDATION_STABILIZATION_AND_DECISION_REEVALUATION_BOUNDARY
+
+The exact future boundary is Mini-EPIC 32.145 — Canonical Release-Readiness Validation Stabilization and Decision Re-Evaluation Boundary.
+
+Mini-EPIC 32.144 does not implement that boundary, resolve the validation nondeterminism, or authorize operational release execution. No deployment, publication, tag creation or push, GitHub Release creation, environment, staging, or production promotion, CI release execution, customer-facing activation, or artifact distribution occurs. No corrected-package audit re-run, audit-output rewrite or recreation, corrected package or archive modification, archive recreation, corrected manifest modification, corrected package acceptance re-execution, historical authority restoration, historical Mini-EPIC 32.134 approval adoption, or historical Mini-EPIC 32.140 closure adoption occurs.
+
+Documents:
+
+docs/architecture/MINI_EPIC_32_144_CANONICAL_RELEASE_READINESS_DECISION_EXECUTION_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_144_CLOSURE.md
+
