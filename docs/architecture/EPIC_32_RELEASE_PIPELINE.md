@@ -4719,3 +4719,65 @@ docs/architecture/MINI_EPIC_32_145_CANONICAL_RELEASE_READINESS_VALIDATION_STABIL
 
 docs/architecture/MINI_EPIC_32_145_CLOSURE.md
 
+## Mini-EPIC 32.146 — Canonical Release Execution or Publication Governance Boundary Definition
+
+Mini-EPIC 32.146 defines the first fresh corrected-chain governance boundary for any later release execution or publication activity.
+
+Mini-EPIC 32.145 is the immediate authoritative predecessor. It was merged through PR #38 at commit `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7` and records:
+
+CANONICAL_RELEASE_READINESS_VALIDATION_STABILIZED
+
+CANONICAL_RELEASE_READINESS_APPROVED
+
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_BOUNDARY_DEFINITION
+
+GitHub Actions run `32487366423` successfully validates the exact `main` merge commit.
+
+The corrected canonical path is:
+
+corrected Mini-EPIC 32.127 review completion
+
+→ Mini-EPIC 32.141 reconciliation
+
+→ Mini-EPIC 32.142 decision definition
+
+→ Mini-EPIC 32.143 decision authorization
+
+→ Mini-EPIC 32.144 blocked decision
+
+→ Mini-EPIC 32.145 validation stabilization and approved re-evaluation
+
+→ Mini-EPIC 32.146 release/publication governance boundary definition
+
+→ future action-specific authorization boundary
+
+→ future operational execution boundary
+
+Historical Mini-EPIC 32.128 through 32.140 authority remains superseded. Historical Mini-EPIC 32.135 definition and Mini-EPIC 32.136 authorization are structural references only. Historical Mini-EPIC 32.137 through 32.140 operational, post-execution, and closure outcomes remain non-canonical. Historical `FINAL_RELEASE_READINESS_APPROVED` from Mini-EPIC 32.134 remains non-canonical.
+
+Mini-EPIC 32.146 binds future authorization to an exact release subject. The currently traceable source baseline is `main` at `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7`, validated by run `32487366423`. A later authorization must also resolve applicable canonical package, artifact, archive, manifest, digest, version, dependency-lock, and configuration identities without fabricating identifiers.
+
+The boundary defines separate action categories for tagging, GitHub Release creation, artifact publication or distribution, CI release execution, deployment, environment or staging or production promotion, external publication, and customer-facing activation. A later authorization must name the exact subject, action or supported atomic compound action, actor, target, validity conditions, capability evidence, drift checks, rollback or abort controls, failure handling, and execution boundary.
+
+Authorization for one action does not authorize another. Governance authority, operational capability, and operational execution remain distinct. Artifact publication, GitHub Release publication, staging promotion, production promotion, and customer-facing activation are not collapsed into a blanket release semantic.
+
+A later authorization may select authorized, not authorized, or blocked or unresolved for the exact request. Mini-EPIC 32.146 selects none of those outcomes.
+
+Source, package bytes, archive, manifest, digest, metadata, version, dependency-lock, configuration, validation, or canonical-governance drift prevents silent reuse of approval. Materially changed subjects require an applicable new validation, readiness, amendment, or supersession path.
+
+Mini-EPIC 32.146 records only:
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_BOUNDARY_DEFINED
+
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_BOUNDARY
+
+The exact future boundary is Mini-EPIC 32.147 — Canonical Release Execution or Publication Governance Authorization Boundary.
+
+No release execution or publication authorization occurs. No deployment, publication, tag creation or push, GitHub Release creation, environment, staging, or production promotion, CI release execution, customer-facing activation, or artifact distribution occurs. No release identity, package, archive, or manifest mutation, release-readiness re-execution or approval replacement, historical authority restoration, historical Mini-EPIC 32.134 approval adoption, or historical Mini-EPIC 32.135 through 32.140 authority adoption occurs.
+
+Documents:
+
+docs/architecture/MINI_EPIC_32_146_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_BOUNDARY_DEFINITION.md
+
+docs/architecture/MINI_EPIC_32_146_CLOSURE.md
+
