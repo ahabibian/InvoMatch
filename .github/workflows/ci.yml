@@ -216,10 +216,22 @@ jobs:
             echo 'Pilot credential leaked into the frontend build.' >&2
             exit 1
           fi
-          grep --recursive --quiet --fixed-strings 'Review Queue' ui/invomatch-ui/dist
-          grep --recursive --quiet --fixed-strings 'Match Detail' ui/invomatch-ui/dist
-          grep --recursive --quiet --fixed-strings 'Traceability' ui/invomatch-ui/dist
-          docker compose -f docker-compose.pilot.yml logs > pilot-runtime.log
+          if ! grep --recursive --quiet --fixed-strings 'Review Queue' ui/invomatch-ui/dist; then
+            echo 'Review Queue contract is absent from the frontend build.' >&2
+            exit 1
+          fi
+          if ! grep --recursive --quiet --fixed-strings 'Match Detail' ui/invomatch-ui/dist; then
+            echo 'Match Detail contract is absent from the frontend build.' >&2
+            exit 1
+          fi
+          if ! grep --recursive --quiet --fixed-strings 'Traceability' ui/invomatch-ui/dist; then
+            echo 'Traceability contract is absent from the frontend build.' >&2
+            exit 1
+          fi
+          if ! docker compose -f docker-compose.pilot.yml logs > pilot-runtime.log; then
+            echo 'Pilot runtime logs could not be read.' >&2
+            exit 1
+          fi
           if grep --quiet --fixed-strings 'ci-pilot-credential' pilot-runtime.log; then
             echo 'Pilot credential leaked into runtime logs.' >&2
             exit 1
