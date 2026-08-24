@@ -1,4 +1,5 @@
 import csv
+from functools import partial
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -9,6 +10,10 @@ from invomatch.main import create_app
 from invomatch.services.ingestion_run_integration.runtime_adapter import (
     IngestionRunRuntimeAdapter,
 )
+from invomatch.services.reconciliation import reconcile_and_save
+from invomatch.services.sqlite_match_record_store import SqliteMatchRecordStore
+from invomatch.services.sqlite_review_store import SqliteReviewStore
+from invomatch.services.sqlite_run_store import SqliteRunStore
 
 
 def _fake_run(run_id: str, batch_id: str) -> ReconciliationRun:
@@ -88,6 +93,58 @@ def test_post_ingest_creates_run(tmp_path: Path):
     assert body["ingestion_batch_id"] == "batch-1"
     assert body["accepted_invoice_count"] == 1
     assert body["accepted_payment_count"] == 1
+
+
+def test_post_ingest_preserves_invoice_binding_for_review_required_run(tmp_path: Path):
+    run_store = SqliteRunStore(tmp_path / "runs.sqlite3")
+    review_store = SqliteReviewStore(tmp_path / "reviews.sqlite3")
+    app = create_app(run_store=run_store, review_store=review_store)
+    app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
+        reconcile_and_save=partial(
+            reconcile_and_save,
+            run_store=run_store,
+            match_record_store=SqliteMatchRecordStore(tmp_path / "matches.sqlite3"),
+            review_store=review_store,
+        ),
+        batch_root=tmp_path / "batches",
+    )
+    client = TestClient(app)
+
+    response = client.post(
+        "/api/reconciliation/runs/ingest",
+        headers=TEST_AUTH_HEADER,
+        json={
+            "ingestion_batch_id": "scenario-15-api",
+            "invoices": [
+                {
+                    "id": "scenario-15-invoice",
+                    "date": "2026-08-24",
+                    "amount": "125.50",
+                    "currency": "EUR",
+                    "reference": "SCENARIO-15",
+                }
+            ],
+            "payments": [
+                {
+                    "id": payment_id,
+                    "invoice_id": "scenario-15-invoice",
+                    "date": "2026-08-24",
+                    "amount": "125.50",
+                    "currency": "EUR",
+                    "reference": "SCENARIO-15",
+                }
+                for payment_id in ("scenario-15-payment-a", "scenario-15-payment-b")
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+    run_id = response.json()["run_id"]
+    detail_response = client.get(
+        f"/api/reconciliation/runs/{run_id}", headers=TEST_AUTH_HEADER
+    )
+    assert detail_response.status_code == 200
+    assert detail_response.json()["status"] == "review_required"
 
 
 def test_post_ingest_reuses_existing_run_for_same_batch(tmp_path: Path):

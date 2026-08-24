@@ -157,7 +157,7 @@ jobs:
             '.match_id == $match and .match_status == "open" and .invoice_summary.invoice_id == "scenario-15-invoice" and (.payment_summary.payment_id | startswith("scenario-15-payment-")) and (.confidence >= 0 and .confidence < 1) and (.evidence | length >= 2) and (.traceability.source_references | length >= 1) and .failure == null' \
             pilot-match-detail.json
           test "$(curl --silent --output missing-match.json --write-out '%{http_code}' --cookie pilot.cookies http://127.0.0.1:8080/api/review/matches/not-a-real-match/detail)" = "404"
-          jq --exit-status '.detail.failure_code == "match_not_found"' missing-match.json
+          jq --exit-status '.detail.code == "match_not_found"' missing-match.json
           cp pilot-queue.json pilot-queue-before-restart.json
           cp pilot-match-detail.json pilot-match-detail-before-restart.json
           docker compose -f docker-compose.pilot.yml down --remove-orphans
