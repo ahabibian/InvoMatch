@@ -224,7 +224,7 @@ jobs:
             echo 'Match Detail contract is absent from the frontend build.' >&2
             exit 1
           fi
-          if ! grep --recursive --quiet --fixed-strings 'Traceability' ui/invomatch-ui/dist; then
+          if ! grep --recursive --quiet --fixed-strings 'Backend-owned traceability' ui/invomatch-ui/dist; then
             echo 'Traceability contract is absent from the frontend build.' >&2
             exit 1
           fi
