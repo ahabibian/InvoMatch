@@ -104,9 +104,13 @@ jobs:
           trap cleanup EXIT
           docker compose -f docker-compose.pilot.yml config --quiet
           docker compose -f docker-compose.pilot.yml up --detach --build --wait
-          curl --fail --silent --show-error http://127.0.0.1:8080/ > /dev/null
+          curl --fail --silent --show-error --dump-header pilot-ui.headers http://127.0.0.1:8080/ > pilot-ui.html
+          grep --fixed-strings '<div id="root"></div>' pilot-ui.html
+          grep --ignore-case --fixed-strings 'server: nginx' pilot-ui.headers
           curl --fail --silent --show-error http://127.0.0.1:8080/health > /dev/null
           curl --fail --silent --show-error http://127.0.0.1:8080/readiness > /dev/null
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8080/api/review/queue)" = "401"
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' --header 'Content-Type: application/json' --data '{"credential":"invalid-pilot-credential"}' http://127.0.0.1:8080/api/auth/login)" = "401"
           curl --fail --silent --show-error \
             --cookie-jar pilot.cookies \
             --header 'Content-Type: application/json' \
@@ -116,16 +120,46 @@ jobs:
             --cookie pilot.cookies \
             http://127.0.0.1:8080/api/auth/session \
             | grep --fixed-strings '"username":"ci-pilot"'
+          curl --fail --silent --show-error --cookie pilot.cookies \
+            http://127.0.0.1:8080/api/operations/release-identity > pilot-identity.json
+          jq --exit-status --arg sha "$INVOMATCH_RELEASE_COMMIT_SHA" \
+            '.application_version == "0.1.0" and .git_commit_sha == $sha and .environment == "production"' \
+            pilot-identity.json
+          curl --fail --silent --show-error --cookie pilot.cookies --request POST \
+            http://127.0.0.1:8080/api/auth/logout > /dev/null
+          test "$(curl --silent --output /dev/null --write-out '%{http_code}' --cookie pilot.cookies http://127.0.0.1:8080/api/auth/session)" = "401"
+          curl --fail --silent --show-error \
+            --cookie-jar pilot.cookies \
+            --header 'Content-Type: application/json' \
+            --data '{"credential":"ci-pilot-credential"}' \
+            http://127.0.0.1:8080/api/auth/login > /dev/null
           curl --fail --silent --show-error \
             --cookie pilot.cookies \
             --header 'Content-Type: application/json' \
-            --data '{"ingestion_batch_id":"epic-34-3-durability","invoices":[{"id":"INV-34-3","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"PILOT-34-3"}],"payments":[{"id":"PAY-34-3","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"PILOT-34-3"}]}' \
+            --data '{"ingestion_batch_id":"scenario-15-deployed","invoices":[{"id":"scenario-15-invoice","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"SCENARIO-15"}],"payments":[{"id":"scenario-15-payment-a","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"SCENARIO-15"},{"id":"scenario-15-payment-b","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"SCENARIO-15"}]}' \
             http://127.0.0.1:8080/api/reconciliation/runs/ingest > pilot-run.json
           RUN_ID=$(jq --raw-output .run_id pilot-run.json)
           test -n "$RUN_ID"
           curl --fail --silent --show-error --cookie pilot.cookies \
             "http://127.0.0.1:8080/api/reconciliation/runs/$RUN_ID" \
-            | grep --fixed-strings "$RUN_ID"
+            > pilot-run-detail.json
+          jq --exit-status --arg run "$RUN_ID" '.run_id == $run and .status == "review_required"' pilot-run-detail.json
+          curl --fail --silent --show-error --cookie pilot.cookies \
+            http://127.0.0.1:8080/api/review/queue > pilot-queue.json
+          MATCH_ID=$(jq --raw-output --arg run "$RUN_ID" '.[] | select(.run_id == $run) | .match_id' pilot-queue.json | head -n 1)
+          test -n "$MATCH_ID"
+          jq --exit-status --arg run "$RUN_ID" --arg match "$MATCH_ID" \
+            'any(.[]; .run_id == $run and .match_id == $match and .status == "open" and (.reason_code | length > 0))' \
+            pilot-queue.json
+          curl --fail --silent --show-error --cookie pilot.cookies \
+            "http://127.0.0.1:8080/api/review/matches/$MATCH_ID/detail" > pilot-match-detail.json
+          jq --exit-status --arg match "$MATCH_ID" \
+            '.match_id == $match and .match_status == "open" and .invoice_summary.invoice_id == "scenario-15-invoice" and (.payment_summary.payment_id | startswith("scenario-15-payment-")) and (.confidence >= 0 and .confidence < 1) and (.evidence | length >= 2) and (.traceability.source_references | length >= 1) and .failure == null' \
+            pilot-match-detail.json
+          test "$(curl --silent --output missing-match.json --write-out '%{http_code}' --cookie pilot.cookies http://127.0.0.1:8080/api/review/matches/not-a-real-match/detail)" = "404"
+          jq --exit-status '.detail.failure_code == "match_not_found"' missing-match.json
+          cp pilot-queue.json pilot-queue-before-restart.json
+          cp pilot-match-detail.json pilot-match-detail-before-restart.json
           docker compose -f docker-compose.pilot.yml down --remove-orphans
           docker compose -f docker-compose.pilot.yml up --detach --wait
           curl --fail --silent --show-error \
@@ -136,6 +170,12 @@ jobs:
           curl --fail --silent --show-error --cookie pilot.cookies \
             "http://127.0.0.1:8080/api/reconciliation/runs/$RUN_ID" \
             | grep --fixed-strings "$RUN_ID"
+          curl --fail --silent --show-error --cookie pilot.cookies \
+            http://127.0.0.1:8080/api/review/queue > pilot-queue-after-restart.json
+          curl --fail --silent --show-error --cookie pilot.cookies \
+            "http://127.0.0.1:8080/api/review/matches/$MATCH_ID/detail" > pilot-match-detail-after-restart.json
+          diff <(jq --sort-keys . pilot-queue-before-restart.json) <(jq --sort-keys . pilot-queue-after-restart.json)
+          diff <(jq --sort-keys . pilot-match-detail-before-restart.json) <(jq --sort-keys . pilot-match-detail-after-restart.json)
           docker compose -f docker-compose.pilot.yml stop
           mkdir -p .pilot-backups
           docker compose -f docker-compose.pilot.yml run --rm --no-deps \
@@ -166,3 +206,8 @@ jobs:
             python -m invomatch.operations.pilot_state verify \
               --state-root /var/lib/invomatch
           ! grep --recursive --fixed-strings 'VITE_API_AUTH_TOKEN' ui/invomatch-ui/dist
+          ! grep --recursive --fixed-strings 'ci-pilot-credential' ui/invomatch-ui/dist
+          grep --recursive --fixed-strings 'Review Queue' ui/invomatch-ui/dist
+          grep --recursive --fixed-strings 'Match Detail' ui/invomatch-ui/dist
+          grep --recursive --fixed-strings 'Traceability' ui/invomatch-ui/dist
+          ! docker compose -f docker-compose.pilot.yml logs | grep --fixed-strings 'ci-pilot-credential'

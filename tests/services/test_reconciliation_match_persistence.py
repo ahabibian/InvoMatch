@@ -6,6 +6,8 @@ from invomatch.services.reconciliation import reconcile_and_save
 from invomatch.services.export.finalized_projection_store import SqliteFinalizedProjectionStore
 from invomatch.services.sqlite_match_record_store import SqliteMatchRecordStore
 from invomatch.services.sqlite_run_store import SqliteRunStore
+from invomatch.services.sqlite_review_store import SqliteReviewStore
+from invomatch.services.review_queries import ReviewQueryService
 
 
 def test_reconcile_and_save_persists_match_records(tmp_path: Path) -> None:
@@ -45,3 +47,43 @@ def test_reconcile_and_save_persists_match_records(tmp_path: Path) -> None:
     assert len(records) == 1
     assert records[0].run_id == run.run_id
     assert records[0].invoice_id == "inv-001"
+
+
+def test_review_required_matches_materialize_backend_owned_review_queue(tmp_path: Path) -> None:
+    invoice_csv = tmp_path / "scenario-15-invoices.csv"
+    payment_csv = tmp_path / "scenario-15-payments.csv"
+    invoice_csv.write_text(
+        "id,date,amount,reference,currency\n"
+        "scenario-15-invoice,2026-08-24,125.50,PILOT-15,EUR\n",
+        encoding="utf-8",
+    )
+    payment_csv.write_text(
+        "invoice_id,id,date,amount,reference,currency\n"
+        "scenario-15-invoice,scenario-15-payment-a,2026-08-24,125.50,PILOT-15,EUR\n"
+        "scenario-15-invoice,scenario-15-payment-b,2026-08-24,125.50,PILOT-15,EUR\n",
+        encoding="utf-8",
+    )
+    run_store = SqliteRunStore(tmp_path / "runs.sqlite3")
+    match_store = SqliteMatchRecordStore(tmp_path / "matches.sqlite3")
+    review_store = SqliteReviewStore(tmp_path / "reviews.sqlite3")
+
+    run = reconcile_and_save(
+        invoice_csv,
+        payment_csv,
+        run_store=run_store,
+        match_record_store=match_store,
+        review_store=review_store,
+    )
+
+    query = ReviewQueryService()
+    query.init(review_store)
+    queue = query.list_review_queue_rows()
+    detail = query.list_match_detail_candidates()
+    assert run.status == "review_required"
+    assert len(queue) == 1
+    assert queue[0].run_id == run.run_id
+    assert queue[0].match_id
+    assert detail[0].match_id == queue[0].match_id
+    assert detail[0].invoice_id == "scenario-15-invoice"
+    assert detail[0].payment_id in {"scenario-15-payment-a", "scenario-15-payment-b"}
+    assert detail[0].source_references == (invoice_csv.as_posix(),)

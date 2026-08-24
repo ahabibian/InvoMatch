@@ -41,6 +41,9 @@ from invomatch.services.reconciliation_validation import (
 from invomatch.services.review_store import InMemoryReviewStore
 from invomatch.services.run_store import RunStore
 from invomatch.services.sqlite_match_record_store import SqliteMatchRecordStore
+from invomatch.services.orchestration.review_integration_service import (
+    ReviewIntegrationService,
+)
 
 
 DEFAULT_MATCH_RECORD_STORE_PATH = Path("output") / "reconciliation_match_records.sqlite3"
@@ -214,7 +217,7 @@ def reconcile_and_save(
             _perform_reconciliation,
             operation_name="reconcile_and_save",
         )
-        report, _ = execution_result.value
+        report, match_records = execution_result.value
     except RuntimeExecutionTerminalError as exc:
         update_reconciliation_run(
             run.run_id,
@@ -240,6 +243,29 @@ def reconcile_and_save(
         ) from exc
 
     final_status = _final_run_status(report)
+    if final_status == "review_required" and review_store is not None:
+        ReviewIntegrationService(review_store=review_store).create_cases(
+            run_id=run.run_id,
+            created_by="reconciliation_runtime",
+            review_cases=[
+                {
+                    "match_id": record.match_id,
+                    "invoice_id": record.invoice_id,
+                    "payment_id": record.selected_payment_id
+                    or (record.candidate_payment_ids[0] if record.candidate_payment_ids else None),
+                    "confidence": record.confidence_score,
+                    "reason_code": record.mismatch_reasons[0]
+                    if record.mismatch_reasons
+                    else record.status,
+                    "status": record.status,
+                    "candidates": list(record.candidate_payment_ids),
+                    "source_reference": invoice_csv_path.as_posix(),
+                    "blocking": True,
+                }
+                for record in match_records
+                if record.status in {"duplicate_detected", "partial_match"}
+            ],
+        )
     finalized_candidate = build_reconciliation_run_update(
         run.run_id,
         status=final_status,
