@@ -186,7 +186,10 @@ jobs:
               --application-version 0.1.0 \
               --source-commit-sha "$INVOMATCH_RELEASE_COMMIT_SHA" \
               --environment production
-          ! grep --recursive --fixed-strings 'ci-pilot-credential' .pilot-backups
+          if grep --recursive --quiet --fixed-strings 'ci-pilot-credential' .pilot-backups; then
+            echo 'Pilot credential leaked into the backup bundle.' >&2
+            exit 1
+          fi
           docker compose -f docker-compose.pilot.yml down --volumes --remove-orphans
           docker compose -f docker-compose.pilot.yml run --rm --no-deps \
             -v "$PWD/.pilot-backups:/backups:ro" backend \
@@ -205,9 +208,19 @@ jobs:
           docker compose -f docker-compose.pilot.yml exec -T backend \
             python -m invomatch.operations.pilot_state verify \
               --state-root /var/lib/invomatch
-          ! grep --recursive --fixed-strings 'VITE_API_AUTH_TOKEN' ui/invomatch-ui/dist
-          ! grep --recursive --fixed-strings 'ci-pilot-credential' ui/invomatch-ui/dist
-          grep --recursive --fixed-strings 'Review Queue' ui/invomatch-ui/dist
-          grep --recursive --fixed-strings 'Match Detail' ui/invomatch-ui/dist
-          grep --recursive --fixed-strings 'Traceability' ui/invomatch-ui/dist
-          ! docker compose -f docker-compose.pilot.yml logs | grep --fixed-strings 'ci-pilot-credential'
+          if grep --recursive --quiet --fixed-strings 'VITE_API_AUTH_TOKEN' ui/invomatch-ui/dist; then
+            echo 'Legacy frontend bearer-token configuration is present in the build.' >&2
+            exit 1
+          fi
+          if grep --recursive --quiet --fixed-strings 'ci-pilot-credential' ui/invomatch-ui/dist; then
+            echo 'Pilot credential leaked into the frontend build.' >&2
+            exit 1
+          fi
+          grep --recursive --quiet --fixed-strings 'Review Queue' ui/invomatch-ui/dist
+          grep --recursive --quiet --fixed-strings 'Match Detail' ui/invomatch-ui/dist
+          grep --recursive --quiet --fixed-strings 'Traceability' ui/invomatch-ui/dist
+          docker compose -f docker-compose.pilot.yml logs > pilot-runtime.log
+          if grep --quiet --fixed-strings 'ci-pilot-credential' pilot-runtime.log; then
+            echo 'Pilot credential leaked into runtime logs.' >&2
+            exit 1
+          fi
