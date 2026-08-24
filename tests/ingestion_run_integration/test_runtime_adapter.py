@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from invomatch.domain.models import ReconciliationRun
+from invomatch.domain.tenant import TenantContext
 from invomatch.services.ingestion_run_integration.models import IngestionRunStatus
 from invomatch.services.ingestion_run_integration.runtime_adapter import (
     IngestionRunRuntimeAdapter,
@@ -136,3 +137,30 @@ def test_runtime_adapter_fails_on_same_batch_with_different_fingerprint(tmp_path
     assert result.status == IngestionRunStatus.RUN_FAILED
     assert result.reason_code == "batch_identity_conflict"
     assert created["count"] == 1
+
+
+def test_runtime_adapter_propagates_tenant_context(tmp_path: Path):
+    captured = {}
+
+    def _reconcile_and_save(invoice_path: Path, payment_path: Path, **kwargs):
+        captured.update(kwargs)
+        return _fake_run("run-tenant")
+
+    context = TenantContext(tenant_id="pilot-tenant", user_id="pilot-user")
+    adapter = IngestionRunRuntimeAdapter(
+        reconcile_and_save=_reconcile_and_save,
+        batch_root=tmp_path,
+    )
+
+    adapter.create_run_from_ingestion(
+        ingestion_batch_id="tenant-batch",
+        ingestion_succeeded=True,
+        accepted_invoices=[{"invoice_number": "INV-1", "amount": "100"}],
+        accepted_payments=[{"payment_reference": "PAY-1", "amount": "100"}],
+        rejected_count=0,
+        conflict_count=0,
+        blocking_conflict=False,
+        tenant_context=context,
+    )
+
+    assert captured["tenant_context"] == context

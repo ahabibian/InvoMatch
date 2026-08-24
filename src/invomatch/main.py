@@ -206,9 +206,11 @@ def create_app(
         run_store=resolved_run_store,
         review_store=resolved_review_store,
         projection_store=finalized_projection_store,
+        match_record_store=persistence_dependencies.match_record_store,
     )
     app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
         reconcile_and_save=app.state.reconcile_and_save,
+        batch_root=settings.persistence.ingestion_batch_root,
     )
 
     app.state.review_store = resolved_review_store
@@ -256,7 +258,11 @@ def create_app(
     resolved_export_artifact_repository = (
         export_artifact_repository
         or SqliteExportArtifactRepository(
-            str(export_root / "export_artifacts.sqlite3")
+            str(
+                export_root / "export_artifacts.sqlite3"
+                if export_base_dir is not None
+                else settings.persistence.export_artifact_db_path
+            )
         )
     )
     resolved_artifact_storage = (
@@ -297,6 +303,9 @@ def create_app(
     app.state.action_service = ActionService(
         run_store=resolved_run_store,
         export_base_dir=export_root,
+        export_artifact_db_path=settings.persistence.export_artifact_db_path,
+        review_store=resolved_review_store,
+        projection_store=finalized_projection_store,
     )
 
     input_session_repo = SqliteInputSessionRepository(

@@ -44,7 +44,6 @@ from invomatch.services.sqlite_match_record_store import SqliteMatchRecordStore
 
 
 DEFAULT_MATCH_RECORD_STORE_PATH = Path("output") / "reconciliation_match_records.sqlite3"
-DEFAULT_MATCH_RECORD_STORE = SqliteMatchRecordStore(DEFAULT_MATCH_RECORD_STORE_PATH)
 
 
 def _utcnow() -> datetime:
@@ -171,11 +170,14 @@ def reconcile_and_save(
     tenant_id: str = "tenant-demo",
     tenant_context: TenantContext | None = None,
     run_store: RunStore = DEFAULT_RUN_STORE,
-    match_record_store: MatchRecordStore = DEFAULT_MATCH_RECORD_STORE,
+    match_record_store: MatchRecordStore | None = None,
     runtime_executor: RuntimeExecutor | None = None,
     review_store: InMemoryReviewStore | None = None,
     projection_store: FinalizedProjectionStore | None = None,
 ) -> ReconciliationRun:
+    resolved_match_record_store = match_record_store or SqliteMatchRecordStore(
+        DEFAULT_MATCH_RECORD_STORE_PATH
+    )
     validate_reconciliation_execution_paths(invoice_csv_path, payment_csv_path)
 
     run = create_reconciliation_run(
@@ -201,7 +203,7 @@ def reconcile_and_save(
         )
 
         try:
-            match_record_store.save_many(match_records)
+            resolved_match_record_store.save_many(match_records)
         except Exception as exc:
             raise RuntimePersistenceError(str(exc)) from exc
 

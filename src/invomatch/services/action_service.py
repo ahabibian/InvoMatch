@@ -52,6 +52,7 @@ class ActionService:
         run_store: RunStore | None = None,
         review_store: InMemoryReviewStore | None = None,
         export_base_dir: Path | None = None,
+        export_artifact_db_path: Path | None = None,
         authorization_service: AuthorizationService | None = None,
         projection_store: FinalizedProjectionStore | None = None,
     ) -> None:
@@ -65,7 +66,7 @@ class ActionService:
         export_root.mkdir(parents=True, exist_ok=True)
 
         export_repository = SqliteExportArtifactRepository(
-            str(export_root / "export_artifacts.sqlite3")
+            str(export_artifact_db_path or (export_root / "export_artifacts.sqlite3"))
         )
         export_storage = LocalArtifactStorage(export_root)
         effective_projection_store = projection_store or SqliteFinalizedProjectionStore(
