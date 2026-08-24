@@ -1,6 +1,18 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
+
+
+class ProductAuthLoginRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    credential: SecretStr
+
+
+class ProductAuthLoginResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    authenticated: bool
 
 
 class ProductAuthSessionUser(BaseModel):

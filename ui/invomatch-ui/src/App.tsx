@@ -1,6 +1,7 @@
 ﻿import { useState } from "react";
 import { useAuthSession } from "./auth/useAuthSession";
 import MatchDetailPanel from "./components/MatchDetailPanel";
+import PilotLogin from "./components/PilotLogin";
 import OperationalVisibilityPage from "./pages/OperationalVisibilityPage";
 import RunDetailPage from "./pages/RunDetailPage";
 import RunListPage from "./pages/RunListPage";
@@ -20,9 +21,18 @@ error: authSessionError,
 hasPermission,
 loading: authSessionLoading,
 reloadSession,
+logout,
 status: authSessionStatus,
 user,
 } = useAuthSession();
+
+if (authSessionStatus === "loading") {
+return <p style={{ padding: 20 }}>Loading pilot session...</p>;
+}
+
+if (authSessionStatus === "unauthenticated") {
+return <PilotLogin />;
+}
 
 const canViewOperations =
 authSessionStatus === "authenticated" &&
@@ -112,6 +122,16 @@ Admin Ops
       >
         Refresh session
       </button>
+      {user && (
+        <button
+          onClick={() => {
+            void logout();
+          }}
+          style={{ marginLeft: 8 }}
+        >
+          Sign out
+        </button>
+      )}
     </div>
   </div>
 

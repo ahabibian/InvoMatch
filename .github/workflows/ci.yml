@@ -87,3 +87,33 @@ jobs:
       - name: Frontend build
         working-directory: ui/invomatch-ui
         run: npm run build
+
+      - name: Pilot runtime composition smoke test
+        env:
+          INVOMATCH_SECURITY_SEED_TOKENS_JSON: >-
+            [{"token":"ci-pilot-credential","user_id":"ci-pilot-user","username":"ci-pilot","role":"viewer","status":"active","tenant_id":"ci-pilot-tenant"}]
+          INVOMATCH_SESSION_COOKIE_SECURE: "false"
+          INVOMATCH_RELEASE_COMMIT_SHA: ${{ github.sha }}
+          INVOMATCH_RELEASE_BRANCH: ${{ github.ref_name }}
+          INVOMATCH_RELEASE_VALIDATION_STATUS: ci_smoke
+        run: |
+          set -euo pipefail
+          cleanup() {
+            docker compose -f docker-compose.pilot.yml down --volumes --remove-orphans
+          }
+          trap cleanup EXIT
+          docker compose -f docker-compose.pilot.yml config --quiet
+          docker compose -f docker-compose.pilot.yml up --detach --build --wait
+          curl --fail --silent --show-error http://127.0.0.1:8080/ > /dev/null
+          curl --fail --silent --show-error http://127.0.0.1:8080/health > /dev/null
+          curl --fail --silent --show-error http://127.0.0.1:8080/readiness > /dev/null
+          curl --fail --silent --show-error \
+            --cookie-jar pilot.cookies \
+            --header 'Content-Type: application/json' \
+            --data '{"credential":"ci-pilot-credential"}' \
+            http://127.0.0.1:8080/api/auth/login > /dev/null
+          curl --fail --silent --show-error \
+            --cookie pilot.cookies \
+            http://127.0.0.1:8080/api/auth/session \
+            | grep --fixed-strings '"username":"ci-pilot"'
+          ! grep --recursive --fixed-strings 'VITE_API_AUTH_TOKEN' ui/invomatch-ui/dist

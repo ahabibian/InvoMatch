@@ -79,6 +79,9 @@ class SecuritySettings:
     public_readiness_enabled: bool
     seed_tokens_json: str
     security_audit_enabled: bool
+    allowed_origins: tuple[str, ...]
+    session_cookie_secure: bool
+    session_ttl_seconds: int
 
 
 @dataclass(frozen=True)

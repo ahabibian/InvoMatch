@@ -3,6 +3,7 @@
 .github
 .pytest_cache
 .pytest_tmp
+.pytest_tmp_*
 .venv
 __pycache__
 *.pyc

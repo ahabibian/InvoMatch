@@ -7,6 +7,9 @@ from .defaults import (
     log_root,
     temp_root,
 )
+
+
+DEVELOPMENT_SEED_TOKENS_JSON = '[{"token":"viewer-token","user_id":"viewer-1","username":"viewer","role":"viewer","status":"active","tenant_id":"tenant-demo"},{"token":"operator-token","user_id":"operator-1","username":"operator","role":"operator","status":"active","tenant_id":"tenant-demo"},{"token":"admin-token","user_id":"admin-1","username":"admin","role":"admin","status":"active","tenant_id":"tenant-demo"},{"token":"inactive-token","user_id":"inactive-1","username":"inactive-user","role":"viewer","status":"inactive","tenant_id":"tenant-demo"}]'
 from .environment import EnvironmentName
 from .models import (
     ApplicationSettings,
@@ -45,6 +48,13 @@ def _get_path(name: str, default: Path) -> Path:
 def _get_environment() -> EnvironmentName:
     raw_value = os.getenv("INVOMATCH_ENV", EnvironmentName.LOCAL.value).strip().lower()
     return EnvironmentName(raw_value)
+
+
+def _get_csv(name: str, default: tuple[str, ...]) -> tuple[str, ...]:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return tuple(item.strip() for item in value.split(",") if item.strip())
 
 
 def load_settings_from_environment() -> ApplicationSettings:
@@ -114,15 +124,31 @@ def load_settings_from_environment() -> ApplicationSettings:
         enable_startup_repair=_get_bool("INVOMATCH_ENABLE_STARTUP_REPAIR", True),
     )
 
+    development_credentials_allowed = environment in {
+        EnvironmentName.LOCAL,
+        EnvironmentName.DEVELOPMENT,
+        EnvironmentName.TEST,
+    }
     security = SecuritySettings(
         auth_enabled=_get_bool("INVOMATCH_AUTH_ENABLED", True),
         public_health_enabled=_get_bool("INVOMATCH_PUBLIC_HEALTH_ENABLED", True),
         public_readiness_enabled=_get_bool("INVOMATCH_PUBLIC_READINESS_ENABLED", True),
         seed_tokens_json=os.getenv(
             "INVOMATCH_SECURITY_SEED_TOKENS_JSON",
-            '[{"token":"viewer-token","user_id":"viewer-1","username":"viewer","role":"viewer","status":"active","tenant_id":"tenant-demo"},{"token":"operator-token","user_id":"operator-1","username":"operator","role":"operator","status":"active","tenant_id":"tenant-demo"},{"token":"admin-token","user_id":"admin-1","username":"admin","role":"admin","status":"active","tenant_id":"tenant-demo"},{"token":"inactive-token","user_id":"inactive-1","username":"inactive-user","role":"viewer","status":"inactive","tenant_id":"tenant-demo"}]',
+            DEVELOPMENT_SEED_TOKENS_JSON if development_credentials_allowed else "",
         ),
         security_audit_enabled=_get_bool("INVOMATCH_SECURITY_AUDIT_ENABLED", True),
+        allowed_origins=_get_csv(
+            "INVOMATCH_ALLOWED_ORIGINS",
+            ("http://localhost:5173", "http://127.0.0.1:5173")
+            if development_credentials_allowed
+            else (),
+        ),
+        session_cookie_secure=_get_bool(
+            "INVOMATCH_SESSION_COOKIE_SECURE",
+            environment in {EnvironmentName.STAGING, EnvironmentName.PRODUCTION},
+        ),
+        session_ttl_seconds=_get_int("INVOMATCH_SESSION_TTL_SECONDS", 3600),
     )
 
     return ApplicationSettings(

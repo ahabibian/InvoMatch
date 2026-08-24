@@ -11,4 +11,6 @@ export type AuthSessionContextValue = {
   permissions: string[];
   hasPermission: (permission: string) => boolean;
   reloadSession: () => Promise<void>;
+  login: (credential: string) => Promise<void>;
+  logout: () => Promise<void>;
 };

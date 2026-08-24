@@ -1,10 +1,15 @@
 from __future__ import annotations
 
 from fastapi import Request
+import logging
 
 from invomatch.api.security.errors import forbidden, unauthorized
 from invomatch.domain.security import AuthenticatedPrincipal, Permission
 from invomatch.domain.tenant import TenantContext
+
+
+logger = logging.getLogger(__name__)
+SESSION_COOKIE_NAME = "invomatch_session"
 
 
 def _record_security_event(
@@ -56,8 +61,19 @@ def get_authenticated_principal(request: Request) -> AuthenticatedPrincipal:
         authorization_header = headers.get("Authorization")
 
     result = authentication_service.authenticate_authorization_header(authorization_header)
+    if not result.is_authenticated and not authorization_header:
+        session_service = getattr(request.app.state, "browser_session_service", None)
+        cookies = getattr(request, "cookies", {})
+        principal = (
+            session_service.resolve(cookies.get(SESSION_COOKIE_NAME))
+            if session_service is not None
+            else None
+        )
+        if principal is not None:
+            result = result.__class__(principal=principal)
 
     if not result.is_authenticated:
+        logger.info("Authentication denied: %s", result.failure_reason)
         _record_security_event(
             request,
             event_type="authentication_failure",
