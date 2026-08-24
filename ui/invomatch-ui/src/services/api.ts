@@ -325,24 +325,16 @@ export async function getOperationalAlerts(): Promise<OperationalAlertsResponse>
 }
 
 export type ReviewQueueRow = {
-  match_id: string;
-  status?: string | null;
-  reason?: string | null;
-  run_id?: string | null;
-  created_at?: string | null;
-  updated_at?: string | null;
-  amount_summary?: string | null;
+  case_id: string;
+  match_id?: string | null;
+  status: "open" | "resolved" | "dismissed";
+  reason_code: string;
+  run_id: string;
+  priority?: string | null;
 };
 
-export type ReviewQueueResponse = {
-  items: ReviewQueueRow[];
-  total: number;
-  limit?: number;
-  offset?: number;
-};
-
-export async function listReviewQueue(): Promise<ReviewQueueResponse> {
-  return request<ReviewQueueResponse>("/api/review/queue", {
+export async function listReviewQueue(): Promise<ReviewQueueRow[]> {
+  return request<ReviewQueueRow[]>("/api/review/queue", {
     method: "GET",
   });
 }
