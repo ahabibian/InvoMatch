@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from invomatch.domain.models import ReconciliationRun
+from invomatch.domain.tenant import TenantContext
 from invomatch.services.ingestion_run_integration.service import (
     IngestionRunIntegrationService,
 )
@@ -99,6 +100,7 @@ class IngestionRunRuntimeAdapter:
         rejected_count: int,
         conflict_count: int,
         blocking_conflict: bool,
+        tenant_context: TenantContext | None = None,
     ):
         invoices = _canonicalize_records(accepted_invoices)
         payments = _canonicalize_records(accepted_payments)
@@ -137,7 +139,14 @@ class IngestionRunRuntimeAdapter:
                 },
             )
 
-            run = self._reconcile_and_save(invoice_csv_path, payment_csv_path)
+            if tenant_context is None:
+                run = self._reconcile_and_save(invoice_csv_path, payment_csv_path)
+            else:
+                run = self._reconcile_and_save(
+                    invoice_csv_path,
+                    payment_csv_path,
+                    tenant_context=tenant_context,
+                )
 
             _write_json(
                 result_path,

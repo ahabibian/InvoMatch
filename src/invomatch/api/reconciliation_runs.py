@@ -92,6 +92,7 @@ def create_reconciliation_run_from_ingestion(
         rejected_count=0,
         conflict_count=0,
         blocking_conflict=False,
+        tenant_context=get_tenant_context(request),
     )
 
     record_privileged_success(
