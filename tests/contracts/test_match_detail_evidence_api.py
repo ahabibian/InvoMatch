@@ -2,6 +2,7 @@
 from fastapi.testclient import TestClient
 
 from invomatch.api import review_cases
+from invomatch.domain.review.models import FeedbackRecord
 from invomatch.api.product_models.review_case import (
     ProductMatchDetailEvidenceItem,
     ProductMatchDetailResponse,
@@ -10,6 +11,13 @@ from invomatch.api.product_models.review_case import (
 from invomatch.services.match_detail_read_service import (
     MatchDetailFailureCode,
     MatchDetailReadError,
+)
+from invomatch.services.review_service import ReviewService
+from invomatch.services.review_store import InMemoryReviewStore
+from invomatch.services.security import (
+    AuthenticationService,
+    AuthorizationService,
+    StaticTokenProvider,
 )
 
 
@@ -155,4 +163,106 @@ def test_match_detail_route_binds_review_store_match_id_to_detail_response():
     assert payload["traceability"]["payment_id"] == "pay-bound-1"
     assert payload["evidence"][0]["source"] == "backend_match_record"
     assert payload["failure"] is None
+
+
+def test_scenario_15_review_queue_handoff_preserves_backend_owned_truth():
+    """Exercise one deterministic queue -> match_id -> detail pilot path."""
+
+    review_store = InMemoryReviewStore()
+    review_service = ReviewService()
+    session = review_service.create_review_session(created_by="system")
+    review_store.save_review_session(session)
+
+    feedback = FeedbackRecord(
+        feedback_id="scenario-15-feedback",
+        run_id="scenario-15-run",
+        source_type="system",
+        source_reference="scenario-15-fixture",
+        feedback_type="match_feedback",
+        raw_payload={
+            "match_id": "scenario-15-match",
+            "reason_code": "ambiguous_amount_and_date",
+            "invoice_id": "scenario-15-invoice",
+            "payment_id": "scenario-15-payment",
+            "confidence": 0.61,
+        },
+        submitted_by="system",
+    )
+    review_store.save_feedback(feedback)
+    review_item, audit_event = review_service.create_review_item(
+        feedback=feedback,
+        review_session=session,
+    )
+    review_store.save_review_item(review_item)
+    review_store.save_audit_event(audit_event)
+
+    app = FastAPI()
+    app.state.review_store = review_store
+    app.state.security_settings = type(
+        "SecuritySettings",
+        (),
+        {"auth_enabled": True, "security_audit_enabled": False},
+    )()
+    app.state.authentication_service = AuthenticationService(
+        token_provider=StaticTokenProvider(
+            '[{"token":"scenario-15-token","user_id":"scenario-15-viewer",'
+            '"username":"viewer","role":"viewer","status":"active"}]'
+        )
+    )
+    app.state.authorization_service = AuthorizationService()
+    app.include_router(review_cases.router)
+    client = TestClient(app)
+
+    queue_response = client.get(
+        "/api/review/queue",
+        headers={"Authorization": "Bearer scenario-15-token"},
+    )
+
+    assert queue_response.status_code == 200
+    queue = queue_response.json()
+    assert queue == [
+        {
+            "case_id": review_item.review_item_id,
+            "run_id": "scenario-15-run",
+            "status": "open",
+            "reason_code": "ambiguous_amount_and_date",
+            "match_id": "scenario-15-match",
+            "priority": None,
+        }
+    ]
+
+    detail_response = client.get(
+        f"/api/review/matches/{queue[0]['match_id']}/detail"
+    )
+
+    assert detail_response.status_code == 200
+    detail = detail_response.json()
+    assert detail["match_id"] == queue[0]["match_id"]
+    assert detail["match_status"] == "open"
+    assert detail["confidence"] == 0.61
+    assert detail["invoice_summary"]["invoice_id"] == "scenario-15-invoice"
+    assert detail["payment_summary"]["payment_id"] == "scenario-15-payment"
+    assert detail["evidence"] == [
+        {
+            "evidence_id": "scenario-15-match:status",
+            "evidence_type": "match_status",
+            "label": "Match status",
+            "value": "open",
+            "source": "backend_match_record",
+        },
+        {
+            "evidence_id": "scenario-15-match:reason",
+            "evidence_type": "review_reason",
+            "label": "Review reason",
+            "value": "ambiguous_amount_and_date",
+            "source": "backend_match_record",
+        }
+    ]
+    assert detail["traceability"] == {
+        "invoice_id": "scenario-15-invoice",
+        "payment_id": "scenario-15-payment",
+        "source_references": ["scenario-15-fixture"],
+        "audit_identifiers": [],
+    }
+    assert detail["failure"] is None
 

@@ -89,7 +89,7 @@ export default function ReviewQueuePage({ onOpenMatch }: ReviewQueuePageProps) {
 
     try {
       const response = await listReviewQueue();
-      setRows(response.items);
+      setRows(response);
     } catch (err: unknown) {
       setRows([]);
       setError(reviewQueueApiErrorMessage(err));
@@ -153,16 +153,19 @@ export default function ReviewQueuePage({ onOpenMatch }: ReviewQueuePageProps) {
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.match_id}>
-                <td style={{ borderBottom: "1px solid #ddd", padding: 8 }}>{row.match_id}</td>
+              <tr key={row.case_id}>
+                <td style={{ borderBottom: "1px solid #ddd", padding: 8 }}>{safeDisplay(row.match_id)}</td>
                 <td style={{ borderBottom: "1px solid #ddd", padding: 8 }}>{safeDisplay(row.status)}</td>
-                <td style={{ borderBottom: "1px solid #ddd", padding: 8 }}>{safeDisplay(row.reason)}</td>
+                <td style={{ borderBottom: "1px solid #ddd", padding: 8 }}>{safeDisplay(row.reason_code)}</td>
                 <td style={{ borderBottom: "1px solid #ddd", padding: 8 }}>{safeDisplay(row.run_id)}</td>
-                <td style={{ borderBottom: "1px solid #ddd", padding: 8 }}>{safeDisplay(row.amount_summary)}</td>
+                <td style={{ borderBottom: "1px solid #ddd", padding: 8 }}>Not provided by backend</td>
                 <td style={{ borderBottom: "1px solid #ddd", padding: 8 }}>
                   <button
+                    disabled={!row.match_id}
                     onClick={() => {
-                     onOpenMatch(row.match_id);
+                      if (row.match_id) {
+                        onOpenMatch(row.match_id);
+                      }
                     }}
                     title="Only match_id is passed across the Review Queue to Match Detail handoff boundary."
                   >

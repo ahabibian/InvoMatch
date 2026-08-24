@@ -66,25 +66,42 @@ def build_match_detail_response(match: Any) -> ProductMatchDetailResponse:
     invoice_id = _as_string(_get_attr(match, "invoice_id", None))
     payment_id = _as_string(_get_attr(match, "payment_id", None))
     status = str(_get_attr(match, "status", "unknown"))
+    reason_code = _as_string(_get_attr(match, "reason_code", None))
+    source_references = [
+        str(reference)
+        for reference in (_get_attr(match, "source_references", ()) or ())
+        if reference is not None
+    ]
+    evidence = [
+        ProductMatchDetailEvidenceItem(
+            evidence_id=match_id + ":status",
+            evidence_type="match_status",
+            label="Match status",
+            value=status,
+            source="backend_match_record",
+        )
+    ]
+    if reason_code:
+        evidence.append(
+            ProductMatchDetailEvidenceItem(
+                evidence_id=match_id + ":reason",
+                evidence_type="review_reason",
+                label="Review reason",
+                value=reason_code,
+                source="backend_match_record",
+            )
+        )
 
     return ProductMatchDetailResponse(
         match_id=match_id,
         match_status=status,
         invoice_summary={"invoice_id": invoice_id} if invoice_id else {},
         payment_summary={"payment_id": payment_id} if payment_id else {},
-        evidence=[
-            ProductMatchDetailEvidenceItem(
-                evidence_id=match_id + ":status",
-                evidence_type="match_status",
-                label="Match status",
-                value=status,
-                source="backend_match_record",
-            )
-        ],
+        evidence=evidence,
         traceability=ProductMatchDetailTraceability(
             invoice_id=invoice_id,
             payment_id=payment_id,
-            source_references=[],
+            source_references=source_references,
             audit_identifiers=[],
         ),
         explanation=[],
