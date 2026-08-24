@@ -37,9 +37,10 @@ def _fake_run(run_id: str, batch_id: str) -> ReconciliationRun:
 def test_post_ingest_creates_run(tmp_path: Path):
     app = create_app()
 
-    def _reconcile_and_save(invoice_path: Path, payment_path: Path):
+    def _reconcile_and_save(invoice_path: Path, payment_path: Path, **kwargs):
         assert invoice_path.exists()
         assert payment_path.exists()
+        assert kwargs["tenant_context"].tenant_id == "tenant-demo"
         return _fake_run("run-123", "batch-1")
 
     app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
@@ -87,7 +88,8 @@ def test_post_ingest_creates_run(tmp_path: Path):
 def test_post_ingest_reuses_existing_run_for_same_batch(tmp_path: Path):
     app = create_app()
 
-    def _reconcile_and_save(invoice_path: Path, payment_path: Path):
+    def _reconcile_and_save(invoice_path: Path, payment_path: Path, **kwargs):
+        assert kwargs["tenant_context"].tenant_id == "tenant-demo"
         return _fake_run("run-123", "batch-1")
 
     app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
@@ -130,7 +132,7 @@ def test_post_ingest_reuses_existing_run_for_same_batch(tmp_path: Path):
 def test_post_ingest_rejects_when_invoices_missing(tmp_path: Path):
     app = create_app()
 
-    def _reconcile_and_save(invoice_path: Path, payment_path: Path):
+    def _reconcile_and_save(invoice_path: Path, payment_path: Path, **kwargs):
         raise AssertionError("reconcile_and_save should not be called")
 
     app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
@@ -168,7 +170,7 @@ def test_post_ingest_rejects_when_invoices_missing(tmp_path: Path):
 def test_post_ingest_rejects_when_payments_missing(tmp_path: Path):
     app = create_app()
 
-    def _reconcile_and_save(invoice_path: Path, payment_path: Path):
+    def _reconcile_and_save(invoice_path: Path, payment_path: Path, **kwargs):
         raise AssertionError("reconcile_and_save should not be called")
 
     app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
@@ -204,7 +206,7 @@ def test_post_ingest_rejects_when_payments_missing(tmp_path: Path):
 def test_post_ingest_rejects_when_invoices_missing(tmp_path: Path):
     app = create_app()
 
-    def _reconcile_and_save(invoice_path: Path, payment_path: Path):
+    def _reconcile_and_save(invoice_path: Path, payment_path: Path, **kwargs):
         raise AssertionError("reconcile_and_save should not be called")
 
     app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
@@ -242,7 +244,7 @@ def test_post_ingest_rejects_when_invoices_missing(tmp_path: Path):
 def test_post_ingest_rejects_when_payments_missing(tmp_path: Path):
     app = create_app()
 
-    def _reconcile_and_save(invoice_path: Path, payment_path: Path):
+    def _reconcile_and_save(invoice_path: Path, payment_path: Path, **kwargs):
         raise AssertionError("reconcile_and_save should not be called")
 
     app.state.ingestion_run_runtime_adapter = IngestionRunRuntimeAdapter(
