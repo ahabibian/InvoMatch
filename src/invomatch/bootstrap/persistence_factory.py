@@ -42,6 +42,7 @@ def _build_review_store(settings: ApplicationSettings) -> object:
 
 
 def build_persistence_dependencies(settings: ApplicationSettings) -> PersistenceDependencies:
+    settings.persistence.ingestion_batch_root.mkdir(parents=True, exist_ok=True)
     match_backend = settings.persistence.match_record_store_backend.strip().lower()
     if match_backend != "sqlite":
         raise ValueError(

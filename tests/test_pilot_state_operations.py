@@ -101,6 +101,7 @@ def test_create_app_injects_configured_match_store_and_ingestion_root(
 
     assert app.state.persistence_dependencies.match_record_store.path == state / "matches.sqlite3"
     assert app.state.ingestion_run_runtime_adapter._batch_root == state / "ingestion"
+    assert (state / "ingestion").is_dir()
     assert app.state.reconcile_and_save.keywords["match_record_store"].path == state / "matches.sqlite3"
 
 
