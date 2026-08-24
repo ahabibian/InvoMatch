@@ -24,7 +24,7 @@ The supported authenticated ingestion endpoint receives:
 
 - batch: `scenario-15-deployed`;
 - invoice: `scenario-15-invoice`, 2026-08-24, EUR 125.50, reference `SCENARIO-15`;
-- payments: `scenario-15-payment-a` and `scenario-15-payment-b`, each EUR 125.50 with the same reference.
+- payments: `scenario-15-payment-a` and `scenario-15-payment-b`, each explicitly bound to `scenario-15-invoice`, EUR 125.50, with the same reference.
 
 The legitimate ambiguity produces backend-owned `review_required` truth. The exact deployed path is:
 
@@ -50,7 +50,7 @@ The repository has no established browser automation framework. In accordance wi
 
 ## Defect and bounded fix
 
-Validation discovered that normal reconciliation persisted review-required match records but did not materialize them into the configured Review Queue store. The bounded fix routes duplicate/partial match records through the existing `ReviewIntegrationService`, preserving generated match identity, invoice/payment identity, confidence, mismatch reason, candidates, and source-file provenance. `ReviewIntegrationService` now honors an explicitly supplied source reference. No matching algorithm, financial rule, UI design, authentication architecture, or deployment platform changes.
+Validation discovered two contract-integration defects. Normal reconciliation persisted review-required match records but did not materialize them into the configured Review Queue store. The bounded fix routes duplicate/partial match records through the existing `ReviewIntegrationService`, preserving generated match identity, invoice/payment identity, confidence, mismatch reason, candidates, and source-file provenance. `ReviewIntegrationService` now honors an explicitly supplied source reference. The supported ingestion payment model also omitted `invoice_id`, preventing the existing reconciliation engine from associating API-ingested payments with invoices; the bounded schema fix preserves that existing key through CSV materialization. No matching algorithm, financial rule, UI design, authentication architecture, or deployment platform changes.
 
 Focused regression proves a real ambiguous reconciliation creates a durable queue row and Match Detail candidate with identity and provenance continuity. The complete backend, contract, operational, Scenario 15, frontend, compilation, Compose, restart, readiness, and whitespace gates remain mandatory.
 

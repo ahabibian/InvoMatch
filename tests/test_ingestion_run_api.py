@@ -1,3 +1,4 @@
+import csv
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -40,6 +41,9 @@ def test_post_ingest_creates_run(tmp_path: Path):
     def _reconcile_and_save(invoice_path: Path, payment_path: Path, **kwargs):
         assert invoice_path.exists()
         assert payment_path.exists()
+        with payment_path.open(newline="", encoding="utf-8") as payment_file:
+            payment_rows = list(csv.DictReader(payment_file))
+        assert payment_rows[0]["invoice_id"] == "inv-1"
         assert kwargs["tenant_context"].tenant_id == "tenant-demo"
         return _fake_run("run-123", "batch-1")
 
@@ -67,6 +71,7 @@ def test_post_ingest_creates_run(tmp_path: Path):
             "payments": [
                 {
                     "id": "pay-1",
+                    "invoice_id": "inv-1",
                     "date": "2026-04-08",
                     "amount": "100.00",
                     "currency": "SEK",

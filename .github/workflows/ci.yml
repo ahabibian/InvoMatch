@@ -136,7 +136,7 @@ jobs:
           curl --fail --silent --show-error \
             --cookie pilot.cookies \
             --header 'Content-Type: application/json' \
-            --data '{"ingestion_batch_id":"scenario-15-deployed","invoices":[{"id":"scenario-15-invoice","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"SCENARIO-15"}],"payments":[{"id":"scenario-15-payment-a","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"SCENARIO-15"},{"id":"scenario-15-payment-b","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"SCENARIO-15"}]}' \
+            --data '{"ingestion_batch_id":"scenario-15-deployed","invoices":[{"id":"scenario-15-invoice","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"SCENARIO-15"}],"payments":[{"id":"scenario-15-payment-a","invoice_id":"scenario-15-invoice","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"SCENARIO-15"},{"id":"scenario-15-payment-b","invoice_id":"scenario-15-invoice","date":"2026-08-24","amount":"125.50","currency":"EUR","reference":"SCENARIO-15"}]}' \
             http://127.0.0.1:8080/api/reconciliation/runs/ingest > pilot-run.json
           RUN_ID=$(jq --raw-output .run_id pilot-run.json)
           test -n "$RUN_ID"
