@@ -1,5 +1,21 @@
 # React + TypeScript + Vite
 
+## InvoMatch pilot runtime
+
+The production-intent Pilot UI is built with `npm run build` and served by the
+same-origin Nginx boundary defined in `Dockerfile.pilot` and
+`pilot-nginx.conf`. Nginx proxies `/api`, `/health`, and `/readiness` to the
+private FastAPI service.
+
+Pilot authentication uses an opaque HttpOnly backend session cookie. The UI
+must not be built with a bearer token or `VITE_API_AUTH_TOKEN`. Local Vite
+development may use `VITE_API_BASE_URL` when the backend is on another local
+origin, subject to the backend's explicit development CORS allow-list.
+
+Browser-facing pilot access is expected to use HTTPS terminated at an external
+ingress or serving boundary. `INVOMATCH_SESSION_COOKIE_SECURE=false` is only for
+local composition validation.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

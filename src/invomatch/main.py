@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import partial
+import logging
 from pathlib import Path
 from typing import Literal
 
@@ -64,6 +65,7 @@ from invomatch.services.run_store import RunStore
 from invomatch.services.security import (
     AuthenticationService,
     AuthorizationService,
+    InMemoryBrowserSessionService,
     PersistentSecurityAuditService,
     StaticTokenProvider,
 )
@@ -71,6 +73,7 @@ from invomatch.services.startup_repair_coordinator import StartupRepairCoordinat
 
 RunStoreBackend = Literal["json", "sqlite"]
 ReviewStoreBackend = Literal["memory", "sqlite"]
+logger = logging.getLogger(__name__)
 
 
 def create_app(
@@ -87,18 +90,19 @@ def create_app(
     startup_now_provider=None,
 ) -> FastAPI:
     app = FastAPI(title="InvoMatch")
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",
-            "http://127.0.0.1:5173",
-        ],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
 
     settings = load_application_settings()
+    logging.basicConfig(
+        level=getattr(logging, settings.observability.log_level.upper(), logging.INFO),
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=list(settings.security.allowed_origins),
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Authorization", "Content-Type"],
+    )
 
     effective_run_store_backend = run_store_backend or settings.persistence.run_store_backend
     effective_review_store_backend = (
@@ -169,6 +173,9 @@ def create_app(
 
     token_provider = StaticTokenProvider(settings.security.seed_tokens_json)
     authentication_service = AuthenticationService(token_provider=token_provider)
+    browser_session_service = InMemoryBrowserSessionService(
+        ttl_seconds=settings.security.session_ttl_seconds
+    )
     authorization_service = AuthorizationService()
     security_audit_service = PersistentSecurityAuditService(audit_event_repository)
     operational_audit_service = OperationalAuditService(
@@ -179,6 +186,7 @@ def create_app(
     app.state.security_settings = settings.security
     app.state.token_provider = token_provider
     app.state.authentication_service = authentication_service
+    app.state.browser_session_service = browser_session_service
     app.state.authorization_service = authorization_service
     app.state.security_audit_service = security_audit_service
     app.state.operational_audit_service = operational_audit_service
@@ -330,6 +338,12 @@ def create_app(
     app.include_router(actions_router)
     app.include_router(export_router)
     app.include_router(export_artifacts_router)
+
+    logger.info(
+        "InvoMatch startup complete environment=%s scheduler_enabled=%s",
+        settings.environment.value,
+        runtime_dependencies.scheduler_enabled,
+    )
 
     return app
 

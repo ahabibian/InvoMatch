@@ -1,0 +1,71 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      INVOMATCH_ENV: production
+      INVOMATCH_RUN_STORE_BACKEND: sqlite
+      INVOMATCH_REVIEW_STORE_BACKEND: sqlite
+      INVOMATCH_FEEDBACK_STORE_BACKEND: sqlite
+      INVOMATCH_MATCH_RECORD_STORE_BACKEND: sqlite
+      INVOMATCH_RUN_STORE_PATH: /var/lib/invomatch/reconciliation_runs.sqlite3
+      INVOMATCH_REVIEW_STORE_PATH: /var/lib/invomatch/review_store.sqlite3
+      INVOMATCH_FEEDBACK_STORE_PATH: /var/lib/invomatch/feedback_store.sqlite3
+      INVOMATCH_MATCH_RECORD_STORE_PATH: /var/lib/invomatch/match_records.sqlite3
+      INVOMATCH_EXPORT_ARTIFACT_DB_PATH: /var/lib/invomatch/export_artifacts.sqlite3
+      INVOMATCH_AUDIT_EVENT_DB_PATH: /var/lib/invomatch/audit_events.sqlite3
+      INVOMATCH_INPUT_SESSION_DB_PATH: /var/lib/invomatch/input_sessions.sqlite3
+      INVOMATCH_INGESTION_BATCH_ROOT: /var/lib/invomatch/ingestion_batches
+      INVOMATCH_ARTIFACT_ROOT_PATH: /var/lib/invomatch/artifacts
+      INVOMATCH_EXPORT_DIRECTORY: /var/lib/invomatch/exports
+      INVOMATCH_UPLOAD_ROOT_PATH: /var/lib/invomatch/uploads
+      INVOMATCH_TEMP_DIRECTORY: /var/lib/invomatch/tmp
+      INVOMATCH_LOG_DIRECTORY: /var/lib/invomatch/logs
+      INVOMATCH_STARTUP_VALIDATION_ENABLED: "true"
+      INVOMATCH_STARTUP_REPAIR_ENABLED: "true"
+      INVOMATCH_RUNTIME_RECOVERY_ENABLED: "true"
+      INVOMATCH_SCHEDULER_ENABLED: "false"
+      INVOMATCH_AUTH_ENABLED: "true"
+      INVOMATCH_SECURITY_AUDIT_ENABLED: "true"
+      INVOMATCH_SECURITY_SEED_TOKENS_JSON: ${INVOMATCH_SECURITY_SEED_TOKENS_JSON:?pilot credentials must be supplied externally}
+      INVOMATCH_ALLOWED_ORIGINS: ""
+      INVOMATCH_SESSION_COOKIE_SECURE: ${INVOMATCH_SESSION_COOKIE_SECURE:-true}
+      INVOMATCH_SESSION_TTL_SECONDS: ${INVOMATCH_SESSION_TTL_SECONDS:-3600}
+      INVOMATCH_LOG_LEVEL: INFO
+      INVOMATCH_STRUCTURED_LOGGING_ENABLED: "true"
+      INVOMATCH_APPLICATION_VERSION: ${INVOMATCH_APPLICATION_VERSION:-0.1.0}
+      INVOMATCH_RELEASE_COMMIT_SHA: ${INVOMATCH_RELEASE_COMMIT_SHA:-not_injected}
+      INVOMATCH_RELEASE_BRANCH: ${INVOMATCH_RELEASE_BRANCH:-not_injected}
+      INVOMATCH_RELEASE_VALIDATION_STATUS: ${INVOMATCH_RELEASE_VALIDATION_STATUS:-not_declared}
+    expose:
+      - "8000"
+    volumes:
+      - pilot_state:/var/lib/invomatch
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/readiness', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ui/invomatch-ui
+      dockerfile: Dockerfile.pilot
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${INVOMATCH_PILOT_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 4s
+      retries: 12
+    restart: unless-stopped
+
+volumes:
+  pilot_state:
+

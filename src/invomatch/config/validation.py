@@ -1,8 +1,28 @@
 from dataclasses import dataclass
+import json
 from pathlib import Path
 
 from .environment import EnvironmentName
 from .models import ApplicationSettings
+
+
+_DEMO_TOKEN_VALUES = {"viewer-token", "operator-token", "admin-token", "inactive-token"}
+
+
+def _configured_token_values(seed_tokens_json: str) -> set[str]:
+    if not seed_tokens_json.strip():
+        return set()
+    try:
+        items = json.loads(seed_tokens_json)
+    except (TypeError, ValueError):
+        return set()
+    if not isinstance(items, list):
+        return set()
+    return {
+        str(item.get("token", "")).strip()
+        for item in items
+        if isinstance(item, dict) and str(item.get("token", "")).strip()
+    }
 
 
 @dataclass(frozen=True)
@@ -56,6 +76,15 @@ def validate_application_settings(settings: ApplicationSettings) -> StartupValid
 
     if settings.security.auth_enabled and not settings.security.seed_tokens_json.strip():
         errors.append("security.seed_tokens_json must not be empty when auth is enabled")
+    if settings.security.session_ttl_seconds <= 0:
+        errors.append("security.session_ttl_seconds must be greater than zero")
+    if "*" in settings.security.allowed_origins:
+        errors.append("security.allowed_origins must not contain a wildcard")
+
+    if settings.environment in {EnvironmentName.STAGING, EnvironmentName.PRODUCTION}:
+        configured_tokens = _configured_token_values(settings.security.seed_tokens_json)
+        if configured_tokens.intersection(_DEMO_TOKEN_VALUES):
+            errors.append("staging and production must not use committed demo tokens")
 
     if settings.environment == EnvironmentName.TEST and settings.scheduler.scheduler_enabled:
         errors.append("scheduler must be disabled in test environment by default")

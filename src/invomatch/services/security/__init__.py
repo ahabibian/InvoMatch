@@ -7,6 +7,7 @@ from .security_audit_service import (
     SecurityAuditEvent,
 )
 from .token_provider import StaticTokenProvider, TokenRecord
+from .session_service import BrowserSession, InMemoryBrowserSessionService
 
 __all__ = [
     "AuthenticationResult",
@@ -21,4 +22,6 @@ __all__ = [
     "SecurityAuditEvent",
     "StaticTokenProvider",
     "TokenRecord",
+    "BrowserSession",
+    "InMemoryBrowserSessionService",
 ]

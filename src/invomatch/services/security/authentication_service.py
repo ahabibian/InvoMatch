@@ -41,7 +41,10 @@ class AuthenticationService:
                 failure_reason="empty_bearer_token",
             )
 
-        token_record = self._token_provider.get_token_record(token)
+        return self.authenticate_token(token)
+
+    def authenticate_token(self, token: str) -> AuthenticationResult:
+        token_record = self._token_provider.get_token_record(token.strip())
         if token_record is None:
             return AuthenticationResult(
                 principal=None,

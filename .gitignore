@@ -5,9 +5,11 @@ __pycache__/
 
 .venv/
 .env
+pilot.env
 
 .pytest_cache/
 .pytest_tmp/
+.pytest_tmp_*/
 
 dist/
 build/

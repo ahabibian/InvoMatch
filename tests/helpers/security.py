@@ -27,6 +27,9 @@ def attach_test_security(app, *, tenant_id: str = TEST_TENANT_ID) -> None:
         public_readiness_enabled=True,
         seed_tokens_json=seed_tokens_json,
         security_audit_enabled=True,
+        allowed_origins=("http://localhost:5173",),
+        session_cookie_secure=False,
+        session_ttl_seconds=3600,
     )
 
     token_provider = StaticTokenProvider(seed_tokens_json)

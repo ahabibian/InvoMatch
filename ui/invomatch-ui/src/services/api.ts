@@ -1,5 +1,4 @@
 ﻿const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
-const API_AUTH_TOKEN = import.meta.env.VITE_API_AUTH_TOKEN ?? "";
 
 export type ApiError = {
   status: number;
@@ -198,20 +197,10 @@ async function parseJsonSafe(response: Response): Promise<unknown> {
   }
 }
 
-function buildRequestHeaders(init?: RequestInit): Headers {
-  const headers = new Headers(init?.headers);
-
-  if (API_AUTH_TOKEN && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${API_AUTH_TOKEN}`);
-  }
-
-  return headers;
-}
-
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
-    headers: buildRequestHeaders(init),
+    credentials: "same-origin",
   });
 
   const body = await parseJsonSafe(response);
@@ -236,6 +225,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export async function getAuthSession(): Promise<AuthSessionResponse> {
   return request<AuthSessionResponse>("/api/auth/session", {
     method: "GET",
+  });
+}
+
+export async function loginAuthSession(credential: string): Promise<void> {
+  await request<{ authenticated: boolean }>("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
+  });
+}
+
+export async function logoutAuthSession(): Promise<void> {
+  await request<{ authenticated: boolean }>("/api/auth/logout", {
+    method: "POST",
   });
 }
 

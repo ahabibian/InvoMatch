@@ -22,6 +22,15 @@ def build_storage_dependencies(
     export_base_dir: Path | None = None,
 ) -> StorageDependencies:
     export_root = Path(export_base_dir or settings.storage.export_directory)
+    for directory in (
+        settings.storage.artifact_root_path,
+        settings.storage.export_directory,
+        settings.storage.upload_root_path,
+        settings.storage.temp_directory,
+        settings.storage.log_directory,
+        export_root,
+    ):
+        directory.mkdir(parents=True, exist_ok=True)
 
     return StorageDependencies(
         artifact_root_path=settings.storage.artifact_root_path,

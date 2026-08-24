@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { getAuthSession } from "../services/api";
+import { getAuthSession, loginAuthSession, logoutAuthSession } from "../services/api";
 import type { ApiError, AuthSessionResponse } from "../services/api";
 import { AuthSessionContext } from "./AuthSessionContext";
 import type { AuthSessionContextValue, AuthSessionStatus } from "./sessionTypes";
@@ -112,6 +112,14 @@ export function AuthSessionProvider({ children }: AuthSessionProviderProps) {
       permissions,
       hasPermission: (permission: string) => permissions.includes(permission),
       reloadSession,
+      login: async (credential: string) => {
+        await loginAuthSession(credential);
+        await reloadSession();
+      },
+      logout: async () => {
+        await logoutAuthSession();
+        await reloadSession();
+      },
     };
   }, [error, reloadSession, session, status]);
 
