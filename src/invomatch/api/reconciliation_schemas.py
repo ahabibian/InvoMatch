@@ -46,6 +46,7 @@ class IngestionInvoiceInput(BaseModel):
 
 class IngestionPaymentInput(BaseModel):
     id: str = Field(min_length=1)
+    invoice_id: str | None = None
     date: str = Field(min_length=1)
     amount: str = Field(min_length=1)
     currency: str = Field(min_length=1)
@@ -59,7 +60,7 @@ class IngestionPaymentInput(BaseModel):
             raise ValueError("Field must not be empty")
         return normalized
 
-    @field_validator("reference")
+    @field_validator("reference", "invoice_id")
     @classmethod
     def _normalize_reference(cls, value: str | None) -> str | None:
         if value is None:

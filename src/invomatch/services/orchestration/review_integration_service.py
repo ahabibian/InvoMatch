@@ -52,7 +52,7 @@ class ReviewIntegrationService:
                 feedback_id=new_id("feedback"),
                 run_id=run_id,
                 source_type="run_orchestration",
-                source_reference=invoice_id,
+                source_reference=str(case.get("source_reference") or invoice_id),
                 feedback_type="REVIEW_CASE",
                 raw_payload=case,
                 submitted_by=created_by,
@@ -108,7 +108,9 @@ class ReviewIntegrationService:
             if feedback is None:
                 continue
 
-            if feedback.run_id == run_id and feedback.source_reference == invoice_id:
+            raw_payload = feedback.raw_payload or {}
+            persisted_invoice_id = raw_payload.get("invoice_id", feedback.source_reference)
+            if feedback.run_id == run_id and str(persisted_invoice_id) == invoice_id:
                 return True
 
         return False
