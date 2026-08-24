@@ -42,6 +42,7 @@ def _path_strings(settings: ApplicationSettings) -> tuple[str, ...]:
         settings.persistence.feedback_store_path,
         settings.persistence.match_record_store_path,
         settings.persistence.export_artifact_db_path,
+        settings.persistence.audit_event_db_path,
         settings.persistence.input_session_db_path,
         settings.persistence.ingestion_batch_root,
         settings.storage.artifact_root_path,
@@ -90,9 +91,31 @@ def validate_application_settings(settings: ApplicationSettings) -> StartupValid
         errors.append("scheduler must be disabled in test environment by default")
 
     if settings.environment == EnvironmentName.PRODUCTION:
+        state_root = Path("/var/lib/invomatch").resolve()
         for path in _path_strings(settings):
             if path.startswith("output/") or path.startswith("output\\"):
                 errors.append("production paths must not use relative output directories")
+                break
+        durable_paths = (
+            settings.persistence.run_store_path,
+            settings.persistence.review_store_path,
+            settings.persistence.feedback_store_path,
+            settings.persistence.match_record_store_path,
+            settings.persistence.export_artifact_db_path,
+            settings.persistence.audit_event_db_path,
+            settings.persistence.input_session_db_path,
+            settings.persistence.ingestion_batch_root,
+            settings.storage.artifact_root_path,
+            settings.storage.export_directory,
+            settings.storage.upload_root_path,
+        )
+        for path in durable_paths:
+            try:
+                Path(path).resolve().relative_to(state_root)
+            except ValueError:
+                errors.append(
+                    "production pilot durable paths must resolve beneath /var/lib/invomatch"
+                )
                 break
 
         if settings.observability.log_level.strip().upper() == "DEBUG":

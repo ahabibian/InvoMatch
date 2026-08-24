@@ -18,6 +18,9 @@ def _dependency_errors(request: Request) -> list[str]:
     sqlite_paths = [
         settings.persistence.audit_event_db_path,
         settings.persistence.input_session_db_path,
+        settings.persistence.match_record_store_path,
+        settings.persistence.export_artifact_db_path,
+        settings.storage.export_directory / "finalized_projections.sqlite3",
     ]
     if settings.persistence.run_store_backend.strip().lower() == "sqlite":
         sqlite_paths.append(settings.persistence.run_store_path)
@@ -34,6 +37,7 @@ def _dependency_errors(request: Request) -> list[str]:
 
     storage = settings.storage
     for directory in (
+        settings.persistence.ingestion_batch_root,
         storage.artifact_root_path,
         storage.export_directory,
         storage.upload_root_path,
