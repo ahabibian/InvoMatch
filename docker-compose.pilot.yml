@@ -60,7 +60,7 @@ services:
     ports:
       - "${INVOMATCH_PILOT_PORT:-8080}:8080"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8080/health"]
       interval: 5s
       timeout: 4s
       retries: 12
@@ -68,4 +68,3 @@ services:
 
 volumes:
   pilot_state:
-
