@@ -4953,3 +4953,64 @@ docs/architecture/MINI_EPIC_32_149_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GO
 
 docs/architecture/MINI_EPIC_32_149_CLOSURE.md
 
+## Mini-EPIC 32.150 — Canonical Release Execution or Publication Governance Execution Boundary
+
+Mini-EPIC 32.150 follows Mini-EPIC 32.149, merged through PR #42 at `895336877eff820a9f03e6e00ddeb28117097180`.
+
+Mini-EPIC 32.149 authorized exactly one bounded compound operation and recorded:
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZED
+
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_EXECUTION_BOUNDARY
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_NOT_EXECUTED
+
+Before mutation, Mini-EPIC 32.150 verified the exact canonical subject, authorization validity, unchanged workflow blob, bounded permissions, manual-only trigger, successful exact-main validation, and conflict-free remote state. Canonical non-mutating preflight returned `subject-identity-verified`. Tag `v0.1.0` and GitHub Release `v0.1.0` were both absent.
+
+The canonical workflow `.github/workflows/canonical-release-execution.yml` was dispatched once through `workflow_dispatch` on `main` with the exact authorization state, approved source SHA `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7`, and manifest identity `51e1393476197d07799248c93dc0b2325f26b7d711f206e0d7668852f9177f45`.
+
+Workflow run `32761680839` completed successfully. Its preflight, authorization-input verification, subject verification, conflict inspection, bounded creation, and post-action verification steps all passed.
+
+Independent verification confirms:
+
+- tag `v0.1.0` exists;
+- tag target is exactly `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7`;
+- GitHub Release `v0.1.0` is published at https://github.com/ahabibian/InvoMatch/releases/tag/v0.1.0;
+- Release target commitish is the exact approved source SHA;
+- Release metadata contains canonical manifest identity `51e1393476197d07799248c93dc0b2325f26b7d711f206e0d7668852f9177f45`; and
+- no conflicting duplicate Release exists.
+
+Mini-EPIC 32.150 records exactly:
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_EXECUTED
+
+CANONICAL_GITHUB_RELEASE_V0_1_0_CREATED
+
+CANONICAL_RELEASE_EXECUTION_POST_VERIFICATION_PASSED
+
+READY_FOR_EPIC_32_FINAL_AUDIT_AND_CLOSURE_BOUNDARY
+
+The corrected path is:
+
+Mini-EPIC 32.145 release-readiness approval
+
+→ Mini-EPIC 32.146 release/publication governance definition
+
+→ Mini-EPIC 32.147 authorization blocked
+
+→ Mini-EPIC 32.148 blocker remediation
+
+→ Mini-EPIC 32.149 authorization re-evaluation successful
+
+→ Mini-EPIC 32.150 canonical tag and GitHub Release execution successful
+
+→ future Mini-EPIC 32.151 final EPIC audit and closure
+
+No deployment, staging or production promotion, package-registry publication, customer-facing activation, infrastructure or runtime change, unrelated publication, or unrelated artifact distribution occurs. Historical Mini-EPIC 32.134 approval remains non-canonical and historical Mini-EPIC 32.135 through 32.140 authority remains superseded.
+
+Documents:
+
+docs/architecture/MINI_EPIC_32_150_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_EXECUTION_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_150_CLOSURE.md
+
