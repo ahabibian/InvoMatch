@@ -4851,7 +4851,7 @@ It introduces a deterministic canonical subject manifest for approved source `6c
 
 A non-mutating preflight regenerates and verifies the evidence. It fails on source, digest, version, tag, action, or manifest mismatch and distinguishes absent/conflicting tags, fresh release state, conflicting releases, and exact replay.
 
-A manual-only GitHub Actions preflight workflow uses `contents: read`, has no push/PR trigger, and contains no tag or release creation command. The future actor model is repository-controlled GitHub Actions, but write capability remains intentionally absent pending valid authorization and execution boundaries.
+A manual-only GitHub Actions preflight workflow uses `contents: read`, has no push/PR trigger, and contains no tag or release creation command. A separate manual execution workflow represents the future repository-controlled action, defaults to read-only, grants `contents: write` only to its execution job, and remains gated on later exact authorization inputs.
 
 The failure contract requires pre-mutation abort on every identity, validation, authorization, capability, permission, or conflict mismatch. It forbids automatic deletion of tags or public releases, requires separate remediation for partial public state, and defines post-creation verification and evidence capture.
 
@@ -4873,7 +4873,7 @@ Mini-EPIC 32.145 release-readiness approval
 
 → Mini-EPIC 32.147 authorization blocked
 
-→ Mini-EPIC 32.148 blocker remediation incomplete
+→ Mini-EPIC 32.148 blocker remediation completed
 
 → future 32.149 authorization re-evaluation
 
@@ -4898,4 +4898,58 @@ scripts/canonical_release_preflight.py
 .github/workflows/ci.yml
 
 tests/test_canonical_release_preflight.py
+
+## Mini-EPIC 32.149 — Canonical Release Execution or Publication Governance Authorization Re-Evaluation Boundary
+
+Mini-EPIC 32.149 follows Mini-EPIC 32.148, merged through PR #41 at `030b258beb0afe5278c17f15e7786730b0bfebd9` with successful merged-main CI run `32498111201`.
+
+Mini-EPIC 32.147 remains preserved as historical blocked authorization evidence:
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_BLOCKED
+
+Mini-EPIC 32.148 is the immediate authoritative predecessor and records:
+
+CANONICAL_RELEASE_AUTHORIZATION_BLOCKERS_REMEDIATED
+
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_REEVALUATION_BOUNDARY
+
+Fresh non-mutating review verifies the exact canonical subject: repository `ahabibian/InvoMatch`, source `6c4b3c3e35798de945a3219bbd419d4f6e41d8b7`, version `0.1.0`, tag `v0.1.0`, archive SHA-256 `f7e8f394d6bc41b63bb9e39e8abf86f8d32820b9774b2a24d1a01ca15b8d2b84`, and manifest identity `51e1393476197d07799248c93dc0b2325f26b7d711f206e0d7668852f9177f45`.
+
+The exact action is one bounded compound operation: create tag `v0.1.0` if absent at the exact approved SHA, create GitHub Release `v0.1.0`, reject conflicting existing state, and perform post-action verification.
+
+Fresh remote inspection finds neither tag `v0.1.0` nor GitHub Release `v0.1.0`. No conflict exists. The execution actor remains repository-controlled GitHub Actions through the dedicated manual workflow. Default authority is read-only, `contents: write` is limited to the execution job, exact authorization and subject inputs are required, and no push or pull-request release trigger exists.
+
+All twenty-two criteria covering predecessor integrity, authoritative readiness and remediation, exact subject identity, manifest and digests, actor/process, permissions, triggers, conflicts, idempotency, failure/remediation, post-verification, remote state, governance drift, and validity conditions pass.
+
+Mini-EPIC 32.149 selects exactly:
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZED
+
+READY_FOR_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_EXECUTION_BOUNDARY
+
+CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_NOT_EXECUTED
+
+Authorization remains valid only while the exact source, manifest, archive digest, version/tag, workflow contract, permissions, validation, compatible remote state, and governing authority remain unchanged.
+
+The corrected path is:
+
+Mini-EPIC 32.145 release-readiness approval
+
+→ Mini-EPIC 32.146 release/publication governance definition
+
+→ Mini-EPIC 32.147 authorization blocked
+
+→ Mini-EPIC 32.148 blocker remediation completed
+
+→ Mini-EPIC 32.149 authorization re-evaluation authorized but not executed
+
+→ future Mini-EPIC 32.150 execution boundary
+
+No write-capable release workflow invocation, tag creation or push, GitHub Release creation, artifact publication or distribution, deployment, environment promotion, package-registry publication, CI release execution, external publication, or customer-facing activation occurs. Historical Mini-EPIC 32.134 approval remains non-canonical and historical Mini-EPIC 32.135 through 32.140 authority remains superseded.
+
+Documents:
+
+docs/architecture/MINI_EPIC_32_149_CANONICAL_RELEASE_EXECUTION_OR_PUBLICATION_GOVERNANCE_AUTHORIZATION_REEVALUATION_BOUNDARY.md
+
+docs/architecture/MINI_EPIC_32_149_CLOSURE.md
 
