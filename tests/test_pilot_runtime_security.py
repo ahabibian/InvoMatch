@@ -169,3 +169,18 @@ def test_pilot_composition_declares_private_backend_and_state_mount() -> None:
     backend_section = composition.split("  frontend:", 1)[0]
     assert "ports:" not in backend_section
 
+
+def test_host_override_replaces_frontend_publish_with_loopback_only_binding() -> None:
+    override = Path("docker-compose.pilot-host.yml").read_text(encoding="utf-8")
+    assert "ports: !override" in override
+    assert '127.0.0.1:${INVOMATCH_PILOT_PORT:-8080}:8080' in override
+    assert "0.0.0.0" not in override
+
+
+def test_pilot_environment_template_is_non_secret_and_launch_safe() -> None:
+    template = Path("pilot.env.example").read_text(encoding="utf-8")
+    assert "INVOMATCH_SECURITY_SEED_TOKENS_JSON=\n" in template
+    assert "INVOMATCH_SESSION_COOKIE_SECURE=true" in template
+    assert "INVOMATCH_RELEASE_VALIDATION_STATUS=controlled_pilot" in template
+    assert ".env.pilot" in Path(".gitignore").read_text(encoding="utf-8")
+

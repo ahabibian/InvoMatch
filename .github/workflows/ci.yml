@@ -99,11 +99,18 @@ jobs:
         run: |
           set -euo pipefail
           cleanup() {
-            docker compose -f docker-compose.pilot.yml down --volumes --remove-orphans
+            docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml down --volumes --remove-orphans
           }
           trap cleanup EXIT
-          docker compose -f docker-compose.pilot.yml config --quiet
-          docker compose -f docker-compose.pilot.yml up --detach --build --wait
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml config --quiet
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml config --format json \
+            | jq --exit-status \
+              'any(.services.frontend.ports[]; .target == 8080 and .published == "8080" and .host_ip == "127.0.0.1") and ((.services.backend.ports // []) | length == 0)'
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml up --detach --build --wait
+          docker inspect "$(docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml ps -q frontend)" \
+            | jq --exit-status '.[0].HostConfig.PortBindings["8080/tcp"] == [{"HostIp":"127.0.0.1","HostPort":"8080"}]'
+          docker inspect "$(docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml ps -q backend)" \
+            | jq --exit-status '((.[0].HostConfig.PortBindings // {}) | length) == 0'
           curl --fail --silent --show-error --dump-header pilot-ui.headers http://127.0.0.1:8080/ > pilot-ui.html
           grep --fixed-strings '<div id="root"></div>' pilot-ui.html
           grep --ignore-case --fixed-strings 'server: nginx' pilot-ui.headers
@@ -160,8 +167,8 @@ jobs:
           jq --exit-status '.detail.code == "match_not_found"' missing-match.json
           cp pilot-queue.json pilot-queue-before-restart.json
           cp pilot-match-detail.json pilot-match-detail-before-restart.json
-          docker compose -f docker-compose.pilot.yml down --remove-orphans
-          docker compose -f docker-compose.pilot.yml up --detach --wait
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml down --remove-orphans
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml up --detach --wait
           curl --fail --silent --show-error \
             --cookie-jar pilot.cookies \
             --header 'Content-Type: application/json' \
@@ -176,9 +183,9 @@ jobs:
             "http://127.0.0.1:8080/api/review/matches/$MATCH_ID/detail" > pilot-match-detail-after-restart.json
           diff <(jq --sort-keys . pilot-queue-before-restart.json) <(jq --sort-keys . pilot-queue-after-restart.json)
           diff <(jq --sort-keys . pilot-match-detail-before-restart.json) <(jq --sort-keys . pilot-match-detail-after-restart.json)
-          docker compose -f docker-compose.pilot.yml stop
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml stop
           mkdir -p .pilot-backups
-          docker compose -f docker-compose.pilot.yml run --rm --no-deps \
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml run --rm --no-deps \
             -v "$PWD/.pilot-backups:/backups" backend \
             python -m invomatch.operations.pilot_state backup \
               --state-root /var/lib/invomatch \
@@ -190,13 +197,13 @@ jobs:
             echo 'Pilot credential leaked into the backup bundle.' >&2
             exit 1
           fi
-          docker compose -f docker-compose.pilot.yml down --volumes --remove-orphans
-          docker compose -f docker-compose.pilot.yml run --rm --no-deps \
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml down --volumes --remove-orphans
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml run --rm --no-deps \
             -v "$PWD/.pilot-backups:/backups:ro" backend \
             python -m invomatch.operations.pilot_state restore \
               --bundle /backups/ci-backup \
               --target-root /var/lib/invomatch
-          docker compose -f docker-compose.pilot.yml up --detach --wait
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml up --detach --wait
           curl --fail --silent --show-error \
             --cookie-jar pilot.cookies \
             --header 'Content-Type: application/json' \
@@ -205,7 +212,7 @@ jobs:
           curl --fail --silent --show-error --cookie pilot.cookies \
             "http://127.0.0.1:8080/api/reconciliation/runs/$RUN_ID" \
             | grep --fixed-strings "$RUN_ID"
-          docker compose -f docker-compose.pilot.yml exec -T backend \
+          docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml exec -T backend \
             python -m invomatch.operations.pilot_state verify \
               --state-root /var/lib/invomatch
           if grep --recursive --quiet --fixed-strings 'VITE_API_AUTH_TOKEN' ui/invomatch-ui/dist; then
@@ -228,7 +235,7 @@ jobs:
             echo 'Traceability contract is absent from the frontend build.' >&2
             exit 1
           fi
-          if ! docker compose -f docker-compose.pilot.yml logs > pilot-runtime.log; then
+          if ! docker compose -f docker-compose.pilot.yml -f docker-compose.pilot-host.yml logs > pilot-runtime.log; then
             echo 'Pilot runtime logs could not be read.' >&2
             exit 1
           fi
