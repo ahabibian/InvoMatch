@@ -6,6 +6,7 @@ __pycache__/
 .venv/
 .env
 pilot.env
+.env.pilot
 
 .pytest_cache/
 .pytest_tmp/

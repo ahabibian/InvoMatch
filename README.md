@@ -2,6 +2,9 @@
 
 Deterministic invoice reconciliation backend.
 
+For controlled target-host launch, use the canonical
+[Pilot Environment Launch Runbook](docs/operations/PILOT_ENVIRONMENT_LAUNCH_RUNBOOK.md).
+
 ## Layers
 - API
 - Services

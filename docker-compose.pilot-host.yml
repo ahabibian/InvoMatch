@@ -1,0 +1,6 @@
+services:
+  frontend:
+    # !override prevents Compose from retaining the base file's all-interface port.
+    # Docker Compose 2.24.4 or newer is required for this tag.
+    ports: !override
+      - "127.0.0.1:${INVOMATCH_PILOT_PORT:-8080}:8080"
